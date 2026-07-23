@@ -105,6 +105,15 @@ debugging from scratch.
 
 ## Phase 4 - Windows
 
+- [x] built - Generic OpenedWindowScreen: reads UIManager.OpenedWindow content (visible labels
+      as text nodes, buttons/toggles as activatable nodes, in reading order) + a back-to-scene
+      close node + Escape back; folds hover tooltips (TooltipWithTitleBehavior / TooltipKeyHolder)
+      onto Space - this also addresses "tooltips did not always read". Covers Destiny / Character /
+      Relations / Council / Empire / Creed / Map / Soul at a basic navigable level in one screen.
+      Loads clean (14 screens); needs live per-window verification + later param name/value folding
+- [x] verified - Fixed: chapter-summary re-spoke every frame with the year mixed in (delivery
+      now keyed on the settled page index, year label excluded from the body sweep) - 7f41191
+
 - [x] verified - Main menu ported (rewritten for Jerian: TMP text buttons under
       MainMenuController, labels from live game text, Continue availability off
       SaveLoadManagerV2.SavesExist, handoff gate on navigationGroups + visible-Continue gate

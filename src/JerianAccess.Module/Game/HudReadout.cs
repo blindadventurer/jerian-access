@@ -28,6 +28,8 @@ namespace JerianAccess.Module.Game
             typeof(HudButtonController).GetField("lockedTextKey", NP);
         private static readonly FieldInfo ButtonField =
             typeof(HudButtonController).GetField("button", NP);
+        private static readonly FieldInfo IsBackField =
+            typeof(HudButtonController).GetField("isBackButton", NP);
         private static readonly FieldInfo SanityParamField =
             typeof(HudSanityCounterView).GetField("sanityParameter", NP);
         private static readonly FieldInfo TempestParamField =
@@ -115,5 +117,16 @@ namespace JerianAccess.Module.Game
 
         private static string Translate(string key)
             => string.IsNullOrEmpty(key) ? null : I2.Loc.LocalizationManager.GetTranslation(key);
+
+        /// <summary>The HUD's back-to-scene button while it is shown (a window is open), or null.
+        /// Clicking it closes the open window through the game's own wiring.</summary>
+        public static Button BackButton()
+        {
+            foreach (var ctrl in Object.FindObjectsOfType<HudButtonController>())
+                if ((bool)IsBackField.GetValue(ctrl)
+                    && ctrl.gameObject.activeInHierarchy && UiWidgets.Visible(ctrl.gameObject))
+                    return (Button)ButtonField.GetValue(ctrl) ?? ctrl.GetComponentInChildren<Button>();
+            return null;
+        }
     }
 }

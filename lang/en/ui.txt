@@ -105,6 +105,7 @@ screen.credits = credits
 screen.gameloading = load game
 gameloading.age = age: {age}
 screen.chaptersummary = chapter summary
+screen.window = window
 
 # Load-game window (save slots). Slot label folds the game's own chapter/name/date/time.
 screen.loadwindow = load game
