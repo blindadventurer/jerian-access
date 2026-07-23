@@ -82,8 +82,13 @@ debugging from scratch.
       so the fade-in never homes focus on the Discord link). Driven live: full ui.down walk
       announces all 6 buttons with position, ui.home returns, ui.activate on unavailable
       Continue speaks "unavailable". Physical arrows = same dispatcher, need game window focus
+- [x] verified - Settings ported (SettingsWindowController via reflection; new Jerian rows:
+      cutscene volume, hold-choice toggle, tips toggle; game's own InputSystem escape closes
+      the window, so no mod-side Back). Driven live: 11-row walk announces label+state,
+      slider adjust speaks percent and applies volume, Menu button exits and the main menu
+      re-homes. Language row = Left/Right on "Language" combo (user switches themselves)
 - [ ] todo - Window shell + ScreenManager reconciliation on Jerian's UIManager slots
-- [ ] todo - Port surviving windows: Character, Chapter select, Save/Load, Settings, Pause,
+- [ ] todo - Port surviving windows: Character, Chapter select, Save/Load, Pause,
       popups (Confirm/Generic), Death/GameOver, Credits, Disclaimer
 - [ ] todo - NEW windows: Council
 - [ ] todo - NEW windows: Soul
