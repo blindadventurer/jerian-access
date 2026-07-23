@@ -79,6 +79,7 @@ gameloading.age = возраст: {age}
 screen.chaptersummary = сводка главы
 screen.window = окно
 screen.pause = пауза
+scene.rewards = изменения:
 
 screen.loadwindow = загрузка игры
 loadwindow.slot = {chapter}, {name}, {date} {time}
