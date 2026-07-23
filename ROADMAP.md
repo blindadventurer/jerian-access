@@ -78,13 +78,20 @@ debugging from scratch.
 - [x] built - Choices: list/focus/activate via game handlers wired (ConsequenceButtonController,
       -10 seats first choice); prologue resolved its choice scripted, so interactive choice
       activation still needs a live pass in chapter 1
-- [ ] todo - Unavailable choices announce the failed requirement (typed Condition model:
-      Parameter/Relation/Status/Article/... - compose from failed non-hidden conditions)
+- [ ] built - Unavailable choices announce the failed requirement (Game/ChoiceConditions.cs:
+      composes failed non-hidden conditions from the typed Condition model - Parameter,
+      Relation, Status, Objective, Ending, Article, Estate, Bilateral - reusing the game's own
+      GetNameLocalised/GetTranslation; Space reads the full met/not-met breakdown). Wired into
+      SceneScreen choice nodes. Awaiting live verification in a scene with locked choices
+- [ ] built - HUD readout as a Tab-stop (Game/HudReadout.cs): Sanity + Tempest Legacy counters
+      from the model, HUD window buttons with game labels + locked reasons + click activation.
+      Appended in SceneScreen.Build. Awaiting live verification
 - [ ] todo - Trigger-scene page (-20) reading
 - [ ] todo - Consequence sheet reading (ConsequenceSheetController: stat changes, rewards)
-- [ ] todo - HUD readout (SanityCounterView, TempestLegacyCounterView, HUD.* buttons) as a
-      Tab-stop; port HudBar/WindowShellScreen
 - [ ] todo - Scene title / chapter transitions announced off Messenger events
+- [ ] todo - GameLoadingScreen / chapter-timeline (Window_GameLoadingScreen): chapter items +
+      Continue/Exit; currently UNSPOKEN (user hits it via Continue). And the LoadWindow (save
+      slots) is still the excluded Brante screen - UNSPOKEN
 
 ## Phase 4 - Windows
 

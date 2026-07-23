@@ -232,16 +232,20 @@ namespace JerianAccess.Module.Screens
                             new NodeAnnouncement(() => Translate(choice.ButtonTextKey),
                                 kind: AnnouncementKinds.Label),
                             new NodeAnnouncement(
-                                () => choice.GetIsButtonInteractable() ? null
-                                    : Loc.T("state.unavailable"),
+                                () => ChoiceConditions.UnavailableReason(choice),
                                 kind: AnnouncementKinds.Enabled),
                         },
                         SearchText = () => Translate(choice.ButtonTextKey),
+                        // Space reads the full requirement breakdown (met and not-met),
+                        // composed from the choice's own typed Condition model.
+                        OnTooltip = () => Mod.Speech.Speak(
+                            ChoiceConditions.Details(choice) ?? Loc.T("nav.no_details")),
                         OnActivate = () =>
                         {
-                            if (!choice.GetIsButtonInteractable())
+                            var reason = ChoiceConditions.UnavailableReason(choice);
+                            if (reason != null)
                             {
-                                Mod.Speech.Speak(Loc.T("state.unavailable"), interrupt: true);
+                                Mod.Speech.Speak(reason, interrupt: true);
                                 return;
                             }
                             // The game's own resolving gate: a clicked choice sets
@@ -254,6 +258,9 @@ namespace JerianAccess.Module.Screens
                     });
             }
             b.PopContext();
+
+            // The story HUD (resource counters + window buttons) as its own Tab-stop.
+            HudReadout.Build(b);
         }
 
         private static UnityEngine.UI.Button ContinueButton(TextController tc)
