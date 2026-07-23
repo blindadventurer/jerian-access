@@ -1,23 +1,26 @@
 using System.Collections.Generic;
+using System.Reflection;
 using JerianAccess.Module.Game;
 using JerianAccess.Module.Speech;
 using JerianAccess.Module.UI;
 using JerianAccess.Module.UI.Graph;
+using UnityEngine;
 using UnityEngine.UI;
-using NameWindow = _Scripts.AMVCC.Views.Windows.NameRequestWindow.NameRequestWindow;
+using _Scripts.AMVCC.MainMenu;
 
 namespace JerianAccess.Module.Screens
 {
     /// <summary>
-    /// The new-game name request popup (UIManager.ShowNameRequestPopup - NOT tracked in the
-    /// popup slot, so presence is the live NameRequestWindow component). Content: subtitle line,
-    /// the name field (Sir [name] Jerian, the game's prefix/postfix text), two radio pairs
-    /// (Chapter Restarts, Consequences - game toggle labels), and the Start button, which the
-    /// game gates on a 2+ letter name. Enter on the name field starts a MODAL EDIT: the game's
-    /// TMP_InputField takes keyboard focus, this screen captures raw input (InputManager stops
-    /// dispatching), and typed characters echo from the field's own text changes. The field's
-    /// built-in Enter (commit) / Escape (cancel) end the edit; the game's own unpatched
-    /// NameRequestWindow.Update additionally closes the whole popup on Escape - vanilla behavior.
+    /// The new-game window (Jerian: additive "NewGameWindow" scene owned by
+    /// NewGameWindowController; also instantiable as a UIManager popup prefab - presence is the
+    /// live controller either way). Content: title, the name field with the game's live
+    /// validation subtitle (wrong/blacklisted names swap its text - spoken as it changes during
+    /// the edit), three radio pairs (chapter returns, consequences, tutorials - real
+    /// ToggleGroups, labels and headers from game text), Back, and Start gated on the game's
+    /// own rule (min length + not blacklisted). Enter on the name field starts a MODAL EDIT:
+    /// the game's TMP_InputField takes keyboard focus, this screen captures raw input, and
+    /// typed characters echo from the field's own text changes. The game's unpatched Update
+    /// closes the window on physical Escape - no mod-side Back action (double-close).
     /// </summary>
     public sealed class NameRequestScreen : Screen
     {
@@ -25,82 +28,144 @@ namespace JerianAccess.Module.Screens
         public override int Layer => 20;
         public override bool IsActive() => Window() != null;
 
+        private static readonly FieldInfo NameInputField = F("nameInput");
+        private static readonly FieldInfo NameSubtitleField = F("nameSubtitle");
+        private static readonly FieldInfo NextButtonField = F("_nextButton");
+        private static readonly FieldInfo MinCharsField = F("_minCharactersCountForName");
+        private static readonly FieldInfo StartLockedField = F("_isStartButtonLocked");
+        private static readonly FieldInfo[] PairFields =
+        {
+            F("IronManToggleOn"), F("IronManToggleOff"),
+            F("StoryModeToggleOn"), F("StoryModeToggleOff"),
+            F("tutorialsToggleOn"), F("tutorialsToggleOff"),
+        };
+
+        private static FieldInfo F(string name) => typeof(NewGameWindowController)
+            .GetField(name, BindingFlags.NonPublic | BindingFlags.Instance);
+
         public override Message ScreenName
         {
             get
             {
                 var w = Window();
-                return w == null ? null : Message.MaybeRaw(w.MainTitleText.text);
+                if (w == null) return null;
+                var title = w.transform.Find("Body/Name");
+                return title == null ? null
+                    : Message.MaybeRaw(UiWidgets.LocalizedLabel(title.gameObject));
             }
         }
 
-        // Live reference to the field being edited (read at speech time), plus the edit differ's
-        // spoken baseline - the last text already announced, never game state kept for later.
+        // Live reference to the field being edited (read at speech time), plus the edit
+        // differ's spoken baselines - the last text already announced, never game state kept
+        // for later.
         private TMPro.TMP_InputField _editField;
+        private TMPro.TextMeshProUGUI _editSubtitle;
         private bool _wasEditing;
         private string _lastText;
+        private string _lastSubtitle;
 
         public override bool CapturesRawInput => _editField != null && _editField.isFocused;
 
-        private static NameWindow Window() => UnityEngine.Object.FindObjectOfType<NameWindow>();
+        private static NewGameWindowController Window()
+            => Object.FindObjectOfType<NewGameWindowController>();
 
         public override void Build(GraphBuilder b)
         {
             var w = Window();
             if (w == null) return;
-            var field = w.GetComponentInChildren<TMPro.TMP_InputField>(true);
-            var start = w.GetComponentInChildren<Button>(true);
+            var field = (TMPro.TMP_InputField)NameInputField.GetValue(w);
+            var subtitle = (TMPro.TextMeshProUGUI)NameSubtitleField.GetValue(w);
+            int minChars = (int)MinCharsField.GetValue(w);
 
-            var subtitleId = ControlId.Referenced(w, "namerequest:subtitle");
-            b.AddItem(subtitleId, new NodeVtable
+            var titleId = ControlId.Referenced(w, "namerequest:title");
+            b.AddItem(titleId, new NodeVtable
             {
                 ControlType = ControlTypes.Text,
                 Announcements = new[]
                 {
-                    new NodeAnnouncement(() => w.Subtitle.text, kind: AnnouncementKinds.Label),
+                    new NodeAnnouncement(() =>
+                    {
+                        var t = w.transform.Find("Body/Name");
+                        return t == null ? null : UiWidgets.LocalizedLabel(t.gameObject);
+                    }, kind: AnnouncementKinds.Label),
                 },
             });
-            // Explicit start: without it the selected-member landing would seat initial focus on a
-            // checked radio in this mixed form-stop instead of the top.
-            b.SetStart(subtitleId);
+            // Explicit start: without it the selected-member landing would seat initial focus
+            // on a checked radio in this mixed form-stop instead of the top.
+            b.SetStart(titleId);
 
             b.AddItem(ControlId.Referenced(field, "namerequest:name"), new NodeVtable
             {
                 ControlType = ControlTypes.Edit,
                 Announcements = new[]
                 {
-                    new NodeAnnouncement(() => Loc.T("namerequest.name_row", new
-                    {
-                        prefix = w.NamePrefixText.text,
-                        value = field.text.Length > 0 ? field.text : Loc.T("edit.blank"),
-                        postfix = w.NamePostfixText.text,
-                    }), kind: AnnouncementKinds.Label),
+                    // NameRow sits under NameBlock, whose first label is the game's
+                    // "enter the hero's name" caption.
+                    new NodeAnnouncement(
+                        () => UiWidgets.LocalizedLabel(field.transform.parent.parent.gameObject),
+                        kind: AnnouncementKinds.Label),
+                    new NodeAnnouncement(
+                        () => field.text.Length > 0 ? field.text : Loc.T("edit.blank"),
+                        live: true, kind: AnnouncementKinds.Value),
                 },
-                OnActivate = () => BeginEdit(field),
+                OnActivate = () => BeginEdit(field, subtitle),
             });
 
-            AddTogglePair(b, w, "Loading", "restarts", w.IronManGameModeTitle.text);
-            AddTogglePair(b, w, "Consequence", "consequences", w.ConsequenceGameModeTitle.text);
+            // The validation subtitle ("the hero is a man", wrong-name, blacklisted-name): its
+            // own stop so it is arrow-reachable; changes DURING the edit are spoken by
+            // OnUpdate's subtitle differ.
+            b.AddItem(ControlId.Referenced(subtitle, "namerequest:subtitle"), new NodeVtable
+            {
+                ControlType = ControlTypes.Text,
+                Announcements = new[]
+                {
+                    new NodeAnnouncement(() => subtitle.text, kind: AnnouncementKinds.Label),
+                },
+            });
 
+            AddTogglePair(b, w, 0, "restarts");
+            AddTogglePair(b, w, 2, "consequences");
+            AddTogglePair(b, w, 4, "tutorials");
+
+            var back = w.transform.Find("Body/BackButton");
+            if (back != null)
+                b.AddItem(ControlId.Referenced(back.GetComponent<Button>(), "namerequest:back"),
+                    new NodeVtable
+                    {
+                        ControlType = ControlTypes.Button,
+                        Announcements = new[]
+                        {
+                            new NodeAnnouncement(() => UiWidgets.LocalizedLabel(back.gameObject),
+                                kind: AnnouncementKinds.Label),
+                        },
+                        OnActivate = () => UiWidgets.Click(back.gameObject),
+                    });
+
+            var start = (Button)NextButtonField.GetValue(w);
             b.AddItem(ControlId.Referenced(start, "namerequest:start"), new NodeVtable
             {
                 ControlType = ControlTypes.Button,
                 Announcements = new[]
                 {
-                    new NodeAnnouncement(() => UiWidgets.LabelText(start.gameObject),
+                    new NodeAnnouncement(() => UiWidgets.LocalizedLabel(start.gameObject),
                         kind: AnnouncementKinds.Label),
-                    // Gate on the MODEL (the game's 2-letter rule), not the button: the game also
-                    // disables the button as its double-click guard after Start fires, and the live
-                    // watch must not read that as "unavailable" mid-transition.
+                    // Gate on the MODEL (the game's min-length + blacklist rule mirrored into
+                    // _isStartButtonLocked), not the button: the game also disables the button
+                    // as its double-click guard after Start fires, and the live watch must not
+                    // read that as "unavailable" mid-transition.
                     new NodeAnnouncement(
-                        () => field.text.Length >= 2 ? null : Loc.T("namerequest.start_unavailable"),
+                        () => StartAllowed(w, field, minChars) ? null
+                            : Loc.T("namerequest.start_unavailable"),
                         live: true, kind: AnnouncementKinds.Enabled),
                 },
                 OnActivate = () =>
                 {
-                    if (field.text.Length < 2)
+                    if (!StartAllowed(w, field, minChars))
                     {
-                        Mod.Speech.Speak(Loc.T("namerequest.start_unavailable"), interrupt: true);
+                        // The game's own subtitle carries the reason (too short / blacklisted).
+                        Mod.Speech.Speak(subtitle.text.Length > 0
+                            ? subtitle.text : Loc.T("namerequest.start_unavailable"),
+                            interrupt: true);
                         return;
                     }
                     UiWidgets.Click(start.gameObject); // honors the button's own interactable state
@@ -108,19 +173,27 @@ namespace JerianAccess.Module.Screens
             });
         }
 
-        // One radio pair (a ToggleGroup): its two toggles as a left/right row under the game's
-        // group title, region-jumpable. Clicking the selected one is skipped (the group would
-        // just force it back on); the game's click path plays the toggle sound and sets the mode.
-        private static void AddTogglePair(GraphBuilder b, NameWindow w, string parentName,
-            string regionKey, string title)
+        private static bool StartAllowed(NewGameWindowController w, TMPro.TMP_InputField field,
+            int minChars)
+            => field.text.Length >= minChars && !(bool)StartLockedField.GetValue(w);
+
+        // One radio pair (a real ToggleGroup on Jerian): the two toggles as a left/right row
+        // under the game's group header (the first label of the toggles' parent node),
+        // region-jumpable. Clicking the selected one is skipped (the group would force it
+        // back); the game's click path plays the toggle sound and sets the mode.
+        private static void AddTogglePair(GraphBuilder b, NewGameWindowController w,
+            int firstFieldIndex, string regionKey)
         {
-            var pair = new List<Toggle>();
-            foreach (var t in w.GetComponentsInChildren<Toggle>(true))
-                if (t.transform.parent.name == parentName)
-                    pair.Add(t);
+            var pair = new List<Toggle>
+            {
+                (Toggle)PairFields[firstFieldIndex].GetValue(w),
+                (Toggle)PairFields[firstFieldIndex + 1].GetValue(w),
+            };
+            pair.RemoveAll(t => t == null);
             pair.Sort((a, c) => a.transform.position.x.CompareTo(c.transform.position.x));
             if (pair.Count == 0) return;
 
+            string title = UiWidgets.LocalizedLabel(pair[0].transform.parent.gameObject);
             b.PushContext(title);
             b.SetRegion(regionKey);
             b.StartRow();
@@ -146,12 +219,6 @@ namespace JerianAccess.Module.Screens
                             if (!toggle.isOn) UiWidgets.Click(toggle.gameObject);
                         },
                         StateText = () => toggle.isOn ? Loc.T("state.selected") : null,
-                        // The game explains each mode only in a hover tooltip
-                        // (MainMenuUITooltip off the toggle's TooltipKeyHolder key).
-                        OnTooltip = toggle.GetComponent<TooltipKeyHolder>() == null
-                            ? (System.Action)null
-                            : () => Mod.Speech.Speak(I2.Loc.LocalizationManager.GetTranslation(
-                                toggle.GetComponent<TooltipKeyHolder>().LocalizationKey)),
                     });
             }
             b.EndRow();
@@ -159,18 +226,21 @@ namespace JerianAccess.Module.Screens
             b.SetRegion(null);
         }
 
-        private void BeginEdit(TMPro.TMP_InputField field)
+        private void BeginEdit(TMPro.TMP_InputField field, TMPro.TextMeshProUGUI subtitle)
         {
             _editField = field;
+            _editSubtitle = subtitle;
             _lastText = field.text;
+            _lastSubtitle = subtitle == null ? null : subtitle.text;
             UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(field.gameObject);
             field.ActivateInputField();
             Mod.Speech.Speak(Loc.T("edit.start"), interrupt: true);
         }
 
         // The edit differ: echo is driven by the FIELD's text changing (model state), not our
-        // keystrokes - paste, game-side rewrites, and backspace all speak correctly. Interrupts
-        // are the house exception for feedback under key repeat.
+        // keystrokes - paste, the game's auto-capitalization, and backspace all speak
+        // correctly. The subtitle differ speaks the game's validation line the moment the game
+        // swaps it. Interrupts are the house exception for feedback under key repeat.
         public override void OnUpdate()
         {
             bool editing = CapturesRawInput;
@@ -192,12 +262,20 @@ namespace JerianAccess.Module.Screens
                     }
                 }
                 _lastText = text;
+
+                if (_editSubtitle != null)
+                {
+                    var sub = _editSubtitle.text;
+                    if (_wasEditing && sub != _lastSubtitle && !string.IsNullOrEmpty(sub))
+                        Mod.Speech.Speak(sub);
+                    _lastSubtitle = sub;
+                }
             }
             else if (_wasEditing)
             {
-                // Edit ended (field's Enter commit / Escape cancel, or the popup closed): speak
-                // the resulting name. A destroyed field means the popup is gone - stay silent,
-                // the screen pop announces the return.
+                // Edit ended (field commit/cancel, or the window closed): speak the resulting
+                // name. A destroyed field means the window is gone - stay silent, the screen
+                // pop announces the return.
                 if (_editField != null)
                     Mod.Speech.Speak(_editField.text.Length > 0
                         ? _editField.text : Loc.T("edit.blank"), interrupt: true);
