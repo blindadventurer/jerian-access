@@ -219,6 +219,17 @@ smoke-tested by calling the patched method from /eval and expecting the announce
   live via /eval `Input.GetKey`. No InputSystem rewrite needed.
 - Env vars set with `$env:` persist across PowerShell tool calls in a session - a launch
   without an explicit `JERIAN_NO_SPEECH` reset may silently inherit the previous value.
+- **/eval swallows broken statements as "(ok)"**: input Mono.CSharp parses as incomplete (a
+  statement missing its trailing `;`, or an unknown identifier in statement position) returns
+  "(ok)" WITHOUT executing and without diagnostics. Always end statements with `;` and append
+  a sentinel expression (`...; "done"`) - a response without `=> done` did not run. `using`
+  directives must go in their OWN /eval call (combining with a statement is a parse error),
+  and reaching host types needs `using JerianAccess;` first (session state persists).
+  Non-ASCII text must go via `--data-binary @file` (UTF-8, no BOM) - PowerShell mangles
+  Cyrillic in curl args.
+- **The game can quit silently at the main menu** after some minutes unattended (observed
+  2026-07-23: clean Player.log, MainMenu loaded, no error, process gone; possibly DRM or idle
+  logic). If the dev server stops answering, check the process before debugging the mod.
 
 - Do not invoke `powershell.exe` from the Bash tool - the auto-mode classifier blocks it. Use
   `dotnet build`, `taskkill.exe` (with `MSYS_NO_PATHCONV=1`), and direct exe launch

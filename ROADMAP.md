@@ -41,9 +41,10 @@ debugging from scratch.
 - [x] verified - INPUT DECISION: legacy Input WORKS at runtime - /eval
       UnityEngine.Input.GetKey(KeyCode.A) → False, no throw (game runs Both input backends).
       No InputSystem rewrite needed; OS key repeat read OK (delay=0.5s, interval=0.033s)
-- [ ] todo - Speech pipeline up: Prism acquires a backend (or SAPI fallback), /speech captures.
-      Dev tap already proven (reload announcement landed at speechCursor=1 under
-      JERIAN_NO_SPEECH=1); backends need a run WITHOUT the env var + immediate /mute
+- [x] verified - Speech pipeline up end to end: "PrismHandler backend acquired: NVDA
+      (features=0xB5)", test line spoken through the user's live NVDA and captured at
+      /speech cursor 0 ("Джериан Аксесс работает..."); dev tap also proven earlier under
+      JERIAN_NO_SPEECH=1 (reload announcement)
 - [x] verified - Hot reload proven: module-only build with game running + POST /reload →
       "reloaded: generation 2", /health confirms generation 2, no restart
 - [x] verified - steam_appid.txt (2936290) beside the exe: without it SteamManager's
