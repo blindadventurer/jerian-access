@@ -104,6 +104,7 @@ screen.credits = credits
 # chapter items jump to an unlocked chapter's start).
 screen.gameloading = load game
 gameloading.age = age: {age}
+screen.chaptersummary = chapter summary
 
 # Load-game window (save slots). Slot label folds the game's own chapter/name/date/time.
 screen.loadwindow = load game
