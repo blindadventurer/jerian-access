@@ -77,7 +77,7 @@ namespace JerianAccess.Module.Game
             if (button == null) return;
             var unlockedKey = (string)UnlockedKeyField.GetValue(ctrl);
             var lockedKey = (string)LockedKeyField.GetValue(ctrl);
-            b.AddItem(ControlId.Referenced(ctrl, "hud:btn:" + ctrl.gameObject.name), new NodeVtable
+            b.AddItem(ControlId.Referenced(ctrl, "hud:btn:" + ctrl.GetInstanceID()), new NodeVtable
             {
                 ControlType = ControlTypes.Button,
                 Announcements = new[]
@@ -104,9 +104,16 @@ namespace JerianAccess.Module.Game
         private static List<HudButtonController> Buttons()
         {
             var list = new List<HudButtonController>();
+            var seen = new HashSet<string>();
             foreach (var ctrl in Object.FindObjectsOfType<HudButtonController>())
-                if (ctrl.gameObject.activeInHierarchy && UiWidgets.Visible(ctrl.gameObject))
-                    list.Add(ctrl);
+            {
+                if (!ctrl.gameObject.activeInHierarchy || !UiWidgets.Visible(ctrl.gameObject)) continue;
+                if ((bool)IsBackField.GetValue(ctrl)) continue; // the back button is its own node
+                // The HUD prefab carries duplicate window buttons (a template + the live one share
+                // a name); keep the first so a window opens from one stop, not two.
+                if (!seen.Add(ctrl.gameObject.name)) continue;
+                list.Add(ctrl);
+            }
             list.Sort((a, c) =>
             {
                 int byY = c.transform.position.y.CompareTo(a.transform.position.y);
