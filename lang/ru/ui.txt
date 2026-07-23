@@ -74,6 +74,9 @@ pager.prev = предыдущая страница
 
 screen.credits = титры
 
+screen.gameloading = загрузка игры
+gameloading.age = возраст: {age}
+
 screen.loadwindow = загрузка игры
 loadwindow.slot = {chapter}, {name}, {date} {time}
 loadwindow.empty = нет сохранений

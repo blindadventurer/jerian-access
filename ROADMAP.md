@@ -89,9 +89,14 @@ debugging from scratch.
 - [ ] todo - Trigger-scene page (-20) reading
 - [ ] todo - Consequence sheet reading (ConsequenceSheetController: stat changes, rewards)
 - [ ] todo - Scene title / chapter transitions announced off Messenger events
-- [ ] todo - GameLoadingScreen / chapter-timeline (Window_GameLoadingScreen): chapter items +
-      Continue/Exit; currently UNSPOKEN (user hits it via Continue). And the LoadWindow (save
-      slots) is still the excluded Brante screen - UNSPOKEN
+- [x] verified - LoadWindow (save slots) ported: slots read chapter+hero+date+time, Enter
+      loads, Backspace deletes, Escape (game's own) closes. Written from decompiled source
+- [x] verified - GameLoadingScreen / chapter-timeline: Continue (focus home), five chapter
+      items with availability (all "глава не достигнута" on an early save - correct), back to
+      menu, age readout, and the on-screen hint. Graph confirmed live via /nav after reload
+- [ ] todo - Chapter-restart confirm popup (LoadPreviousChapterConfirmPopup) + save-delete
+      confirm popup (ShowSaveDeleteConfirmPopup) - both open UNSPOKEN after a chapter/delete
+      click; port the ConfirmationPopupController surface
 
 ## Phase 4 - Windows
 
