@@ -68,7 +68,6 @@
     <BrokenOnJerian Include="Screens\ParameterRows.cs" />
     <BrokenOnJerian Include="Screens\RelationsWindowScreen.cs" />
     <BrokenOnJerian Include="Screens\SceneScreen.cs" />
-    <BrokenOnJerian Include="Screens\SettingsScreen.cs" />
     <BrokenOnJerian Include="Screens\WorkWindowScreen.cs" />
     <BrokenOnJerian Include="UI\HudBar.cs" />
     <BrokenOnJerian Include="UI\PanelSweep.cs" />
