@@ -29,14 +29,62 @@
     <ModuleDeployDir>$(GameDir)\BepInEx\plugins\JerianAccess\module</ModuleDeployDir>
   </PropertyGroup>
 
+  <!-- TODO(J): Brante game-facing code that does not compile against Jerian's assemblies yet
+       (ROADMAP Phase 2-4). Excluded so the infrastructure compiles and the dev server comes up;
+       remove entries one by one as each surface is re-pointed at Jerian's types (the Brante
+       implementation stays on disk as the porting reference). This list is exactly the files
+       that FAIL to compile - everything else carries over. -->
+  <ItemGroup>
+    <BrokenOnJerian Include="Game\Readouts.cs" />
+    <BrokenOnJerian Include="Patches\GameInputPatches.cs" />
+    <BrokenOnJerian Include="Patches\SubtitleSpeechPatches.cs" />
+    <BrokenOnJerian Include="Screens\CreditsScreen.cs" />
+    <BrokenOnJerian Include="Screens\GenericPopupScreen.cs" />
+    <BrokenOnJerian Include="Screens\MapWindowScreen.cs" />
+    <BrokenOnJerian Include="Screens\TriggerScenePopupScreen.cs" />
+    <BrokenOnJerian Include="Screens\MainMenuScreen.cs" />
+    <BrokenOnJerian Include="Screens\PauseScreen.cs" />
+    <BrokenOnJerian Include="Screens\WindowShellScreen.cs" />
+    <BrokenOnJerian Include="Screens\CaseForYearScreen.cs" />
+    <BrokenOnJerian Include="Screens\CaseOfYearPopupScreen.cs" />
+    <BrokenOnJerian Include="Screens\ChapterFinalScreen.cs" />
+    <BrokenOnJerian Include="Screens\ChapterPictureScreen.cs" />
+    <BrokenOnJerian Include="Screens\ChapterSelectScreen.cs" />
+    <BrokenOnJerian Include="Screens\ChapterStartScreen.cs" />
+    <BrokenOnJerian Include="Screens\CharacterInfoScreen.cs" />
+    <BrokenOnJerian Include="Screens\CharacterWindowScreen.cs" />
+    <BrokenOnJerian Include="Screens\ConfirmPopupScreen.cs" />
+    <BrokenOnJerian Include="Screens\DeathScreen.cs" />
+    <BrokenOnJerian Include="Screens\DestinyWindowScreen.cs" />
+    <BrokenOnJerian Include="Screens\DisclaimerScreen.cs" />
+    <BrokenOnJerian Include="Screens\EmpireWindowScreen.cs" />
+    <BrokenOnJerian Include="Screens\FamilyWindowScreen.cs" />
+    <BrokenOnJerian Include="Screens\HomeWindowScreen.cs" />
+    <BrokenOnJerian Include="Screens\InsurrectionSidePopupScreen.cs" />
+    <BrokenOnJerian Include="Screens\InsurrectionWindowScreen.cs" />
+    <BrokenOnJerian Include="Screens\InterludeScreen.cs" />
+    <BrokenOnJerian Include="Screens\LiveTimelineScreen.cs" />
+    <BrokenOnJerian Include="Screens\LoadWindowScreen.cs" />
+    <BrokenOnJerian Include="Screens\NameRequestScreen.cs" />
+    <BrokenOnJerian Include="Screens\ParameterRows.cs" />
+    <BrokenOnJerian Include="Screens\RelationsWindowScreen.cs" />
+    <BrokenOnJerian Include="Screens\SceneScreen.cs" />
+    <BrokenOnJerian Include="Screens\SettingsScreen.cs" />
+    <BrokenOnJerian Include="Screens\WorkWindowScreen.cs" />
+    <BrokenOnJerian Include="UI\HudBar.cs" />
+    <BrokenOnJerian Include="UI\PanelSweep.cs" />
+    <Compile Remove="@(BrokenOnJerian)" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\JerianAccess.Core\JerianAccess.Core.csproj"><Private>false</Private></ProjectReference>
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="0Harmony"><HintPath>$(BepInExCoreDir)\0Harmony.dll</HintPath><Private>false</Private></Reference>
-    <!-- Game assemblies. I2.Loc lives inside Assembly-CSharp. -->
+    <!-- Game assemblies. On Jerian, I2.Loc lives in Assembly-CSharp-firstpass. -->
     <Reference Include="Assembly-CSharp"><HintPath>$(ManagedDir)\Assembly-CSharp.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Assembly-CSharp-firstpass"><HintPath>$(ManagedDir)\Assembly-CSharp-firstpass.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine"><HintPath>$(ManagedDir)\UnityEngine.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.CoreModule"><HintPath>$(ManagedDir)\UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.InputModule"><HintPath>$(ManagedDir)\UnityEngine.InputModule.dll</HintPath><Private>false</Private></Reference>

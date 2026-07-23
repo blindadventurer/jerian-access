@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Reflection;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -38,15 +40,24 @@ namespace JerianAccess.Module.Game
         /// composition its Start() applies - a freshly instantiated prefab still shows the
         /// serialized text of the authoring language until then). Falls back to
         /// <see cref="LabelText"/> for plain labels.</summary>
+        // Jerian made the keys-combination state private serialized fields (public Key remains).
+        private static readonly FieldInfo TlKeysCombinationField =
+            typeof(_Scripts.Localization.TextMeshProLocalization)
+                .GetField("itsKeysCombination", BindingFlags.NonPublic | BindingFlags.Instance);
+        private static readonly FieldInfo TlKeysField =
+            typeof(_Scripts.Localization.TextMeshProLocalization)
+                .GetField("keys", BindingFlags.NonPublic | BindingFlags.Instance);
+
         public static string LocalizedLabel(GameObject go)
         {
             if (go == null) return null;
             var tl = go.GetComponentInChildren<_Scripts.Localization.TextMeshProLocalization>(false);
             if (tl != null)
             {
-                var text = tl.ItsKeysCombination
-                    ? I2.Loc.LocalizationManager.GetTranslation(tl.Keys[0]) + " "
-                        + I2.Loc.LocalizationManager.GetTranslation(tl.Keys[1])
+                var keys = (List<string>)TlKeysField.GetValue(tl);
+                var text = (bool)TlKeysCombinationField.GetValue(tl) && keys.Count >= 2
+                    ? I2.Loc.LocalizationManager.GetTranslation(keys[0]) + " "
+                        + I2.Loc.LocalizationManager.GetTranslation(keys[1])
                     : I2.Loc.LocalizationManager.GetTranslation(tl.Key);
                 if (!string.IsNullOrEmpty(text) && text.Trim().Length > 0) return text;
             }

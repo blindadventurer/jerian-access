@@ -36,8 +36,8 @@ namespace JerianAccess.Module.Game
             if (w == null) return null;
             foreach (var tip in w.GetComponentsInChildren<_Scripts.AMVCC.Views.TooltipWithTitleBehavior>(true))
                 if (tip.name == "HelpIcon" && tip.transform.parent.name.Contains("Title")
-                    && !string.IsNullOrEmpty(tip.TitleMainText))
-                    return I2.Loc.LocalizationManager.GetTranslation(tip.TitleMainText);
+                    && !string.IsNullOrEmpty(tip.DescriptionKey))
+                    return I2.Loc.LocalizationManager.GetTranslation(tip.DescriptionKey);
             return null;
         }
 

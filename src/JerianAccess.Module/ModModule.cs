@@ -2,7 +2,6 @@ using System.Text;
 using JerianAccess.Core.Modularity;
 using JerianAccess.Module.Game;
 using JerianAccess.Module.Input;
-using JerianAccess.Module.Patches;
 using JerianAccess.Module.Screens;
 using JerianAccess.Module.Speech;
 using JerianAccess.Module.UI;
@@ -43,8 +42,8 @@ namespace JerianAccess.Module
                                       && part.Kind != AnnouncementKinds.Position);
             GraphAnnouncer.ExpandedStateText = expanded =>
                 Loc.T(expanded ? "nav.expanded" : "nav.collapsed");
-            GameInputPatches.Apply();
-            SubtitleSpeechPatches.Apply();
+            // TODO(J): GameInputPatches.Apply() + SubtitleSpeechPatches.Apply() return with the
+            // Patches\ port (ROADMAP Phase 2/5) - they reference Brante types.
             // Generation is not logged here: the loader bumps it only after Load succeeds (so a
             // failed reload leaves the old module live), and it logs the real number itself.
             Mod.Log("module code up, waiting for first tick");
@@ -60,8 +59,8 @@ namespace JerianAccess.Module
 
         public void Dispose()
         {
-            GameInputPatches.Remove();
-            SubtitleSpeechPatches.Remove();
+            // TODO(J): GameInputPatches.Remove() + SubtitleSpeechPatches.Remove() return with
+            // the Patches\ port.
             Mod.Log("module disposed (generation " + Mod.Host.ModuleGeneration + ")");
         }
 
@@ -111,48 +110,17 @@ namespace JerianAccess.Module
                 .AddBinding(KeyCode.V, ctrl: true);
         }
 
-        // The outer (poll-driven) screens. The window/popup/pause entries are silent generic
-        // scaffolding proving the stack against the game's real slots; Phase 3 replaces them with
-        // per-surface screens that speak and build graphs.
+        // The outer (poll-driven) screens. Only screens that compile against Jerian's assemblies
+        // are registered; the rest of the Brante set is excluded in the csproj TODO(J) block and
+        // re-registers here as each is re-pointed at Jerian's types (ROADMAP Phases 3-5).
+        // Compiling means the game types resolve, not that behavior is verified - each screen
+        // still gets the live dev-server pass before its ROADMAP item flips to verified.
         private static void RegisterScreens()
         {
             var screens = new Screens.Screen[]
             {
-                new MainMenuScreen(),
-                new NameRequestScreen(),
-                new DisclaimerScreen(),
                 new CutsceneScreen(),
-                new SettingsScreen(),
-                new LoadWindowScreen(),
-                new DeleteConfirmScreen(),
-                new ChapterSelectScreen(),
-                new ChapterRestartConfirmScreen(),
-                new PauseScreen(),
-                new ExitConfirmScreen(),
-                new CreditsScreen(),
                 new GameOverScreen(),
-                new ChapterPictureScreen(),
-                new ChapterStartScreen(),
-                new ChapterFinalScreen(),
-                new DeathScreen(),
-                new InterludeScreen(),
-                new CaseOfYearPopupScreen(),
-                new SceneScreen(),
-                new LiveTimelineScreen(),
-                new WindowShellScreen(),
-                new CharacterWindowScreen(),
-                new FamilyWindowScreen(),
-                new DestinyWindowScreen(),
-                new HomeWindowScreen(),
-                new RelationsWindowScreen(),
-                new EmpireWindowScreen(),
-                new MapWindowScreen(),
-                new WorkWindowScreen(),
-                new InsurrectionWindowScreen(),
-                new CaseForYearScreen(),
-                new GenericPopupScreen(),
-                new TriggerScenePopupScreen(),
-                new InsurrectionSidePopupScreen(),
                 new YearPopupScreen(),
                 new DayStagePopupScreen(),
             };
