@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/JerianAccess.Core/JerianAccess.Core.csproj" />
+    <Project Path="src/JerianAccess.Module/JerianAccess.Module.csproj" />
+    <Project Path="src/JerianAccess/JerianAccess.csproj" />
+  </Folder>
+</Solution>

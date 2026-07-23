@@ -1,0 +1,62 @@
+using _Scripts.Managers;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+namespace JerianAccess.Module.Game
+{
+    /// <summary>
+    /// The one adapter for the game's UI surface (CLAUDE.md: centralize shared reads; never cache
+    /// game state - every property re-reads the live singleton at call time). UIManager.Initiate
+    /// is null between scene loads; that is the only legitimate null here.
+    /// </summary>
+    public static class GameUi
+    {
+        public static UIManager Manager => UIManager.Initiate;
+
+        public static string SceneName => SceneManager.GetActiveScene().name;
+
+        /// <summary>Whether a named scene is loaded, active or ADDITIVE - the main menu opens
+        /// Settings/LoadWindow as additive scene loads, not UIManager window slots.</summary>
+        public static bool IsSceneLoaded(string name) => SceneManager.GetSceneByName(name).isLoaded;
+
+        public static GameObject OpenedWindow => Manager == null ? null : Manager.OpenedWindow;
+        public static GameObject OpenedPopup => Manager == null ? null : Manager.OpenedPopup;
+        public static GameObject OpenedTooltip => Manager == null ? null : Manager.OpenedTooltip;
+
+        public static bool PauseOpen =>
+            Manager != null && Manager.PauseWindow != null && Manager.PauseWindow.activeInHierarchy;
+
+        /// <summary>The open window's what-this-is help: the description behind the game's
+        /// TitleRow help icon (Window_X.Description), read fresh per call. Null where the
+        /// window carries none. The first Title-parented HelpIcon is the window-level one
+        /// (deeper icons - Destiny's timeline - belong to their own panes).</summary>
+        public static string WindowHelp()
+        {
+            var w = OpenedWindow;
+            if (w == null) return null;
+            foreach (var tip in w.GetComponentsInChildren<_Scripts.AMVCC.Views.TooltipWithTitleBehavior>(true))
+                if (tip.name == "HelpIcon" && tip.transform.parent.name.Contains("Title")
+                    && !string.IsNullOrEmpty(tip.TitleMainText))
+                    return I2.Loc.LocalizationManager.GetTranslation(tip.TitleMainText);
+            return null;
+        }
+
+        /// <summary>The game's own global Escape read (UIManager.Update, suppressed while our
+        /// screens are active), replayed for screens without a Back action of their own: the
+        /// pause menu toggles exactly when the game itself would allow it - IsEscButtonBlocked
+        /// tracks GameState and is false only while RUNNING.</summary>
+        public static void GlobalEscape()
+        {
+            var m = Manager;
+            if (m != null && !m.IsEscButtonBlocked) m.ShowPauseMenu();
+        }
+
+        /// <summary>PREGAME at the menu and pre-story scenes; RUNNING flips the instant a game
+        /// begins (SetCharacterName / save load), BEFORE the menu scene unloads - screens gate on
+        /// it to drop out early instead of speaking stale refocus lines mid-transition.
+        /// GameManager.Instance is null for the frames of a save-load scene swap; that
+        /// transition reads as PREGAME so per-frame screen polls drop out instead of throwing.</summary>
+        public static GameState State => GameManager.Instance == null
+            ? GameState.PREGAME : GameManager.Instance.CurrentGameState;
+    }
+}

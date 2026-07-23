@@ -1,0 +1,136 @@
+# Jerian Access - spoken/UI strings, English (the complete manifest; other languages
+# drop in as lang/<code>/ with the same keys). Format: key = value, '#' comments, \n = newline.
+
+
+screen.mainmenu = main menu
+
+# Navigator feedback
+nav.position = {index} of {count}
+nav.expanded = expanded
+nav.collapsed = collapsed
+nav.no_tooltip = no tooltip
+nav.no_details = no details
+search.no_match = no match {text}
+search.cleared = search cleared
+
+# Control role words
+role.button = button
+role.toggle = toggle
+role.slider = slider
+role.radiobutton = radio button
+role.combobox = combo box
+role.tab = tab
+role.edit = edit
+
+# Control states
+state.unavailable = unavailable
+state.selected = selected
+state.on = on
+state.off = off
+# Spoken for a value the game renders as a bare dash (a cleared status row)
+state.none = none
+# A locked control whose reason is a game string (the Destiny chapter tabs' hover title)
+state.unavailable_reason = unavailable, {reason}
+
+# Settings window (value/reason strings the game renders only visually)
+settings.percent = {value} percent
+settings.resolution_unavailable = unavailable, windowed screen format only
+
+# Text entry (edit fields; a hint is allowed - modal editing is an unusual control)
+edit.start = editing, Enter to accept
+edit.blank = blank
+edit.space = space
+
+# Name request popup (the Start gate is the game's dimmed button; it carries no reason string)
+namerequest.name_row = {prefix} {value} {postfix}
+namerequest.start_unavailable = unavailable, name needs at least 2 letters
+
+# Event scene choices. Requirements are composed from the game's serialized per-check data
+# with the game's own localized names; only the operation words are mod-authored (the game's
+# terms are bare symbols, which readers voice unreliably).
+choice.unavailable = unavailable, requires {req}
+choice.req.param = {name} {op} {value}
+# A range condition (the insurrection victory rows' diapason form)
+choice.req.param_range = {name} {min} to {max}
+choice.req.relation = {name} relation {op} {value}
+choice.req.status = {name} {status}
+choice.req.not = not {req}
+choice.op.more = more than
+choice.op.less = less than
+choice.op.equal = exactly
+choice.op.moreequal = at least
+choice.op.lessequal = at most
+choice.op.not = not
+
+# Choice detail readout (Space/F1 on a choice) - composed from the same serialized data the
+# game's hover tooltips render. Section headers ("Conditions Met", "Consequences") and the
+# "now" word are the game's own strings passed in as values.
+tooltip.section = {title}, {rows}
+choice.cond.now = {row}, {now} {current}
+choice.cond.met = {row}, met
+choice.cond.notmet = {row}, not met
+choice.cond.any = any of, {rows}
+choice.cons.param = {name} {delta}
+choice.cons.relation = {name} relation {delta}
+choice.cons.set = {name}, {value}
+
+# Parameter scale readout (Space/F1 on a stat row) - the game's ParameterValueTooltip data;
+# segment texts and the parameter name and description are the game's strings.
+param.scale.single = {value}, {text}
+param.scale.range = {min} to {max}, {text}
+param.scale.now = {now}, {row}
+
+# Voiceover cutscenes (intro: unskippable under the mod, self-advances; chapter: the game's skip keys stay live)
+cutscene.intro = cutscene, spoken narration
+cutscene.chapter = cutscene, spoken narration, Enter skips
+
+# Chapter title splash (the title is the game's own localized text; the whole screen is the
+# dismiss control - unusual enough to earn a hint)
+chapterpicture.hint = Enter continues
+
+# Year-increment flash between events. The "year" word is a localized sprite in the game
+# (LocalizationResources.YearSprite) - no game text term exists; the chapter and age values
+# are the popup's own localized texts.
+yearpopup.summary = year {year}, {chapter}, {age}
+
+# Page-turner windows (the game's pager arrows are image-only buttons - no game string)
+pager.next = next page
+pager.prev = previous page
+
+# Credits roll (no on-screen title; the menu button label is not an I2 term either)
+screen.credits = credits
+
+# Chapter select page (shown after picking a save; the page has no on-screen title)
+screen.chapterselect = chapter select
+chapterselect.locked = unavailable, not reached
+chapterselect.ironman = unavailable, Iron Man mode
+
+# HUD bar (year/chapter texts, window-button names, and lock reasons are all the game's own
+# strings; only the region word and the label-value glue are mod-authored)
+hud.region = HUD
+hud.pair = {label} {value}
+
+# Character window (the deaths label is the game's own text; the count is the Death
+# parameter, out of the skull strip's length)
+character.deaths = {label}, {value} of {max}
+
+# Relations window (member names are the game's live tile texts)
+
+# Destiny window (the game marks objective state only by color: black achieved, gray not)
+destiny.achieved = achieved
+destiny.notachieved = not achieved
+
+# Map window (the game distinguishes provinces from cities only by map layout)
+map.province = {name}, province
+
+# Main menu buttons (the game's labels are localized sprites - no game string exists)
+mainmenu.continue = Continue
+mainmenu.newgame = New game
+mainmenu.credits = Credits
+mainmenu.settings = Settings
+mainmenu.quit = Quit
+
+# Navigation verbosity toggle (Ctrl+V) - concise drops the control role word and the item
+# position from navigator announcements; the new mode word is the whole announcement
+verbosity.verbose = verbose
+verbosity.concise = concise
