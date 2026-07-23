@@ -26,8 +26,17 @@ namespace JerianAccess.Module.Screens
     {
         public override string Key => "namerequest";
         public override int Layer => 20;
-        public override bool IsActive() => Window() != null;
 
+        // _clicked flips when Start fires; the NewGameWindow scene stays LOADED through the
+        // disclaimer/intro that follows, so presence alone would keep this screen focused over
+        // them (seen live). Clicked = handed off.
+        public override bool IsActive()
+        {
+            var w = Window();
+            return w != null && !(bool)ClickedField.GetValue(w);
+        }
+
+        private static readonly FieldInfo ClickedField = F("_clicked");
         private static readonly FieldInfo NameInputField = F("nameInput");
         private static readonly FieldInfo NameSubtitleField = F("nameSubtitle");
         private static readonly FieldInfo NextButtonField = F("_nextButton");

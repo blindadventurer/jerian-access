@@ -122,6 +122,8 @@ namespace JerianAccess.Module
                 new MainMenuScreen(),
                 new SettingsScreen(),
                 new NameRequestScreen(),
+                new DisclaimerScreen(),
+                new SceneScreen(),
                 new CutsceneScreen(),
                 new GameOverScreen(),
                 new YearPopupScreen(),
