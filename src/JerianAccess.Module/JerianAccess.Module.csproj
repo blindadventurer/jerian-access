@@ -65,7 +65,6 @@
     <BrokenOnJerian Include="Screens\InsurrectionWindowScreen.cs" />
     <BrokenOnJerian Include="Screens\InterludeScreen.cs" />
     <BrokenOnJerian Include="Screens\LiveTimelineScreen.cs" />
-    <BrokenOnJerian Include="Screens\LoadWindowScreen.cs" />
     <BrokenOnJerian Include="Screens\ParameterRows.cs" />
     <BrokenOnJerian Include="Screens\RelationsWindowScreen.cs" />
     <BrokenOnJerian Include="Screens\WorkWindowScreen.cs" />

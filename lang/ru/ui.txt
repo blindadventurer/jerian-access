@@ -74,6 +74,11 @@ pager.prev = предыдущая страница
 
 screen.credits = титры
 
+screen.loadwindow = загрузка игры
+loadwindow.slot = {chapter}, {name}, {date} {time}
+loadwindow.empty = нет сохранений
+loadwindow.delete = удалить сохранение
+
 screen.chapterselect = выбор главы
 chapterselect.locked = недоступно, глава не достигнута
 # The Russian game names the Iron Man feature "Возврат к главам" with state "Запрещен".

@@ -100,6 +100,12 @@ pager.prev = previous page
 # Credits roll (no on-screen title; the menu button label is not an I2 term either)
 screen.credits = credits
 
+# Load-game window (save slots). Slot label folds the game's own chapter/name/date/time.
+screen.loadwindow = load game
+loadwindow.slot = {chapter}, {name}, {date} {time}
+loadwindow.empty = no saved games
+loadwindow.delete = delete save
+
 # Chapter select page (shown after picking a save; the page has no on-screen title)
 screen.chapterselect = chapter select
 chapterselect.locked = unavailable, not reached
