@@ -30,10 +30,17 @@ namespace JerianAccess
 
         public bool Enabled => _enabled.Value;
 
+        // Jerian destroys BepInEx's manager GameObject (and this component with it) seconds into
+        // boot while the game keeps running - observed live 2026-07-23, no log error, mid-run.
+        // Real teardown is therefore keyed off Application.quitting, never OnDestroy alone; the
+        // pump lives on our own HideAndDontSave GameObject, which the purge misses.
+        private static bool _quitting;
+
         private void Awake()
         {
             Instance = this;
             HostLog.Source = Logger;
+            Application.quitting += () => _quitting = true;
             _enabled = Config.Bind("General", "Enabled", true,
                 "Master enable. Off = the mod loads but does nothing (no input, no speech).");
 
@@ -58,6 +65,12 @@ namespace JerianAccess
 
         private void OnDestroy()
         {
+            if (!_quitting)
+            {
+                HostLog.Warning("host component destroyed by the game mid-run; " +
+                                "infrastructure stays up on the hidden pump object.");
+                return;
+            }
 #if DEBUG
             StopDevServer();
 #endif

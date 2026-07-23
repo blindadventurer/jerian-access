@@ -17,8 +17,10 @@ namespace JerianAccess.Host
 
         private void Update()
         {
+            // ReferenceEquals, not ==: the game destroys the plugin's UnityEngine.Object side
+            // mid-run (see Plugin), but the managed instance keeps serving Loader/Speech/config.
             var plugin = Plugin.Instance;
-            if (plugin == null) return;
+            if (ReferenceEquals(plugin, null)) return;
 
 #if DEBUG
             plugin.DevTick();

@@ -20,25 +20,35 @@ debugging from scratch.
       144 files); CLAUDE.md game facts rewritten for Jerian (Unity 2020.3.43f1, non-Steam
       install at F:\games, known type renames); csprojs point GameDir at F:\games and
       reference UnityEngine.InputLegacyModule (Unity 2020 home of legacy Input)
-- [ ] todo - Git repo initialized, initial commit of the scaffold
-- [ ] todo - Decompiled reference at jerian-decompiled/ (ilspycmd; record type counts here)
+- [x] verified - Git repo initialized, scaffold committed (f82ed56)
+- [x] verified - Decompiled reference at jerian-decompiled/ (ilspycmd 8.2, net6 tool; 949 types
+      in Assembly-CSharp - Brante had 507 - plus 89 in firstpass, which now hosts I2.Loc)
 
 ## Phase 1 - Bring-up (dev server before features)
 
-- [ ] todo - Install vendored BepInEx (third_party/bepinex, 5.4.23.5 win x64 Mono) into
-      F:\games\The Life and Suffering of Prince Jerian; game still boots clean with no plugin
-      (LogOutput.log: "Chainloader startup complete")
-- [ ] todo - Host + Core + Module compile against Jerian assemblies (expect Module compile
-      errors where Brante game types are gone - stub those call sites with TODO(J) markers and
-      keep the build green; they get re-pointed in Phase 2)
-- [ ] todo - Deploy lands; game boots with the plugin; log lines prefixed "Jerian Access"
-- [ ] todo - Dev server answers /health; /eval works (Mono.CSharp REPL on Unity 2020 Mono)
-- [ ] todo - INPUT DECISION: verify legacy Input.GetKey works at runtime (game ships
-      InputSystem alongside InputLegacyModule). If it throws, switch KeyboardBinding/
-      GraphNavigator/HostPump polling to InputSystem Keyboard.current and record in DECISIONS
-- [ ] todo - Speech pipeline up: Prism acquires a backend (or SAPI fallback), /speech captures
-- [ ] todo - Hot reload proven: module-only build with game running + POST /reload → new
-      behavior live, no restart
+- [x] verified - Vendored BepInEx 5.4.23.5 installed into F:\games\...; boots clean
+      (LogOutput.log: "Chainloader startup complete", runs under Unity v2020.3.43)
+- [x] verified - Host + Core + Module compile and deploy. 37 Brante-facing files excluded via
+      the csproj BrokenOnJerian list (each re-adds as its surface is ported); GameUi/UiWidgets
+      re-pointed (TitleMainText → DescriptionKey; TextMeshProLocalization keys → reflection);
+      I2.Loc referenced from Assembly-CSharp-firstpass
+- [x] verified - Game boots with the plugin, log prefixed "Jerian Access". GOTCHA fixed live:
+      the game destroys BepInEx's manager GameObject ~9s into boot (mid-run, no error) - host
+      teardown now keys off Application.quitting, pump survives on the HideAndDontSave object,
+      HostPump uses ReferenceEquals ("infrastructure stays up" warning observed, server lives)
+- [x] verified - /health answers (module=generation 1, frame counter advances); /eval "1+1"
+      → 2 (Mono.CSharp REPL fine on Unity 2020 Mono)
+- [x] verified - INPUT DECISION: legacy Input WORKS at runtime - /eval
+      UnityEngine.Input.GetKey(KeyCode.A) → False, no throw (game runs Both input backends).
+      No InputSystem rewrite needed; OS key repeat read OK (delay=0.5s, interval=0.033s)
+- [ ] todo - Speech pipeline up: Prism acquires a backend (or SAPI fallback), /speech captures.
+      Dev tap already proven (reload announcement landed at speechCursor=1 under
+      JERIAN_NO_SPEECH=1); backends need a run WITHOUT the env var + immediate /mute
+- [x] verified - Hot reload proven: module-only build with game running + POST /reload →
+      "reloaded: generation 2", /health confirms generation 2, no restart
+- [x] verified - steam_appid.txt (2936290) beside the exe: without it SteamManager's
+      RestartAppIfNecessary quits the game and respawns it without the doorstop (first-launch
+      mystery); with it the game boots in-process. File is part of the install now
 
 ## Phase 2 - Discovery (decompiled source + live probing; update CLAUDE.md game facts)
 

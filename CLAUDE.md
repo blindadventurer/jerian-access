@@ -205,6 +205,21 @@ smoke-tested by calling the patched method from /eval and expecting the announce
 
 ## Gotchas (seeded from the reference mods; append new ones as found)
 
+- **Jerian destroys BepInEx's manager GameObject** ~9 seconds into boot, mid-run, with no
+  error (verified live 2026-07-23; source unknown - possibly Bolt graphs, opaque). The host
+  survives it: real teardown keys off `Application.quitting` (Plugin.OnDestroy without the
+  quitting flag only logs a warning), the pump lives on a `HideAndDontSave` GameObject the
+  purge misses, and HostPump checks `ReferenceEquals(plugin, null)` because the destroyed
+  Unity side makes `== null` true while the managed instance still serves. Never move
+  teardown back to OnDestroy, never "fix" the ReferenceEquals to ==.
+- **steam_appid.txt (2936290) must sit beside the game exe.** Without it SteamManager's
+  `SteamAPI.RestartAppIfNecessary` quits the game after full boot and respawns it WITHOUT the
+  doorstop (the mystery of the dying first launches). The file is part of the install.
+- **Legacy Input works on this Unity 2020.3 build** (Both input backends active) - verified
+  live via /eval `Input.GetKey`. No InputSystem rewrite needed.
+- Env vars set with `$env:` persist across PowerShell tool calls in a session - a launch
+  without an explicit `JERIAN_NO_SPEECH` reset may silently inherit the previous value.
+
 - Do not invoke `powershell.exe` from the Bash tool - the auto-mode classifier blocks it. Use
   `dotnet build`, `taskkill.exe` (with `MSYS_NO_PATHCONV=1`), and direct exe launch
   (see Game control above).
