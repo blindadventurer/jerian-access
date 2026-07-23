@@ -39,7 +39,6 @@
          systems do not exist on Jerian (reworked into ConditionGroup/CaseForAYear/new
          character model). Rewrite it section by section against the live story scene. -->
     <BrokenOnJerian Include="Game\Readouts.cs" />
-    <BrokenOnJerian Include="Patches\GameInputPatches.cs" />
     <BrokenOnJerian Include="Patches\SubtitleSpeechPatches.cs" />
     <BrokenOnJerian Include="Screens\CreditsScreen.cs" />
     <BrokenOnJerian Include="Screens\GenericPopupScreen.cs" />

@@ -2,6 +2,7 @@ using System.Text;
 using JerianAccess.Core.Modularity;
 using JerianAccess.Module.Game;
 using JerianAccess.Module.Input;
+using JerianAccess.Module.Patches;
 using JerianAccess.Module.Screens;
 using JerianAccess.Module.Speech;
 using JerianAccess.Module.UI;
@@ -42,8 +43,8 @@ namespace JerianAccess.Module
                                       && part.Kind != AnnouncementKinds.Position);
             GraphAnnouncer.ExpandedStateText = expanded =>
                 Loc.T(expanded ? "nav.expanded" : "nav.collapsed");
-            // TODO(J): GameInputPatches.Apply() + SubtitleSpeechPatches.Apply() return with the
-            // Patches\ port (ROADMAP Phase 2/5) - they reference Brante types.
+            GameInputPatches.Apply();
+            // TODO(J): SubtitleSpeechPatches.Apply() returns with the subtitle port (Phase 5).
             // Generation is not logged here: the loader bumps it only after Load succeeds (so a
             // failed reload leaves the old module live), and it logs the real number itself.
             Mod.Log("module code up, waiting for first tick");
@@ -59,8 +60,8 @@ namespace JerianAccess.Module
 
         public void Dispose()
         {
-            // TODO(J): GameInputPatches.Remove() + SubtitleSpeechPatches.Remove() return with
-            // the Patches\ port.
+            GameInputPatches.Remove();
+            // TODO(J): SubtitleSpeechPatches.Remove() returns with the subtitle port.
             Mod.Log("module disposed (generation " + Mod.Host.ModuleGeneration + ")");
         }
 
