@@ -35,6 +35,9 @@
        implementation stays on disk as the porting reference). This list is exactly the files
        that FAIL to compile - everything else carries over. -->
   <ItemGroup>
+    <!-- Readouts: NOT a rename job - Brante's Objectives/TriggerCondition*/ParametersList
+         systems do not exist on Jerian (reworked into ConditionGroup/CaseForAYear/new
+         character model). Rewrite it section by section against the live story scene. -->
     <BrokenOnJerian Include="Game\Readouts.cs" />
     <BrokenOnJerian Include="Patches\GameInputPatches.cs" />
     <BrokenOnJerian Include="Patches\SubtitleSpeechPatches.cs" />
