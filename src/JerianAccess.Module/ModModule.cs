@@ -123,6 +123,7 @@ namespace JerianAccess.Module
                 new SettingsScreen(),
                 new LoadWindowScreen(),
                 new GameLoadingScreen(),
+                new ConfirmPopupScreen(),
                 new NameRequestScreen(),
                 new DisclaimerScreen(),
                 new SceneScreen(),

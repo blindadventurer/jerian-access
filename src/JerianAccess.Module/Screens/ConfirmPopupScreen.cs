@@ -1,104 +1,115 @@
-using System.Reflection;
+using System.Collections.Generic;
 using JerianAccess.Module.Game;
 using JerianAccess.Module.Speech;
 using JerianAccess.Module.UI;
 using JerianAccess.Module.UI.Graph;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace JerianAccess.Module.Screens
 {
     /// <summary>
-    /// Shared shape for the game's confirm popups (LoadPreviousChapterConfirmPopup,
-    /// ExitConfirmationPopupController): four serialized TMP fields - _title, _description,
-    /// _confirmButtonText, _cancelButtonText - read by reflection so no hierarchy names are
-    /// assumed, buttons found as the TMPs' parent Buttons. Title is the screen name, description
-    /// the start node, Escape cancels through the game's cancel handler.
+    /// The confirm popups (chapter-restart, save-delete, case-of-year, exit...). They share one
+    /// shape - a title, a body line, and Confirm / Cancel buttons - so this handles them
+    /// generically: the body text (every visible label that is NOT a button caption) becomes the
+    /// screen announcement, and each visible button in the popup becomes a node that activates
+    /// through the game's own click wiring. Type-agnostic: it keys off the popup roots, not their
+    /// fields, so a new confirm popup works without a code change. High layer so it wins over the
+    /// surface beneath it.
     /// </summary>
-    public abstract class ConfirmPopupScreen<T> : Screen where T : Component
+    public sealed class ConfirmPopupScreen : Screen
     {
-        public override int Layer => 22;
-        public override bool IsActive() => Popup() != null;
+        public override string Key => "confirm";
+        public override int Layer => 30;
 
-        private static readonly FieldInfo TitleField = typeof(T)
-            .GetField("_title", BindingFlags.NonPublic | BindingFlags.Instance);
-        private static readonly FieldInfo DescriptionField = typeof(T)
-            .GetField("_description", BindingFlags.NonPublic | BindingFlags.Instance);
-        private static readonly FieldInfo ConfirmTextField = typeof(T)
-            .GetField("_confirmButtonText", BindingFlags.NonPublic | BindingFlags.Instance);
-        private static readonly FieldInfo CancelTextField = typeof(T)
-            .GetField("_cancelButtonText", BindingFlags.NonPublic | BindingFlags.Instance);
+        // The confirm popup controller types (each sits on the popup root). FindObjectOfType per
+        // type is cheaper than a full MonoBehaviour scan and avoids grabbing unrelated popups.
+        private static readonly System.Type[] ConfirmTypes =
+        {
+            typeof(_Scripts.AMVCC.Views.Windows.Popup.LoadPreviousChapterConfirmPopup.LoadPreviousChapterConfirmPopup),
+            typeof(_Scripts.AMVCC.Views.Windows.DeletePopupConfirmation.DeletePopupConfirmation),
+            typeof(_Scripts.AMVCC.Views.Windows.Popup.ConfirmationPopupController),
+            typeof(_Scripts.AMVCC.Views.Windows.Popup.ExitConfirmationPopup.ExitConfirmationPopupController),
+        };
 
-        private static T Popup() => Object.FindObjectOfType<T>();
+        private static GameObject Root()
+        {
+            foreach (var type in ConfirmTypes)
+            {
+                var comp = Object.FindObjectOfType(type) as MonoBehaviour;
+                if (comp != null && comp.gameObject.activeInHierarchy) return comp.gameObject;
+            }
+            return null;
+        }
+
+        public override bool IsActive() => Root() != null;
 
         public override Message ScreenName
         {
             get
             {
-                var p = Popup();
-                return p == null ? null
-                    : Message.MaybeRaw(((TMPro.TextMeshProUGUI)TitleField.GetValue(p)).text);
+                var root = Root();
+                return root == null ? null : Message.MaybeRaw(BodyText(root));
             }
         }
 
-        public override System.Collections.Generic.IEnumerable<ElementAction> GetActions()
-        {
-            yield return new ElementAction(ActionIds.Back, null, _ =>
-            {
-                var p = Popup();
-                if (p != null) UiWidgets.Click(ButtonOf(p, CancelTextField));
-            });
-        }
-
-        private static GameObject ButtonOf(T p, FieldInfo textField)
-            => ((TMPro.TextMeshProUGUI)textField.GetValue(p))
-                .GetComponentInParent<UnityEngine.UI.Button>().gameObject;
-
         public override void Build(GraphBuilder b)
         {
-            var p = Popup();
-            if (p == null) return;
+            var root = Root();
+            if (root == null) return;
 
-            var description = (TMPro.TextMeshProUGUI)DescriptionField.GetValue(p);
-            var descriptionId = ControlId.Referenced(description, Key + ":description");
-            b.AddItem(descriptionId, new NodeVtable
+            ControlId first = null;
+            foreach (var button in Buttons(root))
             {
-                ControlType = ControlTypes.Text,
-                Announcements = new[]
-                {
-                    new NodeAnnouncement(() => description.text, kind: AnnouncementKinds.Label),
-                },
-            });
-            b.SetStart(descriptionId);
-
-            foreach (var textField in new[] { ConfirmTextField, CancelTextField })
-            {
-                var button = ButtonOf(p, textField);
-                b.AddItem(ControlId.Referenced(button.GetComponent<UnityEngine.UI.Button>(),
-                    Key + ":" + button.name), new NodeVtable
+                var go = button.gameObject;
+                var id = ControlId.Referenced(button, "confirm:" + go.name);
+                if (first == null) first = id;
+                b.AddItem(id, new NodeVtable
                 {
                     ControlType = ControlTypes.Button,
                     Announcements = new[]
                     {
-                        new NodeAnnouncement(() => UiWidgets.LabelText(button),
+                        new NodeAnnouncement(() => UiWidgets.LocalizedLabel(go),
                             kind: AnnouncementKinds.Label),
                     },
-                    OnActivate = () => UiWidgets.Click(button),
+                    OnActivate = () => UiWidgets.Click(go),
                 });
             }
+            if (first != null) b.SetStart(first);
         }
-    }
 
-    /// <summary>The restart-from-chapter confirmation opened by a chapter-select icon.</summary>
-    public sealed class ChapterRestartConfirmScreen : ConfirmPopupScreen<LoadPreviousChapterConfirmPopup>
-    {
-        public override string Key => "chapterrestart";
-    }
+        // Every visible label under the popup that is NOT a button caption, top-to-bottom - the
+        // title and body of the confirm.
+        private static string BodyText(GameObject root)
+        {
+            var texts = new List<TMPro.TMP_Text>();
+            foreach (var t in root.GetComponentsInChildren<TMPro.TMP_Text>(false))
+            {
+                if (!UiWidgets.Visible(t.gameObject)) continue;
+                if (t.GetComponentInParent<Button>() != null) continue; // a button caption
+                var s = t.text;
+                if (string.IsNullOrEmpty(s) || s.Trim().Length == 0) continue;
+                texts.Add(t);
+            }
+            texts.Sort((a, c) => c.transform.position.y.CompareTo(a.transform.position.y));
+            var sb = new System.Text.StringBuilder();
+            foreach (var t in texts)
+            {
+                if (sb.Length > 0) sb.Append(". ");
+                sb.Append(t.text.Trim());
+            }
+            return sb.ToString();
+        }
 
-    /// <summary>The quit-to-main-menu confirmation opened by the pause window's exit button
-    /// (never occupies the UIManager popup slot - it is its own top-level popup).</summary>
-    public sealed class ExitConfirmScreen
-        : ConfirmPopupScreen<_Scripts.AMVCC.Views.Windows.Popup.ExitConfirmationPopup.ExitConfirmationPopupController>
-    {
-        public override string Key => "exitconfirm";
+        // Visible buttons in the popup, left to right (Cancel / Confirm as the game lays them out).
+        private static List<Button> Buttons(GameObject root)
+        {
+            var list = new List<Button>();
+            foreach (var btn in root.GetComponentsInChildren<Button>(false))
+                if (UiWidgets.Visible(btn.gameObject))
+                    list.Add(btn);
+            list.Sort((a, c) => a.transform.position.x.CompareTo(c.transform.position.x));
+            return list;
+        }
     }
 }

@@ -55,7 +55,6 @@
     <BrokenOnJerian Include="Screens\ChapterStartScreen.cs" />
     <BrokenOnJerian Include="Screens\CharacterInfoScreen.cs" />
     <BrokenOnJerian Include="Screens\CharacterWindowScreen.cs" />
-    <BrokenOnJerian Include="Screens\ConfirmPopupScreen.cs" />
     <BrokenOnJerian Include="Screens\DeathScreen.cs" />
     <BrokenOnJerian Include="Screens\DestinyWindowScreen.cs" />
     <BrokenOnJerian Include="Screens\EmpireWindowScreen.cs" />

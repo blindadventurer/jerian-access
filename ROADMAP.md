@@ -94,9 +94,14 @@ debugging from scratch.
 - [x] verified - GameLoadingScreen / chapter-timeline: Continue (focus home), five chapter
       items with availability (all "глава не достигнута" on an early save - correct), back to
       menu, age readout, and the on-screen hint. Graph confirmed live via /nav after reload
-- [ ] todo - Chapter-restart confirm popup (LoadPreviousChapterConfirmPopup) + save-delete
-      confirm popup (ShowSaveDeleteConfirmPopup) - both open UNSPOKEN after a chapter/delete
-      click; port the ConfirmationPopupController surface
+- [x] verified - Chapter summary book (Window_ChapterSummary - the "event list" the user hit):
+      delivery-only screen speaks each settled page (position + left summary + right params) off
+      the controller page index; game pages it natively. Live: "1 из 4. 1120. Глава I.
+      Небытие. Сюжеты главы..."
+- [x] built - Confirm popups (ConfirmPopupScreen, generic): detects the confirm controller
+      roots (chapter-restart, save-delete, case-of-year, exit), speaks the title+body as the
+      screen announcement, exposes each visible button as a node with game label + click. Not
+      yet triggered live (needs an unlocked chapter or a Backspace-delete on a save slot)
 
 ## Phase 4 - Windows
 
