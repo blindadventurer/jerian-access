@@ -119,6 +119,7 @@ namespace JerianAccess.Module
         {
             var screens = new Screens.Screen[]
             {
+                new MainMenuScreen(),
                 new CutsceneScreen(),
                 new GameOverScreen(),
                 new YearPopupScreen(),

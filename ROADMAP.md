@@ -76,9 +76,15 @@ debugging from scratch.
 
 ## Phase 4 - Windows
 
+- [x] verified - Main menu ported (rewritten for Jerian: TMP text buttons under
+      MainMenuController, labels from live game text, Continue availability off
+      SaveLoadManagerV2.SavesExist, handoff gate on navigationGroups + visible-Continue gate
+      so the fade-in never homes focus on the Discord link). Driven live: full ui.down walk
+      announces all 6 buttons with position, ui.home returns, ui.activate on unavailable
+      Continue speaks "unavailable". Physical arrows = same dispatcher, need game window focus
 - [ ] todo - Window shell + ScreenManager reconciliation on Jerian's UIManager slots
 - [ ] todo - Port surviving windows: Character, Chapter select, Save/Load, Settings, Pause,
-      popups (Confirm/Generic), Death/GameOver, Credits, Disclaimer, Main menu
+      popups (Confirm/Generic), Death/GameOver, Credits, Disclaimer
 - [ ] todo - NEW windows: Council
 - [ ] todo - NEW windows: Soul
 - [ ] todo - NEW windows: Articles

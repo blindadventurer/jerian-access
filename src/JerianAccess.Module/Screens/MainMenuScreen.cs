@@ -1,117 +1,98 @@
 using System.Collections.Generic;
+using System.Reflection;
 using JerianAccess.Module.Game;
 using JerianAccess.Module.Speech;
 using JerianAccess.Module.UI;
 using JerianAccess.Module.UI.Graph;
+using UnityEngine;
 using UnityEngine.UI;
+using _Scripts.AMVCC.MainMenu;
+using _Scripts.SaveGame;
 
 namespace JerianAccess.Module.Screens
 {
     /// <summary>
-    /// The main menu. Stop 1: the five sprite buttons, read live from the scene's
-    /// CustomMainMenuButton components each render (their labels are localized SPRITES, so the
-    /// spoken labels are mod-authored ui.txt keys - see DECISIONS.md; the Continue button runs
-    /// the game's LoadGameButton_Click, opening the load window). Stop 2: the scene's remaining
-    /// visible buttons (Discord links), labels from their own game text. Activation goes through
-    /// the game's pointer-click path so game logic and sounds run.
+    /// The main menu. Jerian's menu is TMP text buttons driven by MainMenuController (Brante's
+    /// sprite CustomMainMenuButtons survive in the assembly but are unused here), so labels are
+    /// the game's own localized text read live per render. One stop: every visible button in
+    /// the MainMenu scene in visual order. Continue's availability keys off the MODEL
+    /// (SaveLoadManagerV2.SavesExist), never Button.interactable - the game also drops
+    /// interactable as a post-click guard. Activation goes through the game's pointer-click
+    /// path so handlers, sounds, and the nav-group toggle run.
     /// </summary>
     public sealed class MainMenuScreen : Screen
     {
         public override string Key => "mainmenu";
         public override Message ScreenName => Message.Localized("ui", "screen.mainmenu");
         public override int Layer => 0;
-        // The PREGAME gate drops this screen the instant a game starts (SetCharacterName and save
-        // load flip RUNNING before the menu scene unloads) - otherwise the popup closing would
-        // refocus the menu and speak stale lines over the scene transition. The handoff gate
-        // covers the load flow: LoadGameButton_Click disables Continue and ONLY the load window's
-        // back button re-enables it (UpdateButtonsState), so "saves exist but Continue is dead"
-        // is the game's own "menu handed off" flag - without it the menu re-announces itself in
-        // the frames between LoadWindow, GameLoadingScreen, and the loaded scene.
-        public override bool IsActive()
-            => GameUi.SceneName == "MainMenu" && GameUi.State == GameState.PREGAME
-               && !LoadFlowHandoff();
 
-        private static bool LoadFlowHandoff()
+        // MainMenuController turns its navigationGroups off while an additive window scene
+        // (NewGame/Settings/LoadWindow) owns the input - the game's own "menu handed off" flag,
+        // restored by the BackToMainMenuEvent handler. Both fields are private serialized.
+        private static readonly FieldInfo NavigationGroupsField = typeof(MainMenuController)
+            .GetField("navigationGroups", BindingFlags.NonPublic | BindingFlags.Instance);
+        private static readonly FieldInfo ContinueButtonField = typeof(MainMenuController)
+            .GetField("_continueButton", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        public override bool IsActive()
         {
-            if (!SavesExist()) return false;
-            foreach (var custom in UnityEngine.Object.FindObjectsOfType<CustomMainMenuButton>())
-                if (custom.MainMenuButton == MainMenuButtonsEnum.Continue)
-                    return !custom.GetComponent<Button>().interactable;
-            return false;
+            if (GameUi.SceneName != "MainMenu" || GameUi.State != GameState.PREGAME) return false;
+            var controller = Object.FindObjectOfType<MainMenuController>();
+            if (controller == null) return false;
+            var groups = (List<GameObject>)NavigationGroupsField.GetValue(controller);
+            foreach (var g in groups)
+                if (g != null && !g.activeSelf) return false; // handed off to an additive window
+            // The menu buttons fade in after the logo (CanvasGroup alpha); activating before
+            // they are visible builds a graph of just the always-on link buttons and homes
+            // focus there (seen live: first focus landed on Discord). Wait for the primary
+            // block so the first graph is complete and home lands on the first menu button.
+            var continueButton = (Button)ContinueButtonField.GetValue(controller);
+            return continueButton != null && UiWidgets.Visible(continueButton.gameObject);
         }
 
         public override void Build(GraphBuilder b)
         {
-            foreach (var custom in MenuButtons())
+            var controller = Object.FindObjectOfType<MainMenuController>();
+            if (controller == null) return;
+            var continueButton = (Button)ContinueButtonField.GetValue(controller);
+            foreach (var btn in MenuButtons())
             {
-                var go = custom.gameObject;
-                // Availability keys off the MODEL (saves on disk - only Continue has a real
-                // unavailable state), never Button.interactable: the game also disables these
-                // buttons as post-click guards (Continue while its window opens, New Game for 1s
-                // after click), and the live watch read that guard as a bogus "unavailable" the
-                // moment a window opened over the focused button. Non-live: saves can't change
-                // while the menu itself is focused. A click during a guard is the game's own
-                // silent no-op, same as the dimmed button a sighted player sees.
-                bool isContinue = custom.MainMenuButton == MainMenuButtonsEnum.Continue;
-                b.AddItem(
-                    ControlId.Referenced(custom, "mainmenu:" + custom.MainMenuButton),
-                    new NodeVtable
+                var go = btn.gameObject;
+                bool isContinue = btn == continueButton;
+                b.AddItem(ControlId.Referenced(btn, "mainmenu:" + go.name), new NodeVtable
+                {
+                    ControlType = ControlTypes.Button,
+                    Announcements = new[]
                     {
-                        ControlType = ControlTypes.Button,
-                        Announcements = new[]
-                        {
-                            new NodeAnnouncement(LabelFor(custom), kind: AnnouncementKinds.Label),
-                            new NodeAnnouncement(
-                                () => !isContinue || SavesExist() ? null : Loc.T("state.unavailable"),
-                                kind: AnnouncementKinds.Enabled),
-                        },
-                        OnActivate = () =>
-                        {
-                            if (isContinue && !SavesExist())
-                            {
-                                Mod.Speech.Speak(Loc.T("state.unavailable"), interrupt: true);
-                                return;
-                            }
-                            UiWidgets.Click(go);
-                        },
-                    });
-            }
-
-            // The scene's other visible buttons (the Discord links) - their labels are the
-            // game's own localized text, read live.
-            var extras = ExtraButtons();
-            if (extras.Count == 0) return;
-            b.BeginStop("extras");
-            foreach (var extra in extras)
-            {
-                var go = extra.gameObject;
-                b.AddItem(
-                    ControlId.Referenced(extra, "mainmenu:extra:" + go.name),
-                    new NodeVtable
+                        new NodeAnnouncement(() => UiWidgets.LocalizedLabel(go),
+                            kind: AnnouncementKinds.Label),
+                        new NodeAnnouncement(
+                            () => !isContinue || SavesExist() ? null : Loc.T("state.unavailable"),
+                            kind: AnnouncementKinds.Enabled),
+                    },
+                    OnActivate = () =>
                     {
-                        ControlType = ControlTypes.Button,
-                        Announcements = new[]
+                        if (isContinue && !SavesExist())
                         {
-                            new NodeAnnouncement(() => UiWidgets.LabelText(go),
-                                kind: AnnouncementKinds.Label),
-                        },
-                        OnActivate = () => UiWidgets.Click(go),
-                    });
+                            Mod.Speech.Speak(Loc.T("state.unavailable"), interrupt: true);
+                            return;
+                        }
+                        UiWidgets.Click(go);
+                    },
+                });
             }
         }
 
-        private static bool SavesExist() => _Scripts.Managers.SaveLoadManager.Instance.SavesExist();
+        private static bool SavesExist() => SaveLoadManagerV2.Instance.SavesExist();
 
-        // Visible MainMenu-scene buttons that are not sprite menu buttons, in visual order.
-        // Scene-scoped: FindObjectsOfType sees ADDITIVELY loaded scenes too (Settings/LoadWindow),
-        // and their same-named buttons would collide as duplicate control ids (found by sweep).
-        private static List<Button> ExtraButtons()
+        // Visible MainMenu-scene buttons in visual order (top to bottom, then left to right).
+        // Scene-scoped: FindObjectsOfType sees additively loaded scenes too, and their buttons
+        // belong to their own (future) screens. Re-queried per render - never cached (CLAUDE.md).
+        private static List<Button> MenuButtons()
         {
             var list = new List<Button>();
-            foreach (var btn in UnityEngine.Object.FindObjectsOfType<Button>())
-                if (btn.gameObject.scene.name == "MainMenu"
-                    && btn.GetComponent<CustomMainMenuButton>() == null
-                    && UiWidgets.Visible(btn.gameObject))
+            foreach (var btn in Object.FindObjectsOfType<Button>())
+                if (btn.gameObject.scene.name == "MainMenu" && UiWidgets.Visible(btn.gameObject))
                     list.Add(btn);
             list.Sort((a, c) =>
             {
@@ -119,36 +100,6 @@ namespace JerianAccess.Module.Screens
                 return byY != 0 ? byY : a.transform.position.x.CompareTo(c.transform.position.x);
             });
             return list;
-        }
-
-        // The scene's menu buttons in visual order (top to bottom). Re-queried per render - never
-        // cached (CLAUDE.md).
-        private static List<CustomMainMenuButton> MenuButtons()
-        {
-            var buttons = new List<CustomMainMenuButton>(
-                UnityEngine.Object.FindObjectsOfType<CustomMainMenuButton>());
-            buttons.Sort((a, c) =>
-            {
-                int byY = c.transform.position.y.CompareTo(a.transform.position.y);
-                return byY != 0 ? byY : a.transform.position.x.CompareTo(c.transform.position.x);
-            });
-            return buttons;
-        }
-
-        private static System.Func<string> LabelFor(CustomMainMenuButton custom)
-        {
-            switch (custom.MainMenuButton)
-            {
-                case MainMenuButtonsEnum.Continue: return () => Loc.T("mainmenu.continue");
-                case MainMenuButtonsEnum.NewGame: return () => Loc.T("mainmenu.newgame");
-                case MainMenuButtonsEnum.Credits: return () => Loc.T("mainmenu.credits");
-                case MainMenuButtonsEnum.Settings: return () => Loc.T("mainmenu.settings");
-                case MainMenuButtonsEnum.Quit: return () => Loc.T("mainmenu.quit");
-                default:
-                    // A button the enum doesn't cover: its object name is audible (so the gap is
-                    // discoverable), never silent.
-                    return () => custom.gameObject.name;
-            }
         }
     }
 }
