@@ -97,6 +97,12 @@ debugging from scratch.
       controller's key (spoke "Наставление Корнелия" on the change, once). Awaiting confirmation
       on a real transition
 - [ ] todo - Chapter transitions announced (chapter start/finish scene types)
+- [ ] todo - Inconsequential scenes (SceneType.Inconsequential / InconsequentialSceneController,
+      "Window_Inconsequential" - text pages, no choices) are read by NO screen: SceneScreen gates
+      on BasicSceneController, so such a scene is silent. Same pager (TextController) and the same
+      title key, plus a title that CHANGES mid-scene - InconsequentialSceneController is the one
+      listener of "ChangeSceneTitleEvent" (special-scenery blocks, parameter/character info) and
+      it writes only the title TMP, never TitleKey, so delivery there reads the rendered title
 - [x] verified - LoadWindow (save slots) ported: slots read chapter+hero+date+time, Enter
       loads, Backspace deletes, Escape (game's own) closes. Written from decompiled source
 - [x] verified - GameLoadingScreen / chapter-timeline: Continue (focus home), five chapter
