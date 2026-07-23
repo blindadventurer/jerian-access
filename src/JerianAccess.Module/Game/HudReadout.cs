@@ -14,10 +14,10 @@ namespace JerianAccess.Module.Game
     /// <summary>
     /// The story HUD as its own Tab-stop: the two resource counters (Sanity, Tempest Legacy -
     /// read from the model, not the beads) then the window buttons (Destiny, Character,
-    /// Relations, Council, Empire, Creed, Map, ...). Button labels and their locked reasons are
-    /// the game's own serialized keys (unlockedTextKey / lockedTextKey); availability is the
-    /// controller's own Unlocked flag; activation goes through the button's click wiring so the
-    /// game opens the window. Everything re-reads live (CLAUDE.md).
+    /// Relations, Council, Empire, Creed, Map, ...). Button labels are the game's own serialized
+    /// unlockedTextKey and locked reasons its tooltip key (lockedTextKey + the unlocking chapter);
+    /// availability is the controller's own Unlocked flag; activation goes through the button's
+    /// click wiring so the game opens the window. Everything re-reads live (CLAUDE.md).
     /// </summary>
     public static class HudReadout
     {
@@ -76,27 +76,43 @@ namespace JerianAccess.Module.Game
             var button = (Button)ButtonField.GetValue(ctrl) ?? ctrl.GetComponentInChildren<Button>();
             if (button == null) return;
             var unlockedKey = (string)UnlockedKeyField.GetValue(ctrl);
-            var lockedKey = (string)LockedKeyField.GetValue(ctrl);
             b.AddItem(ControlId.Referenced(ctrl, "hud:btn:" + ctrl.GetInstanceID()), new NodeVtable
             {
                 ControlType = ControlTypes.Button,
                 Announcements = new[]
                 {
                     new NodeAnnouncement(() => Translate(unlockedKey), kind: AnnouncementKinds.Label),
-                    new NodeAnnouncement(
-                        () => ctrl.Unlocked ? null : Translate(lockedKey),
-                        kind: AnnouncementKinds.Enabled),
+                    new NodeAnnouncement(() => LockedReason(ctrl), kind: AnnouncementKinds.Enabled),
                 },
                 OnActivate = () =>
                 {
-                    if (!ctrl.Unlocked)
+                    // The game also blocks HUD buttons transiently without locking them (page-turn
+                    // animations, IsButtonsBlocked) - Enter reports that rather than clicking into
+                    // a button the game is ignoring.
+                    var reason = LockedReason(ctrl)
+                        ?? (button.interactable ? null : Loc.T("state.unavailable"));
+                    if (reason != null)
                     {
-                        Mod.Speech.Speak(Translate(lockedKey), interrupt: true);
+                        Mod.Speech.Speak(reason, interrupt: true);
                         return;
                     }
                     UiWidgets.Click(button.gameObject);
                 },
             });
+        }
+
+        // The game's own reason for a locked button, as its tooltip states it: the serialized
+        // lockedTextKey is a PREFIX completed by the unlocking chapter (HUD.WillOpen + 2 =
+        // "В главе II"). A button the game locks with no tooltip (scene-locked, or locked past
+        // its own chapter) gives no reason, and the bare unavailable word carries it.
+        private static string LockedReason(HudButtonController ctrl)
+        {
+            if (ctrl.Unlocked) return null;
+            var reason = ctrl.DontShowTooltip ? null
+                : Translate((string)LockedKeyField.GetValue(ctrl) + ctrl.ChapterToUnlock);
+            return string.IsNullOrEmpty(reason)
+                ? Loc.T("state.unavailable")
+                : Loc.T("state.unavailable_reason", new { reason });
         }
 
         // Visible HUD buttons top-to-bottom (the column runs down the right rail), then left to

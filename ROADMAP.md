@@ -83,9 +83,16 @@ debugging from scratch.
       Relation, Status, Objective, Ending, Article, Estate, Bilateral - reusing the game's own
       GetNameLocalised/GetTranslation; Space reads the full met/not-met breakdown). Wired into
       SceneScreen choice nodes. Awaiting live verification in a scene with locked choices
-- [ ] built - HUD readout as a Tab-stop (Game/HudReadout.cs): Sanity + Tempest Legacy counters
+- [x] verified - HUD readout as a Tab-stop (Game/HudReadout.cs): Sanity + Tempest Legacy counters
       from the model, HUD window buttons with game labels + locked reasons + click activation.
-      Appended in SceneScreen.Build. Awaiting live verification
+      Live: Tab from the transcript speaks "HUD, Рассудок 5, 1 из 10", "Наследие Темпестов 0,
+      2 из 10", then the eight window buttons; Enter on Личность opens the window (stack
+      window(20)), Escape returns to the scene. FIX found by the pass: the locked reason read
+      the bare lockedTextKey, which translates to nothing - the game completes that key with the
+      unlocking chapter (HUD.WillOpen + 2), so a locked button announced no reason and Enter on
+      it was SILENT. Now "Карта Империи, кнопка, недоступно, В главе II, 10 из 10" and Enter
+      speaks "недоступно, В главе II"; a button the game blocks without locking (IsButtonsBlocked)
+      answers with the bare unavailable word instead of clicking into nothing
 - [ ] todo - Trigger-scene page (-20) reading
 - [ ] todo - Consequence sheet reading (ConsequenceSheetController: stat changes, rewards)
 - [ ] built - Scene title on a scene CHANGE (SceneScreen.DeliverTitle): the next scene loads in
@@ -148,6 +155,11 @@ debugging from scratch.
       ToggleGroup radio pairs under game headers, Start gated on the game model with the
       subtitle as the spoken reason. Verified live in Russian; Menu returns to the main menu.
       NOT yet exercised: actually starting a game (needs SceneScreen first)
+- [ ] todo - Opening a window seats focus on its BACK button, not its content: the window screen
+      pushes while the game is still animating the page in, when the back button is the only node
+      in the graph, so the opening announcement is "окно, Назад к сцене, кнопка" and the content
+      needs an arrow press to reach (live 2026-07-24, Личность from the HUD stop). Seat initial
+      focus once the window's content nodes exist
 - [ ] todo - Window shell + ScreenManager reconciliation on Jerian's UIManager slots
 - [ ] todo - Port surviving windows: Character, Chapter select, Save/Load, Pause,
       popups (Confirm/Generic), Death/GameOver, Credits, Disclaimer
