@@ -34,12 +34,12 @@ namespace JerianAccess.Module.Screens
             typeof(ChapterSummaryWindowController).GetField("rightPage", NP);
         private static readonly FieldInfo PageIndexField =
             typeof(ChapterSummaryWindowController).GetField("_currentPageIndex", NP);
+        private static readonly FieldInfo ReadyField =
+            typeof(ChapterSummaryWindowController).GetField("_isReadyToShowPage", NP);
         private static readonly FieldInfo SummaryViewsField =
             typeof(ChapterSummaryWindowController).GetField("_chapterSummaryViews", NP);
 
-        private int _spokenPage;
-        private string _spokenSig;
-        private string _pendingSig;
+        private int _spokenPage = -1;
 
         public override bool IsActive() => Controller() != null;
 
@@ -48,28 +48,25 @@ namespace JerianAccess.Module.Screens
 
         public override void OnPop()
         {
-            _spokenPage = -999;
-            _spokenSig = null;
-            _pendingSig = null;
+            _spokenPage = -1;
         }
 
-        // Deliver a page once it has SETTLED (same rendered content two frames running), so the
-        // fade-in never speaks a half-shown page. Keyed off the page index AND the content, so
-        // both a page turn and an in-place content swap deliver.
+        // Deliver each page exactly ONCE, and only after the controller reports the page has
+        // finished its fade (_isReadyToShowPage). Keying off the stable page index - not the
+        // rendered text - stops the fade animation from re-speaking partial content every frame
+        // (the persistent year label made every partial read say the year, hence the "year
+        // keeps mixing in").
         public override void OnUpdate()
         {
             var c = Controller();
             if (c == null) return;
+            if (!(bool)ReadyField.GetValue(c)) return; // page still animating in
             int page = (int)PageIndexField.GetValue(c);
-            var sig = PageText(c);
-            if (string.IsNullOrEmpty(sig)) { _pendingSig = null; return; }
-
-            if (sig != _pendingSig) { _pendingSig = sig; return; } // not settled yet
-            if (sig == _spokenSig && page == _spokenPage) return;
-
+            if (page == _spokenPage) return;
+            var body = PageText(c);
+            if (string.IsNullOrEmpty(body)) return; // nothing rendered yet
             _spokenPage = page;
-            _spokenSig = sig;
-            Mod.Speech.Speak(Position(c, page) + sig);
+            Mod.Speech.Speak(Position(c, page) + body);
         }
 
         private static string Position(ChapterSummaryWindowController c, int page)
@@ -97,6 +94,9 @@ namespace JerianAccess.Module.Screens
             foreach (var t in page.GetComponentsInChildren<TMPro.TMP_Text>(false))
             {
                 if (!UiWidgets.Visible(t.gameObject)) continue;
+                // The year label is persistent context, not page content - skip it so it is
+                // not re-read on every page (the position prefix already orients the reader).
+                if (t.gameObject.name.Contains("Year")) continue;
                 var s = t.text;
                 if (string.IsNullOrEmpty(s) || s.Trim().Length == 0) continue;
                 texts.Add(t);
