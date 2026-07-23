@@ -1,4 +1,6 @@
+using System.Reflection;
 using _Scripts.Managers;
+using _Scripts.Windows;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -19,7 +21,23 @@ namespace JerianAccess.Module.Game
         /// Settings/LoadWindow as additive scene loads, not UIManager window slots.</summary>
         public static bool IsSceneLoaded(string name) => SceneManager.GetSceneByName(name).isLoaded;
 
-        public static GameObject OpenedWindow => Manager == null ? null : Manager.OpenedWindow;
+        // Jerian moved HUD windows off UIManager's slot onto WindowControllersManager, whose
+        // private _activeWindow is the live open window (null when none, cleared on close).
+        // UIManager.OpenedWindow stays null on Jerian, so read the manager directly.
+        private static readonly FieldInfo ActiveWindowField =
+            typeof(WindowControllersManager).GetField("_activeWindow",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+
+        public static GameObject OpenedWindow
+        {
+            get
+            {
+                var mgr = Object.FindObjectOfType<WindowControllersManager>();
+                if (mgr == null) return null;
+                var w = (GameObject)ActiveWindowField.GetValue(mgr);
+                return w != null && w.activeInHierarchy ? w : null;
+            }
+        }
         public static GameObject OpenedPopup => Manager == null ? null : Manager.OpenedPopup;
         public static GameObject OpenedTooltip => Manager == null ? null : Manager.OpenedTooltip;
 

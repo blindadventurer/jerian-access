@@ -122,10 +122,24 @@ namespace JerianAccess.Module.Game
         /// Clicking it closes the open window through the game's own wiring.</summary>
         public static Button BackButton()
         {
+            var ctrl = BackController();
+            if (ctrl == null) return null;
+            return (Button)ButtonField.GetValue(ctrl) ?? ctrl.GetComponentInChildren<Button>();
+        }
+
+        /// <summary>The game's own localized label for the back button ("Назад к сцене").</summary>
+        public static string BackLabel()
+        {
+            var ctrl = BackController();
+            return ctrl == null ? null : Translate((string)UnlockedKeyField.GetValue(ctrl));
+        }
+
+        private static HudButtonController BackController()
+        {
             foreach (var ctrl in Object.FindObjectsOfType<HudButtonController>())
                 if ((bool)IsBackField.GetValue(ctrl)
                     && ctrl.gameObject.activeInHierarchy && UiWidgets.Visible(ctrl.gameObject))
-                    return (Button)ButtonField.GetValue(ctrl) ?? ctrl.GetComponentInChildren<Button>();
+                    return ctrl;
             return null;
         }
     }

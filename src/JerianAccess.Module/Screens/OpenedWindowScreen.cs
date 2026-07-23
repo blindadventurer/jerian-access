@@ -51,7 +51,7 @@ namespace JerianAccess.Module.Screens
             {
                 if (it.Control is Button btn) AddButton(b, btn);
                 else if (it.Control is Toggle tg) AddToggle(b, tg);
-                else if (it.Text != null) AddText(b, it.Text);
+                else if (it.Text != null) AddText(b, it.Text, it.ValueText);
             }
             b.PopContext();
 
@@ -63,8 +63,7 @@ namespace JerianAccess.Module.Screens
                     ControlType = ControlTypes.Button,
                     Announcements = new[]
                     {
-                        new NodeAnnouncement(() => UiWidgets.LocalizedLabel(back.gameObject),
-                            kind: AnnouncementKinds.Label),
+                        new NodeAnnouncement(() => HudReadout.BackLabel(), kind: AnnouncementKinds.Label),
                     },
                     OnActivate = () => UiWidgets.Click(back.gameObject),
                 });
@@ -84,10 +83,12 @@ namespace JerianAccess.Module.Screens
             public Transform Tf;
             public Selectable Control;
             public TMPro.TMP_Text Text;
+            public TMPro.TMP_Text ValueText; // folded value for a "*Name" + "*Value" pair
         }
 
         // Controls (buttons/toggles) and standalone labels, in reading order. A label that is
-        // part of a control is skipped - the control node speaks it.
+        // part of a control is skipped - the control node speaks it. A "...Name" label folds its
+        // sibling "...Value" onto one item ("Разум 5") so a stat reads as a single stop.
         private static List<Item> Collect(GameObject w)
         {
             var items = new List<Item>();
@@ -97,20 +98,58 @@ namespace JerianAccess.Module.Screens
                 if (!UiWidgets.Visible(sel.gameObject)) continue;
                 items.Add(new Item { Tf = sel.transform, Control = sel });
             }
+
+            var texts = new List<TMPro.TMP_Text>();
             foreach (var t in w.GetComponentsInChildren<TMPro.TMP_Text>(false))
             {
                 if (!UiWidgets.Visible(t.gameObject)) continue;
                 if (t.GetComponentInParent<Selectable>() != null) continue;
                 var s = t.text;
                 if (string.IsNullOrEmpty(s) || s.Trim().Length == 0) continue;
+                texts.Add(t);
+            }
+
+            var consumed = new HashSet<TMPro.TMP_Text>();
+            foreach (var t in texts)
+            {
+                if (consumed.Contains(t)) continue;
+                var name = t.gameObject.name;
+                if (name.EndsWith("Name"))
+                {
+                    var value = NearestValue(texts, consumed, t,
+                        name.Substring(0, name.Length - 4) + "Value");
+                    if (value != null)
+                    {
+                        consumed.Add(value);
+                        items.Add(new Item { Tf = t.transform, Text = t, ValueText = value });
+                        continue;
+                    }
+                }
                 items.Add(new Item { Tf = t.transform, Text = t });
             }
+
             items.Sort((a, c) =>
             {
                 int byY = c.Tf.position.y.CompareTo(a.Tf.position.y);
                 return byY != 0 ? byY : a.Tf.position.x.CompareTo(c.Tf.position.x);
             });
             return items;
+        }
+
+        // The value for a "*Name" label is the like-named "*Value" text physically closest to it
+        // (Jerian lays a row's name and value in sibling columns, not always the same parent).
+        private static TMPro.TMP_Text NearestValue(List<TMPro.TMP_Text> texts,
+            HashSet<TMPro.TMP_Text> consumed, TMPro.TMP_Text name, string valueName)
+        {
+            TMPro.TMP_Text best = null;
+            float bestSqr = float.MaxValue;
+            foreach (var t in texts)
+            {
+                if (t == name || consumed.Contains(t) || t.gameObject.name != valueName) continue;
+                float d = (t.transform.position - name.transform.position).sqrMagnitude;
+                if (d < bestSqr) { bestSqr = d; best = t; }
+            }
+            return best;
         }
 
         private static void AddButton(GraphBuilder b, Button btn)
@@ -157,7 +196,7 @@ namespace JerianAccess.Module.Screens
             });
         }
 
-        private static void AddText(GraphBuilder b, TMPro.TMP_Text text)
+        private static void AddText(GraphBuilder b, TMPro.TMP_Text text, TMPro.TMP_Text value)
         {
             var go = text.gameObject;
             b.AddItem(ControlId.Referenced(text, "window:text:" + text.GetInstanceID()), new NodeVtable
@@ -165,7 +204,9 @@ namespace JerianAccess.Module.Screens
                 ControlType = ControlTypes.Text,
                 Announcements = new[]
                 {
-                    new NodeAnnouncement(() => go == null ? null : text.text, kind: AnnouncementKinds.Label),
+                    new NodeAnnouncement(
+                        () => value == null ? text.text : (text.text + " " + value.text),
+                        kind: AnnouncementKinds.Label),
                 },
                 OnTooltip = TooltipAction(go),
             });

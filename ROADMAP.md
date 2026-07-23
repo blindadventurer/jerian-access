@@ -105,12 +105,15 @@ debugging from scratch.
 
 ## Phase 4 - Windows
 
-- [x] built - Generic OpenedWindowScreen: reads UIManager.OpenedWindow content (visible labels
-      as text nodes, buttons/toggles as activatable nodes, in reading order) + a back-to-scene
-      close node + Escape back; folds hover tooltips (TooltipWithTitleBehavior / TooltipKeyHolder)
-      onto Space - this also addresses "tooltips did not always read". Covers Destiny / Character /
-      Relations / Council / Empire / Creed / Map / Soul at a basic navigable level in one screen.
-      Loads clean (14 screens); needs live per-window verification + later param name/value folding
+- [x] verified - Generic OpenedWindowScreen: reads the open window's content (labels as text
+      nodes, buttons/toggles as activatable nodes, reading order) + back-to-scene close node +
+      Escape back; folds "*Name"+"*Value" into one stat stop and hover tooltips
+      (TooltipWithTitleBehavior / TooltipKeyHolder) onto Space (addresses "tooltips did not
+      always read"). KEY FIX: Jerian moved windows off UIManager.OpenedWindow (always null) onto
+      WindowControllersManager._activeWindow - GameUi.OpenedWindow now reads that. Verified live
+      on the Personality window: "1120, 4 года, Тест, Страсть 5, Разум 5, Кровь 5, Воля 5,
+      Закон 5, ...". Minor: a few duplicate bare-value TMP still surface as stray stops - per
+      -window polish TODO
 - [x] verified - Fixed: chapter-summary re-spoke every frame with the year mixed in (delivery
       now keyed on the settled page index, year label excluded from the body sweep) - 7f41191
 
