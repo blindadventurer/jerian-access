@@ -45,7 +45,6 @@
     <BrokenOnJerian Include="Screens\GenericPopupScreen.cs" />
     <BrokenOnJerian Include="Screens\MapWindowScreen.cs" />
     <BrokenOnJerian Include="Screens\TriggerScenePopupScreen.cs" />
-    <BrokenOnJerian Include="Screens\PauseScreen.cs" />
     <BrokenOnJerian Include="Screens\WindowShellScreen.cs" />
     <BrokenOnJerian Include="Screens\CaseForYearScreen.cs" />
     <BrokenOnJerian Include="Screens\CaseOfYearPopupScreen.cs" />

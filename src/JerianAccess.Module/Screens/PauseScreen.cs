@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using System.Reflection;
 using JerianAccess.Module.Game;
 using JerianAccess.Module.Speech;
 using JerianAccess.Module.UI;
@@ -6,105 +6,134 @@ using JerianAccess.Module.UI.Graph;
 using UnityEngine;
 using UnityEngine.UI;
 using WindowPause = _Scripts.AMVCC.Views.Windows.WindowPause;
-using Tooltip = _Scripts.AMVCC.Views.TooltipWithTitleBehavior;
-using GameLoc = I2.Loc.LocalizationManager;
 
 namespace JerianAccess.Module.Screens
 {
     /// <summary>
-    /// The in-game pause window (UIManager.PauseWindow, toggled by the game's Escape read that
-    /// GameInputPatches suppresses - our Back action and the scene screen's Escape run the same
-    /// ShowPauseMenu handler). Rows in the game's visual order off WindowPause's serialized
-    /// references: Music/Sound sliders (immediate volume, same percent style as Settings), the
-    /// Hidden Consequences and Animated Illustrations toggles, then Quit to Main Menu (the
-    /// game's exit-confirm popup - its own screen) and Resume. The language row and the
-    /// save/load buttons are left to the game: it ships them inactive in this build.
+    /// The in-game pause menu (WindowPause, toggled by the game's Escape read - our Back action
+    /// runs the same UIManager.ShowPauseMenu). All of WindowPause's control references are
+    /// private on Jerian, so they are read by reflection: Music/Sound/Cutscene volume sliders
+    /// (immediate volume), the hidden-consequences / illustration-animation / hold-the-choice /
+    /// tutorials toggles, then the remaining visible buttons (exit to menu, resume). Each row's
+    /// caption is the game's own localized label beside the control. Not a WindowControllersManager
+    /// window, so the generic window reader does not see it - this screen owns it.
     /// </summary>
     public sealed class PauseScreen : Screen
     {
         public override string Key => "pause";
         public override int Layer => 24;
-        public override bool IsActive() => GameUi.PauseOpen;
 
-        private static WindowPause Window() => Object.FindObjectOfType<WindowPause>();
+        private const BindingFlags NP = BindingFlags.NonPublic | BindingFlags.Instance;
+        private static readonly FieldInfo[] SliderFields =
+            { F("Music"), F("Sound"), F("Cutscene") };
+        private static readonly FieldInfo[] ToggleFields =
+            { F("HiddenConsequencesModeToggle"), F("PictureAnimation"),
+              F("HoldingButtonProgress"), F("enableTutorialsToggle") };
+        private static readonly FieldInfo ExitButtonField = F("exitButton");
 
-        public override Message ScreenName
+        private static FieldInfo F(string name) => typeof(WindowPause).GetField(name, NP);
+
+        private static WindowPause Window()
         {
-            get
-            {
-                var w = Window();
-                // The window's own title (the game titles its pause window "Settings"), read
-                // through the localization key where one exists - on the session's FIRST open
-                // the rendered text is still the prefab's serialized editor Russian for a
-                // frame, and announcements fire before the game's localize pass.
-                return w == null ? null
-                    : Message.MaybeRaw(UiWidgets.LocalizedLabel(
-                        w.transform.Find("Buttons/Panel/Title").gameObject));
-            }
+            var w = Object.FindObjectOfType<WindowPause>();
+            return w != null && w.gameObject.activeInHierarchy && UiWidgets.Visible(w.gameObject)
+                ? w : null;
         }
 
-        public override IEnumerable<ElementAction> GetActions()
-        {
-            // The game's own Escape path while paused: ShowPauseMenu toggles the window off.
-            yield return new ElementAction(ActionIds.Back, null,
-                _ => _Scripts.Managers.UIManager.Initiate.ShowPauseMenu());
-        }
+        public override bool IsActive() => Window() != null;
+
+        public override Message ScreenName => Message.Localized("ui", "screen.pause");
+
+        // No mod Back action: the game's own Escape read (UIManager.Update) closes the pause
+        // menu. A mod-side ShowPauseMenu on the same Escape would re-toggle it open.
 
         public override void Build(GraphBuilder b)
         {
             var w = Window();
             if (w == null) return;
+            var exitButton = (Button)ExitButtonField.GetValue(w);
 
-            var rows = w.transform.Find("Buttons/Panel/Objects");
-            for (int i = 0; i < rows.childCount; i++)
+            foreach (var f in SliderFields)
             {
-                var row = rows.GetChild(i);
-                if (!row.gameObject.activeSelf) continue;
-                var caption = row.GetComponentInChildren<TMPro.TMP_Text>(true);
-
-                if (w.Music.transform.IsChildOf(row)) AddSlider(b, caption, w.Music, "music");
-                else if (w.Sound.transform.IsChildOf(row)) AddSlider(b, caption, w.Sound, "sound");
-                else if (w.NarrativeMode.transform.IsChildOf(row)) AddToggle(b, caption, w.NarrativeMode, "consequences");
-                else if (w.PictureAnimation.transform.IsChildOf(row)) AddToggle(b, caption, w.PictureAnimation, "animations");
-                else if (w.LanguageText.transform.IsChildOf(row)) AddSpinner(b, caption, row, w.LanguageText);
+                var slider = (Slider)f.GetValue(w);
+                if (slider != null && UiWidgets.Visible(slider.gameObject)) AddSlider(b, slider);
+            }
+            foreach (var f in ToggleFields)
+            {
+                var toggle = (Toggle)f.GetValue(w);
+                if (toggle != null && UiWidgets.Visible(toggle.gameObject)) AddToggle(b, toggle);
             }
 
-            foreach (var pair in new[] { new { label = w.ExitButtonText, id = "exit" },
-                                         new { label = w.BackButtonText, id = "resume" } })
+            // The remaining buttons (exit to menu, resume/close) - read by their own game labels.
+            foreach (var btn in w.GetComponentsInChildren<Button>(false))
             {
-                var button = pair.label.GetComponentInParent<Button>().gameObject;
-                b.AddItem(ControlId.Referenced(button.GetComponent<Button>(), "pause:" + pair.id),
-                    new NodeVtable
+                if (!UiWidgets.Visible(btn.gameObject)) continue;
+                // The arrow buttons of an (inactive) language cycler carry no text.
+                if (btn.gameObject.name == "LeftAr" || btn.gameObject.name == "RightAr") continue;
+                var go = btn.gameObject;
+                // The full-screen click-away backdrop ("Bg") is image-only; dismissal stays on
+                // the labeled Resume, so the unlabeled backdrop would only add a bare stop.
+                if (btn != exitButton && string.IsNullOrEmpty(UiWidgets.LocalizedLabel(go))) continue;
+                bool isExit = btn == exitButton;
+                b.AddItem(ControlId.Referenced(btn, "pause:btn:" + btn.GetInstanceID()), new NodeVtable
+                {
+                    ControlType = ControlTypes.Button,
+                    Announcements = new[]
                     {
-                        ControlType = ControlTypes.Button,
-                        Announcements = new[]
+                        new NodeAnnouncement(() => UiWidgets.LocalizedLabel(go),
+                            kind: AnnouncementKinds.Label),
+                        new NodeAnnouncement(
+                            () => !isExit || UiWidgets.Interactable(go) ? null : Loc.T("state.unavailable"),
+                            kind: AnnouncementKinds.Enabled),
+                    },
+                    OnActivate = () =>
+                    {
+                        if (isExit && !UiWidgets.Interactable(go))
                         {
-                            new NodeAnnouncement(() => UiWidgets.LabelText(button),
-                                kind: AnnouncementKinds.Label),
-                        },
-                        OnActivate = () => UiWidgets.Click(button),
-                    });
+                            Mod.Speech.Speak(Loc.T("state.unavailable"), interrupt: true);
+                            return;
+                        }
+                        UiWidgets.Click(go);
+                    },
+                });
             }
         }
 
-        private static void AddSlider(GraphBuilder b, TMPro.TMP_Text caption, Slider slider, string id)
+        private static void AddSlider(GraphBuilder b, Slider slider)
         {
-            b.AddItem(ControlId.Referenced(slider, "pause:" + id), new NodeVtable
-            {
-                ControlType = ControlTypes.Slider,
-                Announcements = new[]
+            b.AddItem(ControlId.Referenced(slider, "pause:slider:" + slider.GetInstanceID()),
+                new NodeVtable
                 {
-                    new NodeAnnouncement(() => UiWidgets.LocalizedLabel(caption.gameObject),
-                        kind: AnnouncementKinds.Label),
-                    new NodeAnnouncement(() => Percent(slider), live: true, kind: AnnouncementKinds.Value),
-                },
-                OnAdjust = (sign, large) =>
+                    ControlType = ControlTypes.Slider,
+                    Announcements = new[]
+                    {
+                        new NodeAnnouncement(() => Caption(slider), kind: AnnouncementKinds.Label),
+                        new NodeAnnouncement(() => Percent(slider), live: true, kind: AnnouncementKinds.Value),
+                    },
+                    OnAdjust = (sign, large) =>
+                    {
+                        float step = (slider.maxValue - slider.minValue) * (large ? 0.25f : 0.1f);
+                        slider.value = Mathf.Clamp(slider.value + sign * step, slider.minValue, slider.maxValue);
+                    },
+                    StateText = () => Percent(slider),
+                });
+        }
+
+        private static void AddToggle(GraphBuilder b, Toggle toggle)
+        {
+            b.AddItem(ControlId.Referenced(toggle, "pause:toggle:" + toggle.GetInstanceID()),
+                new NodeVtable
                 {
-                    float step = (slider.maxValue - slider.minValue) * (large ? 0.25f : 0.1f);
-                    slider.value = Mathf.Clamp(slider.value + sign * step, slider.minValue, slider.maxValue);
-                },
-                StateText = () => Percent(slider),
-            });
+                    ControlType = ControlTypes.Toggle,
+                    Announcements = new[]
+                    {
+                        new NodeAnnouncement(() => Caption(toggle), kind: AnnouncementKinds.Label),
+                        new NodeAnnouncement(() => Loc.T(toggle.isOn ? "state.on" : "state.off"),
+                            live: true, kind: AnnouncementKinds.Value),
+                    },
+                    OnActivate = () => UiWidgets.Click(toggle.gameObject),
+                    StateText = () => Loc.T(toggle.isOn ? "state.on" : "state.off"),
+                });
         }
 
         private static string Percent(Slider slider)
@@ -114,52 +143,22 @@ namespace JerianAccess.Module.Screens
             return Loc.T("settings.percent", new { value = pct });
         }
 
-        private static void AddToggle(GraphBuilder b, TMPro.TMP_Text caption, Toggle toggle, string id)
+        // A control's row caption: the nearest label text under the control's row (its parent,
+        // then grandparent) that is not part of the control itself. Climbs at most three levels
+        // so it never wanders into a neighbouring row.
+        private static string Caption(Component ctrl)
         {
-            // The toggle's Background child carries the hover tooltip with the game's
-            // what-this-setting-does description (ConsequenceToggle.Description /
-            // IsPictureAnimatedToggle.Desription - game typo).
-            var tip = toggle.GetComponentInChildren<Tooltip>(true);
-            b.AddItem(ControlId.Referenced(toggle, "pause:" + id), new NodeVtable
+            var row = ctrl.transform.parent;
+            for (int depth = 0; depth < 3 && row != null; depth++, row = row.parent)
             {
-                ControlType = ControlTypes.Toggle,
-                Announcements = new[]
+                foreach (var t in row.GetComponentsInChildren<TMPro.TMP_Text>(false))
                 {
-                    new NodeAnnouncement(() => UiWidgets.LocalizedLabel(caption.gameObject),
-                        kind: AnnouncementKinds.Label),
-                    new NodeAnnouncement(() => Loc.T(toggle.isOn ? "state.on" : "state.off"),
-                        live: true, kind: AnnouncementKinds.Value),
-                },
-                OnActivate = () => UiWidgets.Click(toggle.gameObject),
-                StateText = () => Loc.T(toggle.isOn ? "state.on" : "state.off"),
-                OnTooltip = tip == null || string.IsNullOrEmpty(tip.TitleMainText)
-                    ? (System.Action)null
-                    : () => Mod.Speech.Speak(GameLoc.GetTranslation(tip.TitleMainText)),
-            });
-        }
-
-        // The language cycler (game ships it inactive in-game; built only if a patch enables it).
-        private static void AddSpinner(GraphBuilder b, TMPro.TMP_Text caption, Transform row,
-            TMPro.TextMeshProUGUI valueText)
-        {
-            Button left = null, right = null;
-            foreach (var btn in row.GetComponentsInChildren<Button>(true))
-            {
-                if (btn.gameObject.name == "LeftAr") left = btn;
-                if (btn.gameObject.name == "RightAr") right = btn;
+                    if (t.transform.IsChildOf(ctrl.transform)) continue;
+                    var s = UiWidgets.LocalizedLabel(t.gameObject);
+                    if (!string.IsNullOrEmpty(s) && s.Trim().Length > 0) return s;
+                }
             }
-            b.AddItem(ControlId.Referenced(valueText, "pause:language"), new NodeVtable
-            {
-                ControlType = ControlTypes.ComboBox,
-                Announcements = new[]
-                {
-                    new NodeAnnouncement(() => UiWidgets.LocalizedLabel(caption.gameObject),
-                        kind: AnnouncementKinds.Label),
-                    new NodeAnnouncement(() => valueText.text, live: true, kind: AnnouncementKinds.Value),
-                },
-                OnAdjust = (sign, large) => UiWidgets.Click((sign > 0 ? right : left).gameObject),
-                StateText = () => valueText.text,
-            });
+            return null;
         }
     }
 }

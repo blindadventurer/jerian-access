@@ -86,9 +86,13 @@ namespace JerianAccess.Module
                 .AddBinding(KeyCode.Return).AddBinding(KeyCode.KeypadEnter);
             InputManager.Register("ui.secondary", "Secondary action", InputCategory.UI)
                 .AddBinding(KeyCode.Backspace);
-            // Unconsumed by the focused screen (no Back action), Escape falls through to the
-            // game's own global read, gated exactly as the game gates it.
-            InputManager.Register("ui.back", "Back", InputCategory.UI, GameUi.GlobalEscape)
+            // Escape is owned by the GAME on Jerian (UIManager.Update reads it and toggles the
+            // pause menu, gated on IsEscButtonBlocked). The mod must NOT also open pause: a
+            // second ShowPauseMenu the same frame toggles it right back shut (the reported
+            // "pause does not read on Escape"). So ui.back carries no global fallthrough - only
+            // screens with their own Back action consume it; a plain scene lets the game's own
+            // Escape open pause once.
+            InputManager.Register("ui.back", "Back", InputCategory.UI)
                 .AddBinding(KeyCode.Escape);
             InputManager.Register("ui.tooltip", "Read tooltip", InputCategory.UI)
                 .AddBinding(KeyCode.Space).AddBinding(KeyCode.F1);
@@ -125,6 +129,7 @@ namespace JerianAccess.Module
                 new GameLoadingScreen(),
                 new ConfirmPopupScreen(),
                 new OpenedWindowScreen(),
+                new PauseScreen(),
                 new NameRequestScreen(),
                 new DisclaimerScreen(),
                 new SceneScreen(),
