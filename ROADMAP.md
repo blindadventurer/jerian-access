@@ -67,11 +67,23 @@ debugging from scratch.
 
 ## Phase 3 - Core scene reading (the event loop of the game)
 
-- [ ] todo - Scene screen: passage text spoken on delivery, paging keys work
-- [ ] todo - Choices: list, focus, activate via game handlers; unavailable choices announce
-      the failed requirement
-- [ ] todo - Consequence sheet reading (stat changes, rewards)
-- [ ] todo - HUD readout (stats, date/chapter context) on demand
+- [x] verified - Scene screen v1: transcript rows off the pager model, delivery differ on
+      _pageIndex (the scripted prologue auto-paging spoken faithfully page by page), Enter
+      pages via the game's NextPage, scene title announced ("Взгляд назад"). Verified live
+      through the whole prologue including the consequence pager (12 blocks, Enter-paged)
+- [x] verified - Disclaimer scene: pages spoken on swap, Enter = game's ClickOnScreen
+- [x] verified - Cutscene: subtitles spoken by POLLING the game's TMP line (no Harmony
+      needed on Jerian - SubtitleSpeechPatches route obsolete), skip hint announced;
+      CutsceneShowing gate on _hasExecuted (controller shell stays active after handoff)
+- [x] built - Choices: list/focus/activate via game handlers wired (ConsequenceButtonController,
+      -10 seats first choice); prologue resolved its choice scripted, so interactive choice
+      activation still needs a live pass in chapter 1
+- [ ] todo - Unavailable choices announce the failed requirement (typed Condition model:
+      Parameter/Relation/Status/Article/... - compose from failed non-hidden conditions)
+- [ ] todo - Trigger-scene page (-20) reading
+- [ ] todo - Consequence sheet reading (ConsequenceSheetController: stat changes, rewards)
+- [ ] todo - HUD readout (SanityCounterView, TempestLegacyCounterView, HUD.* buttons) as a
+      Tab-stop; port HudBar/WindowShellScreen
 - [ ] todo - Scene title / chapter transitions announced off Messenger events
 
 ## Phase 4 - Windows
