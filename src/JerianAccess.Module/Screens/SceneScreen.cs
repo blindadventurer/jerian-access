@@ -43,10 +43,16 @@ namespace JerianAccess.Module.Screens
         {
             get
             {
-                var bsc = Object.FindObjectOfType<BasicSceneController>();
-                if (bsc == null || string.IsNullOrEmpty(bsc.TitleKey)) return null;
-                return Message.MaybeRaw(Translate(bsc.TitleKey));
+                var key = TitleKey();
+                return string.IsNullOrEmpty(key) ? null : Message.MaybeRaw(Translate(key));
             }
+        }
+
+        // The scene the game currently has loaded, by its own title key.
+        private static string TitleKey()
+        {
+            var bsc = Object.FindObjectOfType<BasicSceneController>();
+            return bsc == null ? null : bsc.TitleKey;
         }
 
         private static readonly FieldInfo PageIndexField = typeof(TextController)
@@ -63,6 +69,7 @@ namespace JerianAccess.Module.Screens
         private TextController _watched;
         private int _spokenPage;
         private bool _entryPending;
+        private string _spokenTitleKey;
 
         // The consequence pager only activates after a choice resolves - while active it IS
         // the story surface (the game hides the setup pager), so it wins.
@@ -113,15 +120,23 @@ namespace JerianAccess.Module.Screens
 
         public override void OnPush() { _entryPending = true; }
 
+        public override void OnFocus()
+        {
+            base.OnFocus();               // the screen-name announcement IS the title
+            _spokenTitleKey = TitleKey(); // null when the scene hasn't set up yet - delivered below
+        }
+
         public override void OnPop()
         {
             _watched = null;
             _spokenRewards = null;
             _pendingRewards = null;
+            _spokenTitleKey = null;
         }
 
         public override void OnUpdate()
         {
+            DeliverTitle();
             DeliverRewards();
             var tc = Pager();
             if (tc == null) return;
@@ -171,6 +186,19 @@ namespace JerianAccess.Module.Screens
             // speech.
             Navigation.FocusNode(PageId(page), announce: false);
             Mod.Speech.Speak(PageText(tc, page));
+        }
+
+        // The next scene loads IN PLACE - the game swaps the whole scene inside one frame, so the
+        // screen never leaves the stack and OnFocus (which speaks the screen name) never runs
+        // again. The title is therefore delivered off the controller's own key, once per scene,
+        // ahead of that scene's first page.
+        private void DeliverTitle()
+        {
+            var key = TitleKey();
+            if (string.IsNullOrEmpty(key) || key == _spokenTitleKey) return;
+            _spokenTitleKey = key;
+            var title = Translate(key);
+            if (!string.IsNullOrEmpty(title)) Mod.Speech.Speak(title);
         }
 
         // The post-choice reward sheet (parameter/relation/status/... changes). The rows render

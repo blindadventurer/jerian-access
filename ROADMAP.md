@@ -88,7 +88,15 @@ debugging from scratch.
       Appended in SceneScreen.Build. Awaiting live verification
 - [ ] todo - Trigger-scene page (-20) reading
 - [ ] todo - Consequence sheet reading (ConsequenceSheetController: stat changes, rewards)
-- [ ] todo - Scene title / chapter transitions announced off Messenger events
+- [ ] built - Scene title on a scene CHANGE (SceneScreen.DeliverTitle): the next scene loads in
+      place inside one frame, so IsActive never dips, the screen never re-focuses and OnFocus's
+      screen-name announcement never ran again - only the first page was spoken (observed live:
+      speech 245 "Утро. Такое же..." with no title, title only after a hot reload). Now polled
+      off BasicSceneController.TitleKey and delivered once per scene, ahead of its first page;
+      OnFocus records what it spoke so an entry never doubles. Verified live by swapping the
+      controller's key (spoke "Наставление Корнелия" on the change, once). Awaiting confirmation
+      on a real transition
+- [ ] todo - Chapter transitions announced (chapter start/finish scene types)
 - [x] verified - LoadWindow (save slots) ported: slots read chapter+hero+date+time, Enter
       loads, Backspace deletes, Escape (game's own) closes. Written from decompiled source
 - [x] verified - GameLoadingScreen / chapter-timeline: Continue (focus home), five chapter
