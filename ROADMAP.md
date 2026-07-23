@@ -87,6 +87,12 @@ debugging from scratch.
       the window, so no mod-side Back). Driven live: 11-row walk announces label+state,
       slider adjust speaks percent and applies volume, Menu button exits and the main menu
       re-homes. Language row = Left/Right on "Language" combo (user switches themselves)
+- [x] verified - New-game window ported (NewGameWindowController, additive NewGameWindow
+      scene): modal name edit with per-letter echo and the game's auto-capitalization, the
+      validation subtitle spoken live as the game swaps it (min length / blacklist), three
+      ToggleGroup radio pairs under game headers, Start gated on the game model with the
+      subtitle as the spoken reason. Verified live in Russian; Menu returns to the main menu.
+      NOT yet exercised: actually starting a game (needs SceneScreen first)
 - [ ] todo - Window shell + ScreenManager reconciliation on Jerian's UIManager slots
 - [ ] todo - Port surviving windows: Character, Chapter select, Save/Load, Pause,
       popups (Confirm/Generic), Death/GameOver, Credits, Disclaimer
