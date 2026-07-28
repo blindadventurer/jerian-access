@@ -383,4 +383,13 @@ debugging from scratch.
       distinct surface, the day-stage flash, ships in no form (see the item above), and its
       scenes, option pages and interludes are shapes this port has read hundreds of times
 - [ ] todo - Full-game blind playthrough pass by the USER (every chapter, every branch)
-- [ ] todo - package.ps1 produces a working release zip against a clean game copy
+- [x] verified - package.ps1 produces a working release zip against a clean game copy. Built
+      artifacts\JerianAccess-0.9.0.zip (1.1 MB: BepInEx 5.4.23.5, the Release plugin + module,
+      the locale tables, prism.dll, steam_appid.txt, Russian README and key reference, licenses),
+      then INSTALLED IT AS A TESTER WOULD: the dev deploy was moved aside, the archive extracted
+      into the game folder, the game started from its own exe. Log: "Loading [Jerian Access
+      0.9.0]", 24 screens registered, "reflection audit: 56 game member lookups resolve",
+      "PrismHandler backend acquired: NVDA", "handler loaded: prism" - and the main menu spoke
+      through the live screen reader. Note for anyone repeating this: without the dev server the
+      game is a normal Unity app again and PAUSES while its window is not focused, so a boot
+      driven from a terminal stalls until the window is brought forward

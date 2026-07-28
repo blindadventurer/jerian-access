@@ -115,6 +115,17 @@ asynchronous - the mod's own rule is to read detail from the model, not from a t
 lags focus), and grouping every text under an item's root into one stop (the shields row would
 merge three separate counters into "0 15 0").
 
+## 2026-07-28 - The port versions itself from 0.9.0, and ships steam_appid.txt
+
+The plugin carried 1.2.0, the version of the Brante mod this port was copied from - a number
+that claims a maturity this port has not earned and would confuse a bug report. The first
+tester build is 0.9.0.
+
+The archive also drops `steam_appid.txt` (2936290) beside the exe. Without it the game's own
+SteamAPI restart check quits after a full boot and respawns the process WITHOUT the mod loader
+on any copy Steam is not launching - to a tester the mod would simply look absent. Launched
+through Steam the check passes either way, so the file costs nothing on a legitimate install.
+
 ## 2026-07-23 - Non-Steam install, direct exe launch
 
 The game copy on this machine lives at `F:\games\The Life and Suffering of Prince Jerian`

@@ -17,7 +17,9 @@ namespace JerianAccess
     {
         public const string Guid = "com.rashadnaqeeb.jerianaccess";
         public const string Name = "Jerian Access";
-        public const string Version = "1.2.0";
+        // The port's own version, not the Brante mod's it grew out of: 0.x while the game is
+        // still being played through by testers.
+        public const string Version = "0.9.0";
 
         // Public (not internal) so /eval-compiled code, which lives in its own assembly, can reach
         // the speech pipeline: `Plugin.Instance.Speech.Speak("...")` is the standard smoke test.

@@ -57,9 +57,17 @@
     <!-- Native speech lib beside the game exe so P/Invoke resolves it. -->
     <Copy SourceFiles="$(RepoRoot)third_party\prism\prism.dll" DestinationFolder="$(StageDir)" />
 
-    <!-- Player docs at the archive root, readable before (and after) extracting. -->
+    <!-- Steam's app id beside the exe. Without it the game's own SteamAPI restart check quits
+         after a full boot and respawns the process WITHOUT the mod loader, on any copy that is
+         not being launched by Steam - the mod then looks simply absent. Launched through Steam
+         the check passes either way, so the file is safe on every install. -->
+    <WriteLinesToFile File="$(StageDir)steam_appid.txt" Lines="2936290" Overwrite="true" WriteOnlyWhenDifferent="true" />
+
+    <!-- Player docs at the archive root, readable before (and after) extracting. Russian: the
+         testers this build goes to play the game in Russian. -->
     <Copy SourceFiles="$(MSBuildThisFileDirectory)package-readme.txt" DestinationFiles="$(StageDir)JerianAccess-README.txt" />
-    <Copy SourceFiles="$(RepoRoot)KEYS.md" DestinationFiles="$(StageDir)JerianAccess-KEYS.txt" />
+    <Copy SourceFiles="$(MSBuildThisFileDirectory)package-keys.txt" DestinationFiles="$(StageDir)JerianAccess-KEYS.txt" />
+    <Copy SourceFiles="$(RepoRoot)KEYS.md" DestinationFiles="$(StageDir)JerianAccess-KEYS-en.txt" />
 
     <!-- Licenses for everything redistributed. The LGPL-2.1 text shipped for BepInEx is the
          same canonical text prism vendors for the NVDA controller client. -->
