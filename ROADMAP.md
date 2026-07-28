@@ -219,9 +219,25 @@ debugging from scratch.
       reflects on the type that declares it and the pager's own arrow reads are suppressed while
       the mod owns input)
 - [x] built - Credits roll (skipping stays the game's own InputSystem Escape)
-- [ ] todo - Tooltip controller set: fold tooltip detail onto items (never a separate stop)
-- [ ] todo - Per-window polish: the generic sweep still emits a few bare value stops where a row's
-      name and value do not share the "*Name"/"*Value" naming
+- [x] verified - Tooltip controller set (Game/TooltipReader.cs): Jerian hangs nearly all detail on
+      TooltipZoneView, and Space now asks the zone to open, waits for the game to build its view,
+      speaks it and closes it - one path for all ten tooltip types, no per-type modelling. A
+      pending read is cancelled by the next keypress (a tooltip that arrives after focus moved
+      would describe the control the player just left). Live 2026-07-28: the HUD Sanity counter
+      reads its whole scale; a Personality row reads "Разум. Склонность к анализу... 3..7 Баланс
+      Разума и Страсти..."; a Destiny objective reads its description plus every condition
+- [x] verified - Windows were hiding most of their content: Jerian's hover zones ARE Selectables,
+      and the sweep skipped every label owned by one. Only buttons and toggles count as controls
+      now. Live: the Destiny window went from "title + 3 years + 6 locked tabs" to the whole
+      chronicle and objective list
+- [x] verified - Per-window polish: labels the game drew under one parent read as ONE stop with a
+      bare figure last ("Отношения 1"); picture items (a hover zone with no words - an objective,
+      a chronicle entry, a seal) are named from the game's own data containers; the item a list is
+      showing announces "выбрано", not "недоступно"; comparison operators speak as words
+- [x] verified - The confirm popups' click-away backdrop is no longer a stop (it took the opening
+      focus, so "exit to menu?" opened on an unlabeled button)
+- [x] built - The intro spread a new game opens on (IntroSceneController): two pages of setup text
+      and the button on to the story, previously read by nothing. Needs a new-game pass
 
 ## Phase 5 - Cutscenes & interludes
 

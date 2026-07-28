@@ -58,6 +58,30 @@ directly (`Game/HoldChoice.cs`) after checking the same guards the game checks. 
 simulating a timed hold (frame-rate dependent, and the progress animation would fight it) and
 forcing the setting off (the game's setting is the player's, not the mod's).
 
+## 2026-07-28 - Tooltips are READ FROM THE GAME, not re-modelled
+
+Jerian shows a control's detail by having `TooltipZoneView` broadcast on hover and a per-type
+controller build a view prefab a frame later - ten types, each with its own layout and data
+containers. The mod asks the zone to open (its own keyboard-selection entry), waits for the
+view to settle, speaks the rendered view and closes it, rather than composing ten readouts from
+the model. Rationale: the rendered view IS the game's localized output for that type, it stays
+correct when the game changes one, and one code path covers surfaces the mod has not seen yet.
+The cost is asynchrony - the read is ticked, and any keypress cancels a pending one, because a
+tooltip that answers after focus moved would describe the control the player just left.
+
+Where the mod DOES model instead: a choice's requirements and consequences, because those must
+be spoken as part of the choice's own announcement (on focus, not on demand) and the game shows
+them on a sheet that appears a frame late and vanishes on the next hover.
+
+## 2026-07-28 - A screen stays entered while the game hides its surface
+
+Jerian deactivates the whole scene prefab whenever a window or a between-events popup covers
+it, and dips a window's CanvasGroup to zero while its page animates in. Screens keyed purely on
+"is my surface visible right now" therefore popped and pushed again, announcing themselves
+twice and losing focus to whatever node the graph happened to start with. Screens whose surface
+the game hides this way (the scene, the opened window) now hold a live reference to what they
+entered on and only leave when the game DESTROYS it - which Unity's own null reports.
+
 ## 2026-07-23 - Non-Steam install, direct exe launch
 
 The game copy on this machine lives at `F:\games\The Life and Suffering of Prince Jerian`

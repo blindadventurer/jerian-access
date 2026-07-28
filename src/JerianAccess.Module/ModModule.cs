@@ -31,7 +31,14 @@ namespace JerianAccess.Module
                 var current = ScreenManager.Current;
                 return current != null && current.CapturesRawInput;
             };
-            InputManager.UiDispatcher = Navigation.DispatchJustPressed;
+            // Any key the player presses supersedes a tooltip they asked for and have not heard
+            // yet: the game builds a tooltip a frame late, and answering it after focus has
+            // moved would describe the control they just left.
+            InputManager.UiDispatcher = action =>
+            {
+                Game.TooltipReader.Close();
+                return Navigation.DispatchJustPressed(action);
+            };
             ScreenManager.NavigatorAttach = Navigation.Attach;
             ScreenManager.NavigatorScreenClosed = Navigation.ScreenClosed;
             ScreenManager.NavigatorEnsureFocus = Navigation.EnsureFocus;
