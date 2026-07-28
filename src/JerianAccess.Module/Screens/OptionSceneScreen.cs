@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Reflection;
 using JerianAccess.Module.Game;
 using JerianAccess.Module.Input;
 using JerianAccess.Module.Speech;
@@ -124,10 +125,44 @@ namespace JerianAccess.Module.Screens
                     {
                         new NodeAnnouncement(() => PanelText.Read(option.gameObject),
                             kind: AnnouncementKinds.Label),
+                        new NodeAnnouncement(
+                            () => TripCompleted(option) ? Loc.T("case.completed") : null,
+                            kind: AnnouncementKinds.Enabled),
+                        new NodeAnnouncement(() => TripEstates(option),
+                            kind: AnnouncementKinds.Value),
                     },
                     OnTooltip = () => Tooltip(option.gameObject),
-                    OnActivate = () => Choose(option),
+                    OnActivate = () =>
+                    {
+                        if (TripCompleted(option))
+                        {
+                            Mod.Speech.Speak(Loc.T("case.completed"), interrupt: true);
+                            return;
+                        }
+                        Choose(option);
+                    },
                 });
+        }
+
+        private static readonly FieldInfo TripOptionField = typeof(TripOptionView)
+            .GetField("_tripOption", BindingFlags.NonPublic | BindingFlags.Instance);
+        private static readonly FieldInfo TripCompletedField = typeof(TripOptionView)
+            .GetField("_isCompleted", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        private static bool TripCompleted(TripOptionView view)
+            => (bool)TripCompletedField.GetValue(view);
+
+        /// <summary>Which two estates a province's trip courts. The game draws them as a pair of
+        /// crests on the card - the whole point of the pick, and not a word of it is text.</summary>
+        private static string TripEstates(TripOptionView view)
+        {
+            var trip = (TripOption)TripOptionField.GetValue(view);
+            if (trip == null) return null;
+            var left = trip.LeftEstate == null ? null : trip.LeftEstate.GetNameLocalised();
+            var right = trip.RightEstate == null ? null : trip.RightEstate.GetNameLocalised();
+            if (string.IsNullOrEmpty(left)) return right;
+            if (string.IsNullOrEmpty(right)) return left;
+            return left + ", " + right;
         }
 
         private static void AddCase(GraphBuilder b, CaseForAYearOptionView view)

@@ -34,6 +34,15 @@ namespace JerianAccess.Module.UI
                 Take(tmp.gameObject, tmp.text, skip, exclude, rows, texts);
             foreach (var legacy in root.GetComponentsInChildren<UnityEngine.UI.Text>(false))
                 Take(legacy.gameObject, legacy.text, skip, exclude, rows, texts);
+            // A panel that shows an estate's strength as a bare figure (the outcome page an
+            // option scene puts beside its choices) reads as a run of loose numbers otherwise.
+            // The game hangs the word on the same data container its own tooltip reads.
+            for (int i = 0; i < texts.Count; i++)
+            {
+                if (!IsFigure(texts[i])) continue;
+                var name = Game.ContainerLabel.NameOf(rows[i].gameObject);
+                if (!string.IsNullOrEmpty(name)) texts[i] = name + " " + texts[i];
+            }
 
             var order = new List<int>();
             for (int i = 0; i < rows.Count; i++) order.Add(i);

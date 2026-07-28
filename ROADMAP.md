@@ -352,15 +352,29 @@ debugging from scratch.
       through chapters 1, 2, 3 and into 4 (~2000 driver steps) with every action's speech read
       back. Every surface the run met is covered and listed above; the run met no silent screen
       and no dead end after the fixes it found. NOT met by this run, so still unverified live:
-      the DEATH window, the TRIP SELECTION scene, the insurrection day-stage flash (chapter 5),
-      and the intro spread. Chapter 4 was then replayed from its own save for another 800 driver
-      steps (a second set of choices) hunting the chapter-5 surfaces - it stayed inside chapter 4
-      and turned up nothing unread, so those three wait for a run that gets past it
+      the DEATH window, the TRIP SELECTION scene, the insurrection day-stage flash and the intro
+      spread. Chapter 4 was then replayed from its own save for another 800 driver steps (a second
+      set of choices), which turned up nothing unread. Those four were then chased down directly -
+      see the item below
 - [x] verified - Full playthrough to an ENDING, 2026-07-28: the driven run reached the "Крах"
       finale in chapter 4 - the scene's own reward popup announcing the ending, the epilogue
       scenes, and the credits roll - all spoken, with no silent surface left on the path. One
       blocker the finale found: that reward popup (the ending, the estates it moved, a war's
       outcome) was read by nothing and could not be paged by any key, since it lives inside the
       scene rather than in the popup manager's container
+- [x] verified - The four surfaces the driven run never met, chased down deliberately:
+      * TRIP SELECTION - raised by loading its own scene configuration through the game's
+        LoadScene ("FirstTripSelection"). Reads: the page's own words, then six provinces, each
+        naming the two ESTATES its trip courts (the game draws those as crests - not a word of
+        text), Space reads the game's tooltip, Enter resolves the pick. Two fixes came out of it:
+        the estate crests are named at all, and the outcome panel's bare figures now carry their
+        names ("Сила Темпестов 15") instead of reading as a run of loose numbers
+      * GAME OVER scene - loaded directly; reads "Game over" and the credit block, once (it used
+        to say the title twice, screen name and first stop)
+      * DEATH window, INTRO spread, day-stage flash - THE GAME NEVER RAISES THEM. No scene in the
+        build settings, no prefab in the addressables catalog (which does ship every other popup),
+        and no code reference outside their own classes: they are inherited from the shared
+        Brante-lineage codebase and cut from this game. Their screens stay registered and keyed by
+        type, so they read if a patch ever ships that content
 - [ ] todo - Full-game blind playthrough pass by the USER (every chapter, every branch)
 - [ ] todo - package.ps1 produces a working release zip against a clean game copy

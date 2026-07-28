@@ -26,18 +26,9 @@ namespace JerianAccess.Module.Screens
             return w != null && w.gameObject.activeInHierarchy;
         }
 
-        // The scrolling Text object carries the "Game over" title on itself and the credits
-        // block as its child - both TMPs ride the scroll together.
-        public override Message ScreenName
-        {
-            get
-            {
-                var w = Window();
-                if (w == null) return null;
-                var t = w.Text.GetComponent<TMPro.TMP_Text>();
-                return t == null ? null : Message.MaybeRaw(t.text);
-            }
-        }
+        // No screen-name announcement: the title rides on the scrolling Text object, which is
+        // also the first stop - naming it here said "Game over" twice in a row.
+        public override Message ScreenName => null;
 
         public override void Build(GraphBuilder b)
         {
