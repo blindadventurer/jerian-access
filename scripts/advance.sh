@@ -222,10 +222,15 @@ while [ "$STEP" -lt "$MAX" ]; do
       echo "ABORT step $STEP: picked choice $PICKED not in choice list"; exit 1
     fi
     UPS=$((TOTAL - POS))
+    # A choice the game offers to sell open answers Enter with its price, not with a click -
+    # so the driver pays it first, the way a player presses Backspace on the offer.
+    PICKLINE=$(echo "$NAVOUT" | grep "scene:choice:$PICKED," | head -1)
+    case "$PICKLINE" in *"открыть за"*|*"unlock for"*) PAY=1 ;; *) PAY=0 ;; esac
     press ui.prev; sleep 0.2; press ui.home; sleep 0.2
     press ui.end
     UI=0
     while [ "$UI" -lt "$UPS" ]; do press ui.up; sleep 0.15; UI=$((UI + 1)); done
+    if [ "$PAY" = "1" ]; then sleep 0.3; press ui.secondary; fi
     sleep 0.3; press ui.activate
   fi
 

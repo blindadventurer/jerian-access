@@ -520,7 +520,15 @@ namespace JerianAccess.Module.Screens
                 return;
             }
             var bsc = Object.FindObjectOfType<BasicSceneController>();
-            if (bsc != null && bsc.SelectedButton != null) return;
+            if (bsc != null && bsc.SelectedButton != null)
+            {
+                // A choice is already resolving - the scene is mid-handoff and a second click
+                // would fight it. Silent by design, but logged: silence is the one answer a
+                // player cannot interpret, so a run of these is a bug report.
+                Mod.Log("choice " + choice.ButtonIndex + " not clicked: scene already resolving '"
+                        + bsc.SelectedButton.ButtonIndex + "'");
+                return;
+            }
 
             if (HoldChoice.Holding) HoldChoice.Resolve(choice);
             else UiWidgets.Click(choice.Selectable.gameObject);
