@@ -25,11 +25,12 @@ namespace JerianAccess.Module.Screens
         private DayTimePopupController _seen;
         private int _seenFrame;
 
+        // Found by TYPE, not through UIManager's popup slot: Jerian raises this popup through
+        // PopupControllersManager, which never touches that slot.
         private static DayTimePopupController Popup()
         {
-            var p = GameUi.OpenedPopup;
-            return p == null || !p.activeInHierarchy
-                ? null : p.GetComponent<DayTimePopupController>();
+            var p = UnityEngine.Object.FindObjectOfType<DayTimePopupController>();
+            return p != null && UiWidgets.Visible(p.gameObject) ? p : null;
         }
 
         public override bool IsActive()

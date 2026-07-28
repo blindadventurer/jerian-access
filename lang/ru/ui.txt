@@ -49,6 +49,9 @@ choice.op.moreequal = не менее
 choice.op.lessequal = не более
 choice.op.not = не
 
+choice.unlock = открыть за {cost} {name}
+choice.unlock.paid = открыто, потрачено {cost} {name}
+
 tooltip.section = {title}, {rows}
 choice.cond.now = {row}, {now} {current}
 choice.cond.met = {row}, выполнено
@@ -77,6 +80,7 @@ screen.credits = титры
 screen.gameloading = загрузка игры
 gameloading.age = возраст: {age}
 screen.chaptersummary = сводка главы
+screen.tutorial = обучение
 screen.window = окно
 screen.pause = пауза
 scene.rewards = изменения:

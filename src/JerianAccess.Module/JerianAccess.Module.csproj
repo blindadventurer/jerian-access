@@ -40,20 +40,22 @@
          character model). Rewrite it section by section against the live story scene. -->
     <BrokenOnJerian Include="Game\Readouts.cs" />
     <BrokenOnJerian Include="Patches\SubtitleSpeechPatches.cs" />
-    <BrokenOnJerian Include="Screens\CreditsScreen.cs" />
-    <BrokenOnJerian Include="Screens\GenericPopupScreen.cs" />
     <BrokenOnJerian Include="Screens\MapWindowScreen.cs" />
+    <!-- The trigger POPUP: Jerian renders it from a different model (SceneConditionsCollector
+         has no FindCondition); the UIManager-slot sweep reads it until it earns its own screen. -->
     <BrokenOnJerian Include="Screens\TriggerScenePopupScreen.cs" />
+    <!-- Superseded on Jerian: OpenedWindowScreen reads whatever WindowControllersManager opened,
+         which is every HUD window the game has. The shell's HudBar dependency is Brante's. -->
     <BrokenOnJerian Include="Screens\WindowShellScreen.cs" />
     <BrokenOnJerian Include="Screens\CaseForYearScreen.cs" />
     <BrokenOnJerian Include="Screens\CaseOfYearPopupScreen.cs" />
     <BrokenOnJerian Include="Screens\ChapterFinalScreen.cs" />
-    <BrokenOnJerian Include="Screens\ChapterPictureScreen.cs" />
     <BrokenOnJerian Include="Screens\ChapterSelectScreen.cs" />
+    <!-- Chapter start/finish are ChapterSummaryWindowController scenes on Jerian, read by
+         ChapterSummaryScreen; Brante's own chapter-transition panels are gone. -->
     <BrokenOnJerian Include="Screens\ChapterStartScreen.cs" />
     <BrokenOnJerian Include="Screens\CharacterInfoScreen.cs" />
     <BrokenOnJerian Include="Screens\CharacterWindowScreen.cs" />
-    <BrokenOnJerian Include="Screens\DeathScreen.cs" />
     <BrokenOnJerian Include="Screens\DestinyWindowScreen.cs" />
     <BrokenOnJerian Include="Screens\EmpireWindowScreen.cs" />
     <BrokenOnJerian Include="Screens\FamilyWindowScreen.cs" />

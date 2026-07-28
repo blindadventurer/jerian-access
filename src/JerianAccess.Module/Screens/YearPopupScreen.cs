@@ -1,5 +1,6 @@
 using System.Reflection;
 using JerianAccess.Module.Game;
+using UnityEngine;
 using JerianAccess.Module.UI;
 using JerianAccess.Module.UI.Graph;
 using TMPro;
@@ -34,10 +35,13 @@ namespace JerianAccess.Module.Screens
         private YearPopup _seen;
         private int _seenFrame;
 
+        // Found by TYPE, not through UIManager's popup slot: Jerian's PopupControllersManager
+        // instantiates this popup into its own container and never touches that slot, so a
+        // slot-gated screen would never wake up.
         private static YearPopup Popup()
         {
-            var p = GameUi.OpenedPopup;
-            return p == null || !p.activeInHierarchy ? null : p.GetComponent<YearPopup>();
+            var p = Object.FindObjectOfType<YearPopup>();
+            return p != null && UiWidgets.Visible(p.gameObject) ? p : null;
         }
 
         public override bool IsActive()

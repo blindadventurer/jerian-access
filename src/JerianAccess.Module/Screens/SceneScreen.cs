@@ -8,26 +8,34 @@ using JerianAccess.Module.UI.Graph;
 using UnityEngine;
 using _Scripts.AMVCC.Controllers;
 using _Scripts.AMVCC.Views.ConsequenceButton;
+using _Scripts.AMVCC.Views.Windows.ChapterSummary.PageNavigation;
 using _Scripts.AMVCC.Views.Windows.Cutscenes;
+using _Scripts.AMVCC.Models.Static;
 using _Scripts.Localization;
+using _Scripts.Managers;
+using _Scripts.SpecialPages;
 
 namespace JerianAccess.Module.Screens
 {
     /// <summary>
-    /// The event scene - the passage pager as a TRANSCRIPT (house pattern): every delivered
+    /// The story scene, in both flavours the game ships: one with choices (BasicSceneController)
+    /// and a straight-through one (InconsequentialSceneController) - the same surface to read, so
+    /// the same screen reads both and only the choices differ. The passage pager is a TRANSCRIPT
+    /// (house pattern): every delivered
     /// page is a text row in one silent-positions stop, arrows re-read earlier pages without
-    /// touching game state, Enter on the newest row advances through the game's own NextPage
+    /// touching game state, Enter on the newest row advances through the game's own click entry
     /// (sounds, death triggers, skip service all run). A new page re-homes focus SILENTLY; the
     /// queued delivery announcement is the speech, spoken once per page off model state (the
-    /// pager's own page index), no matter what advanced it. Special pager indices: -10 = the
-    /// choice panel is up (focus moves to the first choice, announced), -15 = the consequence
-    /// Continue page. Page text resolves through the game's own I2 keys
+    /// pager's own page index), no matter what advanced it. Special pager index -10 = the
+    /// choice panel is up (focus moves to the first choice, announced); the Continue is offered
+    /// when the game enables it. Page text resolves through the game's own I2 keys
     /// ({TextKey}_Text_{n} / {TextKey}_ConsequenceText_{c}_{n}) plus the game's default
     /// replace map (hero name), with the block's character name prefixed where the game shows
-    /// a portrait. Choices are ConsequenceButtonController nodes: labels from their I2 key,
-    /// activation through the game's own click path (its guards decide), unavailability off
-    /// the game's own interactable model. TODO(J): spoken unavailable REASONS (the typed
-    /// Condition model), the trigger-scene page (-20), and the HUD Tab-stop follow.
+    /// a portrait. Page -20 is the TRIGGER page the scene opens on when the player's earlier
+    /// choices are what summoned it. Choices are ConsequenceButtonController nodes: labels from
+    /// their I2 key, activation through the game's own click path (its guards decide),
+    /// unavailability and unlock prices off the game's own condition model, Space reading the
+    /// consequence sheet the game paints for a sighted player on hover.
     /// </summary>
     public sealed class SceneScreen : Screen
     {
@@ -36,40 +44,58 @@ namespace JerianAccess.Module.Screens
 
         public override bool IsActive()
             => GameUi.State == GameState.RUNNING
-            && Object.FindObjectOfType<BasicSceneController>() != null
+            && SceneController() != null
             && !CutsceneScreen.CutsceneShowing;
 
-        public override Message ScreenName
+        public override Message ScreenName => Message.MaybeRaw(TitleText());
+
+        /// <summary>The scene controller the loaded scene runs on - a choice scene's, else a
+        /// straight-through scene's.</summary>
+        private static MonoBehaviour SceneController()
         {
-            get
-            {
-                var key = TitleKey();
-                return string.IsNullOrEmpty(key) ? null : Message.MaybeRaw(Translate(key));
-            }
+            var basic = Object.FindObjectOfType<BasicSceneController>();
+            if (basic != null) return basic;
+            return Object.FindObjectOfType<InconsequentialSceneController>();
         }
 
-        // The scene the game currently has loaded, by its own title key.
-        private static string TitleKey()
+        private static readonly FieldInfo BasicTitleField = typeof(BasicSceneController)
+            .GetField("titleText", BindingFlags.NonPublic | BindingFlags.Instance);
+        private static readonly FieldInfo InconsequentialTitleField =
+            typeof(InconsequentialSceneController)
+                .GetField("titleText", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        // The title as the page shows it, not as the scene was configured: a straight-through
+        // scene swaps its title mid-run on a special-scenery block (ChangeSceneTitleEvent, whose
+        // handler writes the label and leaves TitleKey pointing at the scene's own title).
+        private static string TitleText()
         {
-            var bsc = Object.FindObjectOfType<BasicSceneController>();
-            return bsc == null ? null : bsc.TitleKey;
+            var ctrl = SceneController();
+            if (ctrl == null) return null;
+            var field = ctrl is BasicSceneController ? BasicTitleField : InconsequentialTitleField;
+            var label = (TextMeshProLocalization)field.GetValue(ctrl);
+            return label == null ? null : UiWidgets.LocalizedLabel(label.gameObject);
         }
 
         private static readonly FieldInfo PageIndexField = typeof(TextController)
             .GetField("_pageIndex", BindingFlags.NonPublic | BindingFlags.Instance);
+        private static readonly FieldInfo TriggerSceneField = typeof(TextController)
+            .GetField("_triggerScene", BindingFlags.NonPublic | BindingFlags.Instance);
         private static readonly FieldInfo ItsConsequenceField = typeof(TextController)
             .GetField("ItsConsequence", BindingFlags.NonPublic | BindingFlags.Instance);
-        private static readonly FieldInfo NextButtonField = typeof(TextController)
-            .GetField("NextButton", BindingFlags.NonPublic | BindingFlags.Instance);
         private static readonly FieldInfo ContinueButtonField = typeof(TextController)
             .GetField("ContinueButton", BindingFlags.NonPublic | BindingFlags.Instance);
+        private static readonly FieldInfo PageNavField = typeof(TextController)
+            .GetField("_pageNavigationController", BindingFlags.NonPublic | BindingFlags.Instance);
+        private static readonly FieldInfo PageNavContinueField = typeof(PageNavigationController)
+            .GetField("continueButton", BindingFlags.NonPublic | BindingFlags.Instance);
 
         // Live component references for delivery bookkeeping only; all text re-reads at
         // speech time.
         private TextController _watched;
         private int _spokenPage;
         private bool _entryPending;
-        private string _spokenTitleKey;
+        private string _spokenTitle;
+        private bool _continueOffered;
 
         // The consequence pager only activates after a choice resolves - while active it IS
         // the story surface (the game hides the setup pager), so it wins.
@@ -122,8 +148,8 @@ namespace JerianAccess.Module.Screens
 
         public override void OnFocus()
         {
-            base.OnFocus();               // the screen-name announcement IS the title
-            _spokenTitleKey = TitleKey(); // null when the scene hasn't set up yet - delivered below
+            base.OnFocus();             // the screen-name announcement IS the title
+            _spokenTitle = TitleText(); // empty when the scene hasn't set up yet - delivered below
         }
 
         public override void OnPop()
@@ -131,7 +157,8 @@ namespace JerianAccess.Module.Screens
             _watched = null;
             _spokenRewards = null;
             _pendingRewards = null;
-            _spokenTitleKey = null;
+            _spokenTitle = null;
+            _continueOffered = false;
         }
 
         public override void OnUpdate()
@@ -140,6 +167,7 @@ namespace JerianAccess.Module.Screens
             DeliverRewards();
             var tc = Pager();
             if (tc == null) return;
+            DeliverContinue(tc);
             int page = PageIndex(tc);
 
             // A pager swap. On screen entry the navigator's own focus-seat announcement reads
@@ -151,6 +179,7 @@ namespace JerianAccess.Module.Screens
                 _entryPending = false;
                 _watched = tc;
                 _spokenPage = page;
+                _continueOffered = false;
                 if (!entry && page >= 0)
                 {
                     Navigation.FocusNode(PageId(page), announce: false);
@@ -172,12 +201,10 @@ namespace JerianAccess.Module.Screens
                         announce: true);
                 return;
             }
-            if (page == -15)
+            if (page == -20)
             {
-                var cont = ContinueButton(tc);
-                if (cont != null)
-                    Navigation.FocusNode(ControlId.Referenced(cont, "scene:continue"),
-                        announce: true);
+                // The trigger page opens the scene, ahead of its first passage.
+                Navigation.FocusNode(TriggerPageId, announce: true);
                 return;
             }
             if (page < 0) return;
@@ -188,17 +215,29 @@ namespace JerianAccess.Module.Screens
             Mod.Speech.Speak(PageText(tc, page));
         }
 
+        // The consequence Continue, seated when the GAME makes it usable. Its page index is not
+        // the signal: on a page owned by a PageNavigationController the button is revealed and
+        // enabled at the end of that controller's own run, several pages after the text pager
+        // calls itself finished.
+        private void DeliverContinue(TextController tc)
+        {
+            var cont = ReadyContinue(tc);
+            if ((cont != null) == _continueOffered) return;
+            _continueOffered = cont != null;
+            if (cont != null)
+                Navigation.FocusNode(ControlId.Referenced(cont, "scene:continue"), announce: true);
+        }
+
         // The next scene loads IN PLACE - the game swaps the whole scene inside one frame, so the
         // screen never leaves the stack and OnFocus (which speaks the screen name) never runs
-        // again. The title is therefore delivered off the controller's own key, once per scene,
-        // ahead of that scene's first page.
+        // again. The title is therefore delivered off the page's own title label, once per new
+        // title, ahead of the page it belongs to.
         private void DeliverTitle()
         {
-            var key = TitleKey();
-            if (string.IsNullOrEmpty(key) || key == _spokenTitleKey) return;
-            _spokenTitleKey = key;
-            var title = Translate(key);
-            if (!string.IsNullOrEmpty(title)) Mod.Speech.Speak(title);
+            var title = TitleText();
+            if (string.IsNullOrEmpty(title) || title == _spokenTitle) return;
+            _spokenTitle = title;
+            Mod.Speech.Speak(title);
         }
 
         // The post-choice reward sheet (parameter/relation/status/... changes). The rows render
@@ -253,11 +292,33 @@ namespace JerianAccess.Module.Screens
             if (tc == null) return;
             int current = PageIndex(tc);
 
-            // Transcript rows: every text page up to the current one (all of them once the
-            // pager has moved past the text into choices/continue).
+            // The trigger page (-20) precedes the passages: the scene announcing itself as a
+            // consequence of what the player did earlier. It is the only page on screen while
+            // it shows, so the transcript below stays empty until it is paged past.
+            if (current == -20)
+            {
+                b.AddItem(TriggerPageId, new NodeVtable
+                {
+                    ControlType = ControlTypes.Text,
+                    SilentRecovery = true,
+                    Announcements = new[]
+                    {
+                        new NodeAnnouncement(() => TriggerPageText(tc), kind: AnnouncementKinds.Label),
+                    },
+                    OnActivate = () => tc.TextPanelClick(),
+                });
+                b.SetStart(TriggerPageId);
+                HudReadout.Build(b);
+                return;
+            }
+
+            // Transcript rows: every DELIVERED text page - the ones the pager can reach (a block
+            // whose conditions fail is skipped by the game and never shown, so reading it would
+            // be reading a passage the player's playthrough does not contain) up to the current
+            // one (all of them once the pager has moved past the text into choices/continue).
             var rows = new List<int>();
             for (int i = 0; i < tc.TextBlocks.Count; i++)
-                if (current < 0 || i <= current) rows.Add(i);
+                if ((current < 0 || i <= current) && Unlocked(tc, i)) rows.Add(i);
 
             b.PushContext("", role: null, positions: false);
             foreach (var row in rows)
@@ -273,25 +334,24 @@ namespace JerianAccess.Module.Screens
                         new NodeAnnouncement(() => PageText(tc, page),
                             kind: AnnouncementKinds.Label),
                     },
-                    // Enter on the newest page turns to the next through the game's own pager,
-                    // gated on the game's own next-button state (page-turn animations and
-                    // death windows disable it).
-                    OnActivate = !newest ? (System.Action)null : () =>
-                    {
-                        var next = (GameObject)NextButtonField.GetValue(tc);
-                        if (next != null && next.GetComponent<UnityEngine.UI.Button>().interactable)
-                            tc.NextPage();
-                    },
+                    // Enter on the newest page turns to the next through TextPanelClick - the
+                    // entry the game's own click zone uses, which hands the turn to whichever
+                    // pager owns the page. Calling TextController.NextPage directly moves the
+                    // text but leaves a PageNavigationController's page model behind, and that
+                    // model is what reveals the Continue button - a consequence paged the direct
+                    // way is never offered one and the scene cannot be finished. Both routes
+                    // carry their own navigation locks, so no gate of ours is needed.
+                    OnActivate = !newest ? (System.Action)null : () => tc.TextPanelClick(),
                 });
             }
             if (current >= 0 && rows.Count > 0) b.SetStart(PageId(current));
             b.PopContext();
 
-            // The consequence Continue - only on its own page (-15); the serialized button
-            // object can sit active in the hierarchy earlier while the choices are the
-            // surface.
-            var contBtn = current == -15 ? ContinueButton(tc) : null;
-            if (contBtn != null && contBtn.gameObject.activeInHierarchy)
+            // The consequence Continue - present exactly while the game offers it; the
+            // serialized button object can sit active in the hierarchy earlier, disabled and
+            // faded out, while the choices or the text are the surface.
+            var contBtn = ReadyContinue(tc);
+            if (contBtn != null)
                 b.AddItem(ControlId.Referenced(contBtn, "scene:continue"), new NodeVtable
                 {
                     ControlType = ControlTypes.Button,
@@ -322,37 +382,159 @@ namespace JerianAccess.Module.Screens
                                 kind: AnnouncementKinds.Enabled),
                         },
                         SearchText = () => Translate(choice.ButtonTextKey),
-                        // Space reads the full requirement breakdown (met and not-met),
-                        // composed from the choice's own typed Condition model.
-                        OnTooltip = () => Mod.Speech.Speak(
-                            ChoiceConditions.Details(choice) ?? Loc.T("nav.no_details")),
-                        OnActivate = () =>
-                        {
-                            var reason = ChoiceConditions.UnavailableReason(choice);
-                            if (reason != null)
-                            {
-                                Mod.Speech.Speak(reason, interrupt: true);
-                                return;
-                            }
-                            // The game's own resolving gate: a clicked choice sets
-                            // SelectedButton until the consequence flow takes over - Enter
-                            // must not choose twice.
-                            var bsc = Object.FindObjectOfType<BasicSceneController>();
-                            if (bsc != null && bsc.SelectedButton != null) return;
-                            UiWidgets.Click(choice.Selectable.gameObject);
-                        },
+                        // Space reads what the sighted player sees on the choice's sheet - the
+                        // consequences it promises - then the full requirement breakdown (met
+                        // and not-met) from the choice's own typed Condition model.
+                        OnTooltip = () => Mod.Speech.Speak(Detail(choice) ?? Loc.T("nav.no_details")),
+                        // Backspace pays a resource lock open (and pays it back): the game's own
+                        // lock click, the only way to reach a choice bought with Sanity or
+                        // Tempest Legacy - clicking the choice itself does nothing until then.
+                        OnSecondary = () => PayLocks(choice),
+                        OnActivate = () => Choose(choice),
                     });
             }
             b.PopContext();
+
+            // Where focus lands when the screen has no remembered position - re-entering the
+            // scene after a window closes, most of all. The live surface is what the game is
+            // showing: the choice panel if it is up, else the Continue it is offering, else the
+            // newest page. Without this the graph's first node wins and the scene re-reads its
+            // opening passage while the choices sit unheard below it (seen live).
+            if (current == -10)
+            {
+                var first = FirstChoice();
+                if (first != null)
+                    b.SetStart(ControlId.Referenced(first, "scene:choice:" + first.ButtonIndex));
+            }
+            else if (current < 0 && contBtn != null)
+            {
+                b.SetStart(ControlId.Referenced(contBtn, "scene:continue"));
+            }
 
             // The story HUD (resource counters + window buttons) as its own Tab-stop.
             HudReadout.Build(b);
         }
 
-        private static UnityEngine.UI.Button ContinueButton(TextController tc)
+        /// <summary>The Continue button while the game is offering it - shown AND enabled by
+        /// whichever pager owns the page; null otherwise. A page owned by a
+        /// PageNavigationController has its OWN Continue (the one that controller reveals at the
+        /// end of its run and whose click runs its Continue): the text pager's serialized button
+        /// only ever appears on a scene that pages itself.</summary>
+        private static UnityEngine.UI.Button ReadyContinue(TextController tc)
         {
-            var go = (GameObject)ContinueButtonField.GetValue(tc);
-            return go == null ? null : go.GetComponent<UnityEngine.UI.Button>();
+            var owner = (PageNavigationController)PageNavField.GetValue(tc);
+            var cont = owner != null
+                ? (UnityEngine.UI.Button)PageNavContinueField.GetValue(owner)
+                : GetComponent<UnityEngine.UI.Button>((GameObject)ContinueButtonField.GetValue(tc));
+            return cont != null && cont.gameObject.activeInHierarchy && cont.interactable
+                ? cont : null;
+        }
+
+        private static T GetComponent<T>(GameObject go) where T : UnityEngine.Component
+            => go == null ? null : go.GetComponent<T>();
+
+        // A text block the pager will actually stop on: the game skips blocks whose conditions
+        // this playthrough does not meet (TextControllerExtensions.GetNextUnlockedTextIndex).
+        private static bool Unlocked(TextController tc, int page)
+            => tc.TextBlocks[page].AreAllConditionsSatisfied(tc.GlobalConditionGroups);
+
+        private static readonly ControlId TriggerPageId = ControlId.Structural("scene:trigger");
+
+        /// <summary>The trigger page: the scene the player's earlier choices opened, and the
+        /// conditions that opened it. The page's own header row (the game's explanation) leads,
+        /// then the scene name, then each condition with its met marker - the page shows those
+        /// markers as dimming, which no text sweep can hear.</summary>
+        private static string TriggerPageText(TextController tc)
+        {
+            var trigger = (TriggerScene)TriggerSceneField.GetValue(tc);
+            if (trigger == null) return null;
+            var parts = new List<string>();
+            var header = TriggerPageHeader(tc);
+            if (!string.IsNullOrEmpty(header)) parts.Add(header);
+            var title = Translate(trigger.SceneTitleKey);
+            if (!string.IsNullOrEmpty(title)) parts.Add(title);
+            var rows = ChoiceConditions.GroupDetails(trigger.ConditionGroup, tc.gameObject);
+            if (rows != null) parts.Add(rows);
+            return string.Join(". ", parts.ToArray());
+        }
+
+        // The game builds the page's static explanation row from a prefab, first into the
+        // conditions container - its label is the game's own word for what this page is.
+        private static readonly FieldInfo TriggerPageField = typeof(TextController)
+            .GetField("triggerScenePage", BindingFlags.NonPublic | BindingFlags.Instance);
+        private static readonly FieldInfo TriggerConditionsField = typeof(TriggerScenePageView)
+            .GetField("triggerConditionsContainer", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        private static string TriggerPageHeader(TextController tc)
+        {
+            var page = (TriggerScenePageView)TriggerPageField.GetValue(tc);
+            if (page == null) return null;
+            var container = (RectTransform)TriggerConditionsField.GetValue(page);
+            if (container == null || container.childCount == 0) return null;
+            return UiWidgets.LocalizedLabel(container.GetChild(0).gameObject);
+        }
+
+        /// <summary>Space on a choice: its promised consequences (the sheet the game paints on
+        /// hover) followed by its requirements.</summary>
+        private static string Detail(ConsequenceButtonController choice)
+        {
+            var parts = new List<string>();
+            var rewards = ChoiceRewards.Summary(choice);
+            if (rewards != null) parts.Add(rewards);
+            var conditions = ChoiceConditions.Details(choice);
+            if (conditions != null) parts.Add(conditions);
+            return parts.Count == 0 ? null : string.Join(". ", parts.ToArray());
+        }
+
+        // The game's own click gate, in the game's own order: an uninteractable choice states
+        // why, an unpaid lock states its price (Backspace pays it), and a choice already
+        // resolving is left alone (SelectedButton is set until the consequence flow takes over).
+        private static void Choose(ConsequenceButtonController choice)
+        {
+            if (!choice.GetIsButtonInteractable())
+            {
+                Mod.Speech.Speak(ChoiceConditions.UnavailableReason(choice)
+                    ?? Loc.T("state.unavailable"), interrupt: true);
+                return;
+            }
+            if (!ChoiceConditions.LocksPaid(choice))
+            {
+                Mod.Speech.Speak(ChoiceConditions.UnavailableReason(choice)
+                    ?? Loc.T("state.unavailable"), interrupt: true);
+                return;
+            }
+            var bsc = Object.FindObjectOfType<BasicSceneController>();
+            if (bsc != null && bsc.SelectedButton != null) return;
+
+            if (HoldChoice.Holding) HoldChoice.Resolve(choice);
+            else UiWidgets.Click(choice.Selectable.gameObject);
+        }
+
+        // Pay (or take back) every resource lock on the choice, through the game's own lock
+        // handler - the click a sighted player aims at the lock icon. The spoken answer is the
+        // state each lock ends in.
+        private static void PayLocks(ConsequenceButtonController choice)
+        {
+            var locks = ChoiceConditions.Locks(choice);
+            if (locks.Count == 0)
+            {
+                Mod.Speech.Speak(Loc.T("nav.no_details"), interrupt: true);
+                return;
+            }
+            var said = new List<string>();
+            foreach (var view in locks)
+            {
+                // A lock the player cannot afford (or one the game holds shut behind another
+                // lock) answers with the requirement, not with a click that does nothing.
+                if (!view.IsUnlocked && !view.IsUnlockable)
+                {
+                    said.Add(ChoiceConditions.UnavailableReason(choice) ?? Loc.T("state.unavailable"));
+                    continue;
+                }
+                view.OnClick();
+                said.Add(ChoiceConditions.LockState(view));
+            }
+            Mod.Speech.Speak(string.Join(", ", said.ToArray()), interrupt: true);
         }
 
         private static ConsequenceButtonController FirstChoice()

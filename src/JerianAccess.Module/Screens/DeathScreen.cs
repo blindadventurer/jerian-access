@@ -9,7 +9,7 @@ using DeathChoiceButton = _Scripts.AMVCC.Views.Windows.Death.DeathChoiceButtonBe
 using SimplePageTurner = _Scripts.AMVCC.Views.Windows.Death.SimplePageTurner;
 using UniversalPageTurner = _Scripts.AMVCC.Views.Windows.Death.UniversalPageTurner;
 using ResolveBehaviour = _Scripts.AMVCC.Views.Windows.Death.ResolveBehaviour;
-using TextBlock = _Scripts.AMVCC.Controllers.TextBlock;
+using TextBlock = _Scripts.AMVCC.Controllers.Text.TextBlock;
 
 namespace JerianAccess.Module.Screens
 {
@@ -66,7 +66,9 @@ namespace JerianAccess.Module.Screens
             .GetField("_mainText_TMP", BindingFlags.NonPublic | BindingFlags.Instance);
         private static readonly FieldInfo TextBlockField = typeof(SimplePageTurner)
             .GetField("_textBlock", BindingFlags.NonPublic | BindingFlags.Instance);
-        private static readonly MethodInfo InsertNameMethod = typeof(SimplePageTurner)
+        // Declared on the BASE pager, and private - reflection never reaches a private member
+        // through a derived type, so the lookup names the type that owns it.
+        private static readonly MethodInfo InsertNameMethod = typeof(UniversalPageTurner)
             .GetMethod("InsertCharacterName", BindingFlags.NonPublic | BindingFlags.Instance);
         private static readonly FieldInfo ResolveContinueField = typeof(ResolveBehaviour)
             .GetField("_continueButton", BindingFlags.NonPublic | BindingFlags.Instance);

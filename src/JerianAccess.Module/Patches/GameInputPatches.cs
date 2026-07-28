@@ -23,6 +23,14 @@ namespace JerianAccess.Module.Patches
         private static readonly Type[] InputOnlyUpdates =
         {
             typeof(_Scripts.AMVCC.Controllers.TextController),
+            // The pager the story scenes actually run on: BasicSceneController and its
+            // inconsequential twin hand their TextController a PageNavigationController, and
+            // from then on TextController.Update returns early and THIS Update reads the arrow
+            // and continue keys. Unpatched, one physical Right both moved mod focus along the
+            // transcript and turned the game's page underneath it.
+            typeof(_Scripts.AMVCC.Views.Windows.ChapterSummary.PageNavigation.PageNavigationController),
+            // The death window's pager reads the arrows itself (A/D and Left/Right).
+            typeof(_Scripts.AMVCC.Views.Windows.Death.SimplePageTurner),
         };
 
         private static Harmony _harmony;

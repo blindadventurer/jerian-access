@@ -1,41 +1,49 @@
+using JerianAccess.Module.Game;
 using JerianAccess.Module.Speech;
 using JerianAccess.Module.UI;
 using JerianAccess.Module.UI.Graph;
 using UnityEngine;
-using StartPictureHelper = _Scripts.Helpers.StartPictureHelper;
+using _Scripts.Helpers;
 
 namespace JerianAccess.Module.Screens
 {
     /// <summary>
-    /// The chapter title splash (StartPictureHelper - "ChildhoodPicture" and its siblings): a
-    /// full-screen picture with the chapter title, dismissed by clicking anywhere. One node
-    /// carrying the game's own localized title; Enter runs the game's click handler so the hide
-    /// animation, sfx and the Bolt flow advance exactly as a mouse click would. The dismiss
-    /// gesture is unusual (the whole screen is the control), so the hint is part of the readout.
+    /// The chapter-picture scene (SceneType.ChapterPicture, ChapterPictureController): a
+    /// full-screen illustration under two title lines - the chapter's name on the left, its
+    /// subtitle on the right - and nothing else. The whole screen is the dismiss control (the
+    /// game clicks the picture, or takes its InputSystem submit), which is unusual enough to earn
+    /// the hint. Enter runs the controller's own click handler, the entry its submit action uses,
+    /// so the hide animation, sfx and the Bolt flow advance exactly as a mouse click would.
     /// </summary>
     public sealed class ChapterPictureScreen : Screen
     {
         public override string Key => "chapterpicture";
         public override int Layer => 0;
 
-        public override bool IsActive()
-            => Object.FindObjectOfType<StartPictureHelper>() != null;
+        private static ChapterPictureController Controller()
+        {
+            var c = Object.FindObjectOfType<ChapterPictureController>();
+            return c != null && UiWidgets.Visible(c.gameObject) ? c : null;
+        }
 
-        private static StartPictureHelper Helper() => Object.FindObjectOfType<StartPictureHelper>();
+        public override bool IsActive() => Controller() != null;
+
+        public override Message ScreenName => null; // the title row below is the announcement
 
         public override void Build(GraphBuilder b)
         {
-            var helper = Helper();
-            if (helper == null) return;
-            b.AddItem(ControlId.Referenced(helper, "chapterpicture:title"), new NodeVtable
+            var c = Controller();
+            if (c == null) return;
+            b.AddItem(ControlId.Referenced(c, "chapterpicture:title"), new NodeVtable
             {
                 ControlType = ControlTypes.Text,
                 Announcements = new[]
                 {
-                    new NodeAnnouncement(() => helper.Title.text, kind: AnnouncementKinds.Label),
+                    new NodeAnnouncement(() => PanelText.Read(c.gameObject),
+                        kind: AnnouncementKinds.Label),
                     new NodeAnnouncement(() => Loc.T("chapterpicture.hint")),
                 },
-                OnActivate = () => Helper().OnPointerClick(),
+                OnActivate = () => c.OnPointerClick(),
             });
         }
     }

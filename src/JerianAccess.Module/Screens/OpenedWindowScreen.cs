@@ -23,10 +23,36 @@ namespace JerianAccess.Module.Screens
         public override string Key => "window";
         public override int Layer => 20;
 
+        // The window's CONTENT is what makes it a screen. The game instantiates the window
+        // prefab and then animates its page in, and for those frames the only node in the graph
+        // is the back button - the screen would open announcing "back to scene" and the content
+        // would need an arrow press to reach. Waiting for the first rendered label seats the
+        // opening focus on the window itself.
+        // Live reference for entry bookkeeping only, never content: the window this screen has
+        // already opened on. Once open it stays open until the game destroys the window - the
+        // page-in animation dips the CanvasGroup to zero on the way, and a screen that dropped
+        // out there would push again and announce the window twice (heard live).
+        private GameObject _entered;
+
         public override bool IsActive()
         {
             var w = GameUi.OpenedWindow;
-            return w != null && UiWidgets.Visible(w);
+            if (w == null) { _entered = null; return false; }
+            if (ReferenceEquals(w, _entered)) return true;
+            if (!UiWidgets.Visible(w) || !HasContent(w)) return false;
+            _entered = w;
+            return true;
+        }
+
+        private static bool HasContent(GameObject w)
+        {
+            foreach (var t in w.GetComponentsInChildren<TMPro.TMP_Text>(false))
+            {
+                var s = t.text;
+                if (string.IsNullOrEmpty(s) || s.Trim().Length == 0) continue;
+                if (UiWidgets.Visible(t.gameObject)) return true;
+            }
+            return false;
         }
 
         public override Message ScreenName
@@ -45,7 +71,13 @@ namespace JerianAccess.Module.Screens
             var w = GameUi.OpenedWindow;
             if (w == null) return;
 
+            // Nothing rendered yet (the page is still animating in): declare an EMPTY graph
+            // rather than a back button on its own. A graph whose only node is the way out seats
+            // focus there, and focus stays where it was seated once the content arrives - the
+            // window would open on "back to scene" every time (seen live).
             var items = Collect(w);
+            if (items.Count == 0) return;
+
             b.PushContext("", role: null, positions: false);
             foreach (var it in items)
             {
@@ -232,8 +264,20 @@ namespace JerianAccess.Module.Screens
         private static void Speak(string s)
             => Mod.Speech.Speak(string.IsNullOrEmpty(s) ? Loc.T("nav.no_details") : s);
 
+        // The window's name is the game's own name for the HUD button that opened it: every
+        // window controller keeps that button (WindowControllersManager hands it over on
+        // OnSelect) and the button carries the localization key the HUD speaks. A prefab title
+        // row is the fallback for a window opened some other way.
         private static string FindTitle(GameObject w)
         {
+            foreach (var comp in w.GetComponents<MonoBehaviour>())
+                foreach (var f in comp.GetType().GetFields(
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance))
+                {
+                    if (f.FieldType != typeof(GameObject) || f.Name != "_hudButton") continue;
+                    var label = HudReadout.ButtonLabel((GameObject)f.GetValue(comp));
+                    if (!string.IsNullOrEmpty(label)) return label;
+                }
             var t = w.transform.Find("Title") ?? w.transform.Find("Header/Title");
             if (t == null) return null;
             var tmp = t.GetComponentInChildren<TMPro.TMP_Text>(true);

@@ -114,13 +114,16 @@ namespace JerianAccess.Module.Game
         /// <summary>Could a mouse click reach this control right now? The game blocks input
         /// during page-turn/show/hide animations by switching ancestor CanvasGroups'
         /// blocksRaycasts off (SceneAnimationController) - keyboard activation goes around the
-        /// raycaster, so it must honor the same block or Enter double-fires mid-animation.</summary>
+        /// raycaster, so it must honor the same block or Enter double-fires mid-animation.
+        /// A DISABLED CanvasGroup is skipped because Unity itself ignores one: the game leaves
+        /// blocksRaycasts off in groups it disables after a fade (the consequence Continue
+        /// button's own group), and reading those would report a live control unreachable.</summary>
         private static bool RaycastsReachable(GameObject go)
         {
             for (var t = go.transform; t != null; t = t.parent)
             {
                 var group = t.GetComponent<CanvasGroup>();
-                if (group == null) continue;
+                if (group == null || !group.enabled) continue;
                 if (!group.blocksRaycasts) return false;
                 if (group.ignoreParentGroups) break;
             }

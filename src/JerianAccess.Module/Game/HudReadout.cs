@@ -150,6 +150,16 @@ namespace JerianAccess.Module.Game
             return (Button)ButtonField.GetValue(ctrl) ?? ctrl.GetComponentInChildren<Button>();
         }
 
+        /// <summary>The game's own localized label for a HUD button object ("Личность") - the
+        /// name a window screen answers with, since the window that button opened has no title
+        /// row of its own. Null when the object is not a HUD button.</summary>
+        public static string ButtonLabel(GameObject go)
+        {
+            if (go == null) return null;
+            var ctrl = go.GetComponent<HudButtonController>();
+            return ctrl == null ? null : Translate((string)UnlockedKeyField.GetValue(ctrl));
+        }
+
         /// <summary>The game's own localized label for the back button ("Назад к сцене").</summary>
         public static string BackLabel()
         {

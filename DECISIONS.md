@@ -28,6 +28,36 @@ YearPopup, DayStagePopup) carried over compiling and stays registered. Ported su
 their entry from the list. Chosen over stubbing call sites inside files: the Brante code stays
 pristine on disk as the porting reference, and the list doubles as the port's todo inventory.
 
+## 2026-07-28 - Delivery-only screens for everything the game pages itself
+
+Jerian pages several surfaces through `PageNavigationController`, which reads the game's own
+arrow / continue keys every frame: the chapter-summary book, tutorial popups, interludes and
+the creed-outcome popup. Those screens declare NO input category and only DELIVER (speak each
+settled page); the player pages them with the same keys a sighted player uses. Alternative
+considered and rejected: claiming input and driving the pager from the mod - it needs a
+suppression patch per pager and re-implements page state the game already owns. The rule that
+makes this safe: `GameInputPatches` skips a game Update only while the mod's UI category is
+active, so a delivery-only screen leaves the game's keys live by construction.
+
+## 2026-07-28 - Choice unlocking is a first-class action (Backspace), not a hidden Enter step
+
+A Jerian choice whose requirements fail can still be BOUGHT open with Sanity / Tempest Legacy
+by clicking its lock (`ConditionLockView`), and until that click the choice's own click does
+nothing. Enter therefore never pays: it states the price. Backspace (the existing secondary
+action) pays every lock on the choice and pays it back, answering with the state each lock
+ends in. Rationale: paying is spending a scarce resource - it must be a deliberate keypress,
+and it must be reversible the same way the mouse can un-click a lock.
+
+## 2026-07-28 - The mod resolves a held choice directly when hold-to-choose is on
+
+With the "hold the choice" setting on, the game leaves choice buttons' onClick UNWIRED and
+resolves the pick from the mouse-hold sequence, so a synthesized click reaches nothing and the
+choice cannot be taken by keyboard at all. Every choice surface (scene choices, trip options,
+case-for-a-year options) ends its hold in a private `ResolveClickEvent`; the mod calls that
+directly (`Game/HoldChoice.cs`) after checking the same guards the game checks. Rejected:
+simulating a timed hold (frame-rate dependent, and the progress animation would fight it) and
+forcing the setting off (the game's setting is the player's, not the mod's).
+
 ## 2026-07-23 - Non-Steam install, direct exe launch
 
 The game copy on this machine lives at `F:\games\The Life and Suffering of Prince Jerian`

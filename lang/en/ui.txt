@@ -62,6 +62,11 @@ choice.op.moreequal = at least
 choice.op.lessequal = at most
 choice.op.not = not
 
+# A choice whose requirements are unmet but BUYABLE: the game offers it behind a resource lock
+# (Sanity, Tempest Legacy) that the player clicks to pay. Backspace pays it and pays it back.
+choice.unlock = unlock for {cost} {name}
+choice.unlock.paid = unlocked, {cost} {name} spent
+
 # Choice detail readout (Space/F1 on a choice) - composed from the same serialized data the
 # game's hover tooltips render. Section headers ("Conditions Met", "Consequences") and the
 # "now" word are the game's own strings passed in as values.
@@ -105,6 +110,8 @@ screen.credits = credits
 screen.gameloading = load game
 gameloading.age = age: {age}
 screen.chaptersummary = chapter summary
+# The tutorial popup - the game names its steps but not the popup itself
+screen.tutorial = tutorial
 screen.window = window
 screen.pause = pause
 scene.rewards = changes:
