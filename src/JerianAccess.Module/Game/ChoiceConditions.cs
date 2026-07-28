@@ -213,9 +213,11 @@ namespace JerianAccess.Module.Game
                                 + "', naming the group instead ('" + status + "')");
                     }
                     if (string.IsNullOrEmpty(status)) return null;
-                    var req = Loc.T("choice.req.status",
+                    // The game draws the negation between the name and the status ("X ≠ Y"), and
+                    // that is where it belongs in speech too: "не X Y" reads as a different person.
+                    if (c.Not) status = Loc.T("choice.req.not", new { req = status });
+                    return Loc.T("choice.req.status",
                         new { name = c.Character.GetNameLocalised(), status });
-                    return c.Not ? Loc.T("choice.req.not", new { req }) : req;
                 }
                 case ConditionType.Objective:
                 {
@@ -229,9 +231,9 @@ namespace JerianAccess.Module.Game
                 }
                 case ConditionType.Article:
                 {
-                    var req = c.Article.GetNameLocalised() + ": "
-                        + c.Article.GetValueLocalised(c.ArticleValue);
-                    return c.Not ? Loc.T("choice.req.not", new { req }) : req;
+                    var value = c.Article.GetValueLocalised(c.ArticleValue);
+                    if (c.Not) value = Loc.T("choice.req.not", new { req = value });
+                    return c.Article.GetNameLocalised() + ": " + value;
                 }
                 case ConditionType.Estate:
                     return Loc.T("choice.req.param", new

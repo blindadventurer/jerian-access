@@ -102,6 +102,19 @@ title, a two-second flash, then the title again. The title is now delivered once
 keyed to the scene like a page is keyed to its index. What a player needs on the way back from
 an overlay is the row they are on, which the navigator's own re-seat already speaks.
 
+## 2026-07-28 - A figure the game leaves to a tooltip is named from its data container
+
+Jerian's windows draw a lot of their content as numbers with the WORD living in the hover
+tooltip: an estate's power, the summary counters, a province on the map. Read literally those
+are stops that say "22" and nothing else. The mod names them from the same data container the
+game's own tooltip controller reads (NumericalParameterContainer / TextParameterContainer /
+GenericTranslationKeyContainer / MapElementView) and keeps the RENDERED figure - a container's
+own CurrentValue can be a different reading of the same item (an estate answers with its
+loyalty, not the power drawn beside it). Rejected: reading the tooltip on focus (it is
+asynchronous - the mod's own rule is to read detail from the model, not from a tooltip that
+lags focus), and grouping every text under an item's root into one stop (the shields row would
+merge three separate counters into "0 15 0").
+
 ## 2026-07-23 - Non-Steam install, direct exe launch
 
 The game copy on this machine lives at `F:\games\The Life and Suffering of Prince Jerian`

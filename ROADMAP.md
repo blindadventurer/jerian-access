@@ -65,9 +65,12 @@ debugging from scratch.
       keycodes read by TextController, PageNavigationController and SimplePageTurner (all three
       suppressed while the mod owns input), plus InputSystem actions for Escape/submit in the
       credits and chapter-picture controllers (left alone - the mod never claims those)
-- [ ] todo - Survey Messenger event names actually fired (WriteAnswerInLog and
-      ChangeSceneTitleEvent survive; find the GoToConsequenceEvent successor)
-- [ ] todo - SceneStateMachine phases on Jerian: confirm names/order used for delivery gating
+- [x] dropped - Survey Messenger event names / SceneStateMachine phases. Both were discovery for
+      an event-driven delivery design; every surface the port ships delivers off POLLED model
+      state instead (the pager's page index, the controller's ready flag, the rendered panel),
+      which is what the reference mods do and what survives the game hiding and re-showing a
+      scene. Nothing left in the tree needs either survey - reopen if a surface turns up that
+      polling cannot see
 
 ## Phase 3 - Core scene reading (the event loop of the game)
 
@@ -150,11 +153,15 @@ debugging from scratch.
       controller, and the title is delivered off the RENDERED title label, not TitleKey, because
       such a scene swaps its title mid-run on a special-scenery block ("ChangeSceneTitleEvent"
       writes the label only)
-- [x] built - The two option-picking scene types (Screens/OptionSceneScreen.cs): "Дело на год"
+- [x] verified - The two option-picking scene types (Screens/OptionSceneScreen.cs): "Дело на год"
       (CaseForAYear) and the trip selection are whole scenes with no BasicSceneController, so
       nothing saw them. Each option is a node (game label, availability, Space for the tooltip /
       the typed conditions, Enter picks through the hold-aware resolve), with the rest of the page
-      as text rows
+      as text rows. Live 2026-07-28 on chapter 2's "Имперские Проекты" and "Сила Темпестов": nine
+      options walked and one picked by keyboard. Three fixes the pass found - the page's own words
+      now come FIRST and no longer recite every option card; and after the pick the scene turns
+      into a CONSEQUENCE page the game pages itself, where the screen used to keep claiming UI and
+      left the page unturnable by any key (now delivery-only, like the interlude popups)
 - [x] built - Chapter-picture scene (SceneType.ChapterPicture): the two title lines as one node
       plus the game's own click handler on Enter (rewritten off ChapterPictureController; Brante's
       StartPictureHelper is gone)
@@ -209,10 +216,19 @@ debugging from scratch.
       while the page animated in (focus seated there and stayed), and it re-pushed when the
       page-in animation dipped the CanvasGroup to zero, announcing the window twice. Live
       2026-07-28: "Личность" then "1124" - one announcement, focus on the first content row
-- [x] built - Windows: the generic OpenedWindowScreen covers every WindowType the game has
+- [x] verified - Windows: the generic OpenedWindowScreen covers every WindowType the game has
       (Personality, Destiny, Relations, Empire, Map, Creed, Council) - they all open through
-      WindowControllersManager, so there is no per-window porting left to make them readable;
-      per-window polish (folding rows the sweep splits) stays open
+      WindowControllersManager, so there is no per-window porting left to make them readable.
+      Live 2026-07-28 on Personality, Destiny, Empire and Map (the four a chapter-2 run can
+      reach). Four fixes the pass found: the MAP was read by nothing at all (a picture with
+      fourteen hover zones and no text - the screen's content test wanted text, so the window
+      never opened as a screen and the player was left on a dead scene); figures the game leaves
+      to its hover tooltip read as stops that said a number and nothing else ("22", "15", "0"),
+      and now carry the name from the data container the tooltip reads; a row that renders only
+      its reading says whose it is ("Великие дома, Лояльность – 12"); a scale's end marker (every
+      personality axis ends in "20") is the ruler, not a reading, so it is no longer a stop; and a
+      "*Name" label pairs with a "*Value" only inside its own row - the hero's name had claimed a
+      value from the far side of the page, leaving that row with none
 - [x] built - The UIManager popup slot's family (Screens/GenericPopupScreen.cs, re-pointed at
       Jerian): objective / info / condition-help / case-of-year / finals-remind popups read as
       body text plus their buttons
@@ -229,9 +245,10 @@ debugging from scratch.
       dead end for a keyboard player. A screen that declares no categories now stops the category
       walk (ScreenManager.ProvideCategories): the keyboard goes to the GAME, not to a covered
       screen. Live: with an interlude up, CategoryActive(UI) went True -> False and its pages turn
-- [x] built - Tutorial popups (Screens/TutorialPopupScreen.cs). These LOCK scene navigation while
-      open, so an unread one was not just silence - the scene had stopped answering. Verified live
-      2026-07-28: the Destiny-lock tutorial spoke on the prologue's first choice panel
+- [x] verified - Tutorial popups (Screens/TutorialPopupScreen.cs). These LOCK scene navigation
+      while open, so an unread one was not just silence - the scene had stopped answering.
+      Verified live 2026-07-28: the Destiny-lock tutorial spoke on the prologue's first choice
+      panel, and chapter 1's Sanity-lock tutorial read and paged in the chapter-1 run
 - [x] built - Death window (Brante's DeathScreen re-pointed: Jerian keeps the same
       DeathWindowBehaviour / SimplePageTurner / ResolveBehaviour shapes; the page-text helper now
       reflects on the type that declares it and the pager's own arrow reads are suppressed while
@@ -259,9 +276,13 @@ debugging from scratch.
 
 ## Phase 5 - Cutscenes & interludes
 
-- [ ] todo - Cutscene subtitles spoken (Addressables video bundles; port
-      SubtitleSpeechPatches approach); skip key announced state
-- [ ] todo - Interlude / chapter picture screens
+- [x] verified - Cutscene subtitles spoken. No Harmony patch on Jerian: the game's own localized
+      TMP line is polled and spoken as it toggles per phrase (SubtitleSpeechPatches stays
+      excluded). Live 2026-07-28 on the chapter-2 opening cutscene - the skip hint, then all
+      twenty-six subtitle lines in order
+- [x] verified - Interlude / chapter picture screens: the interludes read and page (see the
+      PopupControllersManager item), and the chapter picture announces its two title lines with
+      the Enter hint ("1132г. Глава II. Наследник, Enter продолжить")
 
 ## Phase 6 - Input & navigation polish
 
@@ -273,7 +294,11 @@ debugging from scratch.
 - [x] built - Popups that PopupControllersManager instantiates are found by TYPE, not through
       UIManager's popup slot: Jerian never writes that slot for them, so the year-increment and
       day-stage screens could never wake up
-- [ ] todo - Full key map reviewed against Jerian's own keys; KEYS.md regenerated
+- [x] verified - Full key map reviewed against Jerian's own keys (GlobalConfig: left = A /
+      Left, right = D / Right / Space, continue = Enter / keypad Enter, skip = either Shift):
+      the mod's own bindings match the habits those keys teach, so a surface the game pages
+      itself needs no new key from the player. KEYS.md regenerated - it now documents the
+      game-paged surfaces and Backspace paying (and un-paying) a choice's resource lock
 - [ ] todo - Typeahead search on lists; verbosity settings; UI sounds
 
 ## Phase 7 - Localization

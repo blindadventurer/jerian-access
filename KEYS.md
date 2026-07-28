@@ -19,8 +19,10 @@ game's stock keys everywhere else (cutscene skips, text entry).
 - Space or F1: read details for the focused item - choice conditions and consequences,
   parameter scales, character and objective descriptions. Where the item has no detail
   of its own, Space reads the window's help text if the game provides one.
-- Backspace: secondary action where one exists. Currently only the load window uses it:
-  Backspace on a save slot opens the game's delete confirmation.
+- Backspace: secondary action where one exists. On a choice the game offers to unlock for
+  Sanity or Tempest Legacy, Backspace pays the price - and pressed again, takes it back;
+  Enter never pays, it states the price. On a save slot, Backspace opens the game's delete
+  confirmation.
 - Home and End: first and last item. Pressed again at the edge, they re-read the
   current item in full.
 - Ctrl plus Up and Ctrl plus Down: previous and next region on screens that group
@@ -28,6 +30,18 @@ game's stock keys everywhere else (cutscene skips, text entry).
 - Ctrl plus V: toggle verbosity. Concise drops the control role word and the item
   position from navigation readouts; verbose, the default, keeps them. The setting
   persists across sessions.
+
+## Surfaces the game turns itself
+
+Some pages carry no navigation of their own - an interlude or a newspaper between events, a
+tutorial card, the chapter book, and the outcome page after you pick a case for the year.
+The mod reads each page as the game settles it and leaves the keys to the game, so these use
+the game's own paging keys:
+
+- Right arrow, D or Space: next page.
+- Left arrow or A: previous page.
+- Enter (main or keypad): continue, once the page offers it.
+- Hold either Shift: skip to the last page.
 
 ## Type-ahead search
 

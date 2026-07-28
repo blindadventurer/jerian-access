@@ -130,6 +130,10 @@ while [ "$STEP" -lt "$MAX" ]; do
       # A screen with no nodes at all has handed the keyboard to the game for this phase (the
       # case-for-a-year scene turns into a consequence page the game pages itself).
       if echo "$NAVOUT" | grep -q '^graph ('; then ACTION="endenter"; else ACTION="gamenext"; fi ;;
+    "screen window"|"screen pause"|"screen settings")
+      # A window the walk opened by accident (End lands on a HUD button when the scene offers
+      # no choices): leave it the way a player would.
+      ACTION="escape" ;;
     "screen gameloading")
       # The between-chapters loading screen: Continue is the start node (End would land on the
       # on-screen hint), so Home+Enter resumes at the chapter the run just reached.
@@ -178,7 +182,12 @@ while [ "$STEP" -lt "$MAX" ]; do
 
   C=$(cursor)
   if [ "$ACTION" = "endenter" ]; then
-    press ui.end; sleep 0.3; press ui.activate
+    # Shift+Tab first: End walks the stop focus is IN, and a scene with no choices leaves focus
+    # on the HUD stop, where End+Enter opened a window (and Escape put it right back). The story
+    # is the stop before the HUD; from the story stop the key does nothing.
+    press ui.prev; sleep 0.2; press ui.home; sleep 0.2; press ui.end; sleep 0.3; press ui.activate
+  elif [ "$ACTION" = "escape" ]; then
+    press ui.back
   elif [ "$ACTION" = "gamenext" ]; then
     # These surfaces fade a page in before its text lands; a click on the frame the page
     # reports itself ready turns past content nobody heard. A player waits for the words.
@@ -204,6 +213,7 @@ while [ "$STEP" -lt "$MAX" ]; do
       echo "ABORT step $STEP: picked choice $PICKED not in choice list"; exit 1
     fi
     UPS=$((TOTAL - POS))
+    press ui.prev; sleep 0.2; press ui.home; sleep 0.2
     press ui.end
     UI=0
     while [ "$UI" -lt "$UPS" ]; do press ui.up; sleep 0.15; UI=$((UI + 1)); done

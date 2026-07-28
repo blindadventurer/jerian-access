@@ -19,43 +19,45 @@ namespace JerianAccess.Module.Screens
         public override string Key => "popup";
         public override int Layer => 20;
 
-        // Live reference for first-frame bookkeeping only, never content.
-        private GameObject _seen;
-        private int _seenFrame;
-
+        // The popup opens as a screen once it has WORDS: the game assigns the slot a frame or
+        // more before its texts localize, and a screen that opened on the empty prefab announced
+        // an empty body - the player heard a position and nothing else (heard live on the
+        // objective popup: "1 of 2").
         public override bool IsActive()
         {
             var p = GameUi.OpenedPopup;
-            if (p == null || !p.activeInHierarchy)
-            {
-                _seen = null;
-                return false;
-            }
-            // Popups that localize in Start still show serialized editor text on the frame
-            // UIManager assigns the slot; every popup therefore activates one frame after first
-            // observation - Start has run by then, and synchronously-configured popups lose
-            // nothing audible.
-            if (!ReferenceEquals(p, _seen))
-            {
-                _seen = p;
-                _seenFrame = Time.frameCount;
-            }
-            return Time.frameCount > _seenFrame;
+            return p != null && p.activeInHierarchy && PanelText.Read(p).Length > 0;
         }
 
-        public override Message ScreenName
+        // No screen-name announcement: the body node below is the first stop, and its own
+        // announcement IS the popup - naming it here would say the whole body twice.
+        public override Message ScreenName => null;
+
+        // These popups animate in, and reading order is the order things are ON SCREEN: read
+        // mid-animation the rows come out shuffled (the title landed last, after the button).
+        // The graph therefore stays EMPTY until the panel has held still - focus seats when the
+        // nodes appear, and its announcement is the settled popup.
+        private readonly SettledDelivery _settle = new SettledDelivery(0.25f);
+        private bool _settled;
+
+        public override void OnPop()
         {
-            get
-            {
-                var p = GameUi.OpenedPopup;
-                return p == null ? null : Message.MaybeRaw(PanelText.Read(p));
-            }
+            _settle.Reset();
+            _settled = false;
+        }
+
+        public override void OnUpdate()
+        {
+            var p = GameUi.OpenedPopup;
+            if (p == null) return;
+            bool grew;
+            if (_settle.Poll(PanelText.Read(p), out grew) != null) _settled = true;
         }
 
         public override void Build(GraphBuilder b)
         {
             var p = GameUi.OpenedPopup;
-            if (p == null) return;
+            if (p == null || !_settled) return;
 
             b.AddItem(ControlId.Referenced(p.transform, "popup:body"), new NodeVtable
             {
@@ -70,6 +72,9 @@ namespace JerianAccess.Module.Screens
             {
                 var btn = button;
                 if (!UiWidgets.Visible(btn.gameObject)) continue;
+                // The full-screen click-away backdrop behind the popup carries no caption. It is
+                // a real button, but as a stop it is an unlabeled one that answers nothing.
+                if (string.IsNullOrEmpty(UiWidgets.LocalizedLabel(btn.gameObject))) continue;
                 b.AddItem(ControlId.Referenced(btn, "popup:btn:" + btn.GetInstanceID()),
                     new NodeVtable
                     {

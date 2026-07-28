@@ -119,12 +119,14 @@ namespace JerianAccess.Module.Screens
             if (controller == null) return false;
             int index = (int)RewardIndexField.GetValue(controller);
             if (index < 0) return false;
+            var rewards = ((Interlude)InterludeField.GetValue(controller)).VisibleRewards;
+            // A reward the sheet has no words for (a creed ending is painted as a seal) falls
+            // through to the rendered read rather than leaving the page silent.
+            var text = index < rewards.Count ? ChoiceRewards.Describe(rewards[index]) : null;
+            if (string.IsNullOrEmpty(text)) return false;
             if (index == _spokenReward) return true;
             _spokenReward = index;
-            var rewards = ((Interlude)InterludeField.GetValue(controller)).VisibleRewards;
-            if (index >= rewards.Count) return true;
-            var text = ChoiceRewards.Describe(rewards[index]);
-            if (!string.IsNullOrEmpty(text)) Mod.Speech.Speak(text);
+            Mod.Speech.Speak(text);
             return true;
         }
     }
