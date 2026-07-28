@@ -156,6 +156,7 @@ namespace JerianAccess.Module
                 new CreditsScreen(),
                 new TutorialPopupScreen(),
                 new ScenePopupScreen(),
+                new SceneRewardPopupScreen(),
                 new GenericPopupScreen(),
                 new YearPopupScreen(),
                 new DayStagePopupScreen(),
