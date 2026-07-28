@@ -81,7 +81,9 @@ while [ "$STEP" -lt "$MAX" ]; do
     # header repeats the id, so only graph lines' leading token counts (the focused graph
     # line starts with "* " instead of two spaces).
     CHOICE_IDS=$(echo "$NAVOUT" | awk '{id=($1=="*")?$2:$1; if (id ~ /^ControlId\(scene:choice:[0-9]+,$/) {gsub(/^ControlId\(scene:choice:|,$/,"",id); print id}}')
-    AVAIL=$(echo "$NAVOUT" | grep -v ', unavailable' \
+    # The unavailable marker is the mod's own localized word - the graph dump is in whatever
+    # language the game is set to, so both the English and the Russian form are filtered.
+    AVAIL=$(echo "$NAVOUT" | grep -v ', unavailable' | grep -v ', недоступно' \
       | awk '{id=($1=="*")?$2:$1; if (id ~ /^ControlId\(scene:choice:[0-9]+,$/) {gsub(/^ControlId\(scene:choice:|,$/,"",id); print id}}' \
       | tr '\n' ',' | sed 's/,$//')
     # Progress fingerprint for the stuck detector: newest transcript page + choice set.
