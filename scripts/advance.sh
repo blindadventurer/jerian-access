@@ -118,7 +118,7 @@ while [ "$STEP" -lt "$MAX" ]; do
       echo "STOP step $STEP: main menu"; exit 0 ;;
     "screen gameover"|"screen credits")
       echo "STOP step $STEP: run ended on $ACTIVE"; exit 0 ;;
-    "screen popup:scene"|"screen tutorial"|"screen chaptersummary")
+    "screen popup:scene"|"screen popup:reward"|"screen tutorial"|"screen chaptersummary")
       # Delivery-only surfaces: the mod claims no key on them, the GAME pages them (arrows /
       # Enter). The driver cannot press a real key - legacy Input needs the game window focused -
       # so it clicks the pager's own buttons through the game.next dev verb.
@@ -175,7 +175,10 @@ while [ "$STEP" -lt "$MAX" ]; do
     choices*)
       LIST=${KIND#choices }
       N=$(echo "$LIST" | tr ',' '\n' | wc -l)
-      PICK_AT=$((STEP % N + 1))
+      # Rotating the pick keeps a lethal first choice from looping forever; JERIAN_PICK=first
+      # forces the top choice instead, which is how a run takes a different path through a
+      # chapter it has already played one way.
+      if [ "${JERIAN_PICK:-rotate}" = "first" ]; then PICK_AT=1; else PICK_AT=$((STEP % N + 1)); fi
       PICK=$(echo "$LIST" | tr ',' '\n' | sed -n "${PICK_AT}p")
       ACTION="choice $PICK" ;;
     advance)
