@@ -27,6 +27,23 @@ namespace JerianAccess.Module.Game
                     value = numerical.CurrentValue,
                 });
 
+            return NameOf(go);
+        }
+
+        /// <summary>Just what the item IS, without the container's own figure - for a stop that
+        /// already shows the figure on screen (an estate's power, a summary counter: the game
+        /// draws the number and leaves the word to the hover tooltip). The rendered number is the
+        /// one to speak; a container's own CurrentValue can be a different reading of the same
+        /// item (an estate's container answers with its loyalty, not the power beside it).</summary>
+        public static string NameOf(GameObject go)
+        {
+            if (go == null) return null;
+
+            var numerical = go.GetComponentInParent<NumericalParameterContainer>();
+            if (numerical != null && numerical.IsInitialised
+                && !string.IsNullOrEmpty(numerical.NameLocalised))
+                return numerical.NameLocalised;
+
             var text = go.GetComponentInParent<TextParameterContainer>();
             if (text != null && text.IsInitialised && !string.IsNullOrEmpty(text.NameLocalised))
                 return text.NameLocalised;
@@ -34,6 +51,12 @@ namespace JerianAccess.Module.Game
             var generic = go.GetComponentInParent<GenericTranslationKeyContainer>();
             if (generic != null && !string.IsNullOrEmpty(generic.TitleTranslationKey))
                 return I2.Loc.LocalizationManager.GetTranslation(generic.TitleTranslationKey);
+
+            // A province on the Empire map: the window is a picture with fourteen hover zones and
+            // not one word of text, so the province's own name key is all there is to read.
+            var mapElement = go.GetComponentInParent<MapElementView>();
+            if (mapElement != null && !string.IsNullOrEmpty(mapElement.MapElementNameKey))
+                return I2.Loc.LocalizationManager.GetTranslation(mapElement.MapElementNameKey);
 
             return null;
         }

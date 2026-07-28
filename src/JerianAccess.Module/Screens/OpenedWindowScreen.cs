@@ -41,6 +41,8 @@ namespace JerianAccess.Module.Screens
             return true;
         }
 
+        // Content is not only words: the Empire map is a picture with fourteen hover zones and no
+        // text at all, and a text-only test left that whole window unread and unnavigable.
         private static bool HasContent(GameObject w)
         {
             foreach (var t in w.GetComponentsInChildren<TMPro.TMP_Text>(false))
@@ -49,6 +51,9 @@ namespace JerianAccess.Module.Screens
                 if (string.IsNullOrEmpty(s) || s.Trim().Length == 0) continue;
                 if (UiWidgets.Visible(t.gameObject)) return true;
             }
+            foreach (var zone in w.GetComponentsInChildren<_Scripts.Tooltips.TooltipZoneView>(false))
+                if (zone.enabled && UiWidgets.Visible(zone.gameObject)
+                    && !string.IsNullOrEmpty(ContainerLabel.Of(zone.gameObject))) return true;
             return false;
         }
 
@@ -139,6 +144,13 @@ namespace JerianAccess.Module.Screens
             return twins > 1 && off == 1;
         }
 
+        /// <summary>The figure a scale draws at its own end (every personality axis ends in "20"),
+        /// which is the ruler, not a reading: the slider owns it, the row states its own value
+        /// beside its name, and as a stop it says a number and nothing else. What the scale means
+        /// is what Space reads on the row.</summary>
+        private static bool IsScaleEndMarker(TMPro.TMP_Text t)
+            => IsNumber(t.text) && t.GetComponentInParent<CustomSlider>() != null;
+
         private static bool IsNumber(string s)
         {
             s = s.Trim();
@@ -189,6 +201,7 @@ namespace JerianAccess.Module.Screens
                 if (owner is Button || owner is Toggle) continue;
                 var s = t.text;
                 if (string.IsNullOrEmpty(s) || s.Trim().Length == 0) continue;
+                if (IsScaleEndMarker(t)) continue;
                 texts.Add(t);
             }
 
@@ -265,7 +278,10 @@ namespace JerianAccess.Module.Screens
         }
 
         // The value for a "*Name" label is the like-named "*Value" text physically closest to it
-        // (Jerian lays a row's name and value in sibling columns, not always the same parent).
+        // (Jerian lays a row's name and value in sibling columns, not always the same parent) -
+        // but always WITHIN THE SAME ROW. Without that bound the hero's "Name" claimed a "Value"
+        // from the far side of the page ("Джериан II Темпест 5"), and the row that value really
+        // belonged to lost it ("Рассудок" with no number).
         private static TMPro.TMP_Text NearestValue(List<TMPro.TMP_Text> texts,
             HashSet<TMPro.TMP_Text> consumed, TMPro.TMP_Text name, string valueName)
         {
@@ -274,11 +290,17 @@ namespace JerianAccess.Module.Screens
             foreach (var t in texts)
             {
                 if (t == name || consumed.Contains(t) || t.gameObject.name != valueName) continue;
+                if (!SameRow(name.transform, t.transform)) continue;
                 float d = (t.transform.position - name.transform.position).sqrMagnitude;
                 if (d < bestSqr) { bestSqr = d; best = t; }
             }
             return best;
         }
+
+        // One row: the same parent, or two columns of the same one (a shared grandparent).
+        private static bool SameRow(Transform a, Transform b)
+            => a.parent == b.parent
+            || (a.parent != null && b.parent != null && a.parent.parent == b.parent.parent);
 
         private static void AddButton(GraphBuilder b, Button btn, bool selected)
         {
@@ -332,16 +354,36 @@ namespace JerianAccess.Module.Screens
             List<TMPro.TMP_Text> row)
         {
             if (value != null) return text.text + " " + value.text;
-            if (row == null || row.Count <= 1) return text.text;
+            if (row == null || row.Count <= 1) return Named(text, text.text);
             var sb = new System.Text.StringBuilder();
+            bool figuresOnly = true;
             foreach (var member in row)
             {
                 var s = member.text;
                 if (string.IsNullOrEmpty(s) || s.Trim().Length == 0) continue;
+                if (!IsNumber(s)) figuresOnly = false;
                 if (sb.Length > 0) sb.Append(' ');
                 sb.Append(s.Trim());
             }
-            return sb.ToString();
+            return figuresOnly ? Named(text, sb.ToString()) : sb.ToString();
+        }
+
+        // A stop the game drew as a bare FIGURE (an estate's power, a summary counter) states
+        // nothing on its own: the game leaves the word to the hover tooltip, and hangs it on the
+        // data container that tooltip reads. The word comes from there, the figure stays the
+        // rendered one - it is what the player is looking at.
+        private static string Named(TMPro.TMP_Text text, string words)
+        {
+            var name = ContainerLabel.NameOf(text.gameObject);
+            if (string.IsNullOrEmpty(name)) return words;
+            if (IsNumber(words)) return name + " " + words.Trim();
+            // A row that renders its own reading ("Лояльность – 12") still has to say WHOSE. The
+            // game composes the container's name as "<item>: <parameter>", so the item is exactly
+            // the half the rendered row leaves out.
+            int colon = name.IndexOf(':');
+            if (colon <= 0) return words;
+            var item = name.Substring(0, colon).Trim();
+            return words.StartsWith(item) ? words : item + ", " + words;
         }
 
         private static void AddPicture(GraphBuilder b, GameObject zone, string label)
