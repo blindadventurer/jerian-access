@@ -38,6 +38,20 @@ namespace JerianAccess.Module.Screens
 
         private readonly SettledDelivery _delivery = new SettledDelivery(0.25f);
 
+        // The popup's title row is chrome: it stays put while the pages turn under it, so it is
+        // read with the first page and never again (a nine-page interlude opened every page with
+        // its own name otherwise). Rows are matched by the game's own object naming.
+        private const string TitleRow = "Title";
+        private string _spokenTitle;
+
+        private static string Title(GameObject popup)
+        {
+            foreach (var tmp in popup.GetComponentsInChildren<TMPro.TMP_Text>(false))
+                if (tmp.gameObject.name.Contains(TitleRow) && UiWidgets.Visible(tmp.gameObject))
+                    return tmp.text.Trim();
+            return null;
+        }
+
         /// <summary>The live popup in the manager's container, or null. The manager destroys a
         /// popup when it closes, so a live child IS an open popup.</summary>
         private static GameObject Popup()
@@ -62,15 +76,26 @@ namespace JerianAccess.Module.Screens
 
         public override Message ScreenName => null; // the delivered page is the announcement
 
-        public override void OnPop() => _delivery.Reset();
+        public override void OnPop()
+        {
+            _delivery.Reset();
+            _spokenTitle = null;
+        }
 
         public override void OnUpdate()
         {
             var popup = Popup();
             if (popup == null) return;
             bool grew;
-            var text = _delivery.Poll(PanelText.Read(popup), out grew);
-            if (!string.IsNullOrEmpty(text)) Mod.Speech.Speak(text);
+            var text = _delivery.Poll(PanelText.Read(popup, TitleRow), out grew);
+            if (string.IsNullOrEmpty(text)) return;
+            var title = Title(popup);
+            if (!string.IsNullOrEmpty(title) && title != _spokenTitle)
+            {
+                _spokenTitle = title;
+                text = title + ". " + text;
+            }
+            Mod.Speech.Speak(text);
         }
     }
 }

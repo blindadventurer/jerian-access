@@ -79,15 +79,16 @@ debugging from scratch.
 - [x] verified - Cutscene: subtitles spoken by POLLING the game's TMP line (no Harmony
       needed on Jerian - SubtitleSpeechPatches route obsolete), skip hint announced;
       CutsceneShowing gate on _hasExecuted (controller shell stays active after handoff)
-- [x] built - Choices: list/focus/activate via game handlers wired (ConsequenceButtonController,
-      -10 seats first choice); prologue resolved its choice scripted, so interactive choice
-      activation still needs a live pass in chapter 1
-- [ ] built - Unavailable choices announce the failed requirement (Game/ChoiceConditions.cs:
+- [x] verified - Choices: list/focus/activate via game handlers wired (ConsequenceButtonController,
+      -10 seats first choice). Live 2026-07-28: every choice panel of the chapter-1 run was walked
+      and resolved by keyboard alone (announcement, availability, Enter) - six scenes' worth
+- [x] verified - Unavailable choices announce the failed requirement (Game/ChoiceConditions.cs:
       composes failed non-hidden conditions from the typed Condition model - Parameter,
       Relation, Status, Objective, Ending, Article, Estate, Bilateral - reusing the game's own
       GetNameLocalised/GetTranslation; Space reads the full met/not-met breakdown). Wired into
       SceneScreen choice nodes. Live 2026-07-28: a met condition read correctly on the prologue's
-      third choice ("Разум не менее 6, выполнено"). A FAILING one still needs a live pass
+      third choice ("Разум не менее 6, выполнено"); FAILING ones read through the chapter-1 run
+      ("Заступиться за семью Марты, кнопка, недоступно, требуется Страсть не менее 6")
 - [x] built - Choice RESOURCE LOCKS (Jerian mechanic Brante had no equivalent of): a choice whose
       conditions fail can be bought open with Sanity / Tempest Legacy, and until its
       ConditionLockView is clicked the choice's own click does nothing - so without this the
@@ -130,14 +131,16 @@ debugging from scratch.
       scene re-read its first page while the choices sat unheard. The start node is now the live
       surface (choices, else the offered Continue, else the newest page). Verified live 2026-07-28
 - [x] built - Consequence sheet reading - see the choice-detail item above (ChoiceRewards)
-- [ ] built - Scene title on a scene CHANGE (SceneScreen.DeliverTitle): the next scene loads in
+- [x] verified - Scene title on a scene CHANGE (SceneScreen.DeliverTitle): the next scene loads in
       place inside one frame, so IsActive never dips, the screen never re-focuses and OnFocus's
       screen-name announcement never ran again - only the first page was spoken (observed live:
       speech 245 "Утро. Такое же..." with no title, title only after a hot reload). Now polled
       off BasicSceneController.TitleKey and delivered once per scene, ahead of its first page;
       OnFocus records what it spoke so an entry never doubles. Verified live by swapping the
-      controller's key (spoke "Наставление Корнелия" on the change, once). Awaiting confirmation
-      on a real transition
+      controller's key (spoke "Наставление Корнелия" on the change, once). Confirmed on real
+      transitions through chapter 1 - and the title no longer DOUBLES when the year flash (or any
+      overlay) hands focus back: the title is announced once per scene, keyed to content like a
+      page, never on re-focus (the navigator's re-seat speaks the row the player is on)
 - [x] built - Chapter transitions announced: SceneType.ChapterStart and ChapterFinish are
       ChapterSummaryWindowController scenes on Jerian, which ChapterSummaryScreen already reads
       (Brante's own chapter-transition panels are gone - their screens stay excluded)
@@ -213,8 +216,19 @@ debugging from scratch.
 - [x] built - The UIManager popup slot's family (Screens/GenericPopupScreen.cs, re-pointed at
       Jerian): objective / info / condition-help / case-of-year / finals-remind popups read as
       body text plus their buttons
-- [x] built - The PopupControllersManager family (Screens/ScenePopupScreen.cs): interlude and
-      creed-outcome popups deliver each settled page; the game pages them with its own keys
+- [x] verified - The PopupControllersManager family (Screens/ScenePopupScreen.cs): interlude and
+      creed-outcome popups deliver each settled page; the game pages them with its own keys.
+      Live 2026-07-28 on three chapter-1 interludes (a nine-page newspaper among them). Two fixes
+      the pass found: the popup's TITLE is chrome that stays while the pages turn, so it is read
+      with the first page only; and a page that GREW opened on the composer's separator, which the
+      reader voiced ("точка Вестник Аркнии")
+- [x] verified - BLOCKER: a delivery-only screen was unpageable by ANY key. Those screens claim no
+      input on purpose - the game pages them with its own keys - but the covered scene UNDERNEATH
+      kept claiming UI, and GameInputPatches suppresses the game's pagers for exactly as long as
+      the mod claims UI. So every interlude, tutorial and chapter book opened over a scene was a
+      dead end for a keyboard player. A screen that declares no categories now stops the category
+      walk (ScreenManager.ProvideCategories): the keyboard goes to the GAME, not to a covered
+      screen. Live: with an interlude up, CategoryActive(UI) went True -> False and its pages turn
 - [x] built - Tutorial popups (Screens/TutorialPopupScreen.cs). These LOCK scene navigation while
       open, so an unread one was not just silence - the scene had stopped answering. Verified live
       2026-07-28: the Destiny-lock tutorial spoke on the prologue's first choice panel

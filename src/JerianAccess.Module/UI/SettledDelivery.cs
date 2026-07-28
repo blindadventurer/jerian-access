@@ -49,8 +49,10 @@ namespace JerianAccess.Module.UI
             }
             if (Time.unscaledTime - _pendingSince < _settleSeconds) return null;
             grew = _spokenSig != null && sig.StartsWith(_spokenSig);
+            // A tail starts at the separator the composer left behind (PanelText joins rows with
+            // ". ", readouts with ", ") - it is punctuation the reader would voice, not content.
             var delivery = grew
-                ? sig.Substring(_spokenSig.Length).TrimStart(',', ' ')
+                ? sig.Substring(_spokenSig.Length).TrimStart('.', ',', ' ')
                 : sig;
             _spokenSig = sig;
             _pendingSig = null;

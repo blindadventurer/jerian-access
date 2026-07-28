@@ -82,6 +82,26 @@ twice and losing focus to whatever node the graph happened to start with. Screen
 the game hides this way (the scene, the opened window) now hold a live reference to what they
 entered on and only leave when the game DESTROYS it - which Unity's own null reports.
 
+## 2026-07-28 - A screen that claims no keys hands the keyboard to the GAME
+
+`ScreenManager.ProvideCategories` walks the stack focus-first and unions each screen's input
+categories. A delivery-only screen (interlude popup, tutorial, chapter book) declares none
+because the GAME pages it - but the walk continued into the scene underneath, which claims UI,
+and `GameInputPatches` suppresses the game's own pagers for exactly as long as the mod claims
+UI. The result was a popup no key could turn. The walk now stops at a screen that declares no
+categories, the same way it stops at an Exclusive one. Rejected: marking each such screen
+Exclusive by hand (the invariant then lives in five files and the sixth one forgets it), and
+giving those screens their own paging nodes (DECISIONS 2026-07-28 already rejected that - it
+re-implements page state the game owns).
+
+## 2026-07-28 - The scene title is content, not a focus announcement
+
+A scene's title was the screen-name announcement, so every overlay the game raises over a live
+scene (the year flash, a window, a popup) spoke it again on the way out - the player heard the
+title, a two-second flash, then the title again. The title is now delivered once per scene,
+keyed to the scene like a page is keyed to its index. What a player needs on the way back from
+an overlay is the row they are on, which the navigator's own re-seat already speaks.
+
 ## 2026-07-23 - Non-Steam install, direct exe launch
 
 The game copy on this machine lives at `F:\games\The Life and Suffering of Prince Jerian`

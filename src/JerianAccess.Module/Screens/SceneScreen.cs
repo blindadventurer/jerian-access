@@ -157,10 +157,16 @@ namespace JerianAccess.Module.Screens
 
         public override void OnPush() { _entryPending = true; }
 
+        // The screen-name announcement IS the scene title, and a scene's title is announced ONCE -
+        // like a page, keyed to content rather than to focus. Every overlay the game raises over a
+        // live scene (the year flash, a window, a popup) hands focus back on the way out, and
+        // re-announcing there repeated the title the player had just heard. What the player needs
+        // on the way back is the row they are on, which the navigator's own re-seat speaks.
         public override void OnFocus()
         {
-            base.OnFocus();             // the screen-name announcement IS the title
-            _spokenTitle = TitleText(); // empty when the scene hasn't set up yet - delivered below
+            var title = TitleText(); // empty when the scene hasn't set up yet - delivered below
+            if (!string.IsNullOrEmpty(title) && title != _spokenTitle) Mod.Speech.Speak(title);
+            _spokenTitle = title;
         }
 
         public override void OnPop()

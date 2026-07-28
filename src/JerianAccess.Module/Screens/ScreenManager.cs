@@ -43,14 +43,20 @@ namespace JerianAccess.Module.Screens
 
         /// <summary>InputManager's ActiveCategoriesProvider: the union of every active screen's
         /// declared categories, focus-first, stopping at the first Exclusive screen (a modal owns
-        /// the keyboard). Global is appended by InputManager itself.</summary>
+        /// the keyboard). Global is appended by InputManager itself.
+        ///
+        /// A screen that declares NO categories stops the walk too: a delivery-only screen (an
+        /// interlude popup, a tutorial, the chapter book) hands the keyboard to the GAME, which
+        /// pages it with its own keys - and GameInputPatches suppresses those game pagers for
+        /// exactly as long as the mod claims UI. Letting the covered scene underneath keep
+        /// claiming UI left such a popup unpageable by any key at all.</summary>
         public static void ProvideCategories(List<InputCategory> cats)
         {
             foreach (var screen in FocusedFirst())
             {
                 foreach (var c in screen.InputCategories)
                     if (!cats.Contains(c)) cats.Add(c);
-                if (screen.Exclusive) break;
+                if (screen.Exclusive || screen.InputCategories.Count == 0) break;
             }
         }
 

@@ -40,23 +40,6 @@ LOGC=$(logcur)
 while [ "$STEP" -lt "$MAX" ]; do
   STEP=$((STEP + 1))
 
-  # Life support (harness intervention, see DECISIONS.md): the fourth-death trial rewinds
-  # the whole chapter, so three runs in a row died before reaching the chapter final. Reset
-  # the death counter (trial fires at 4) and keep Will off the floor so the run can finish;
-  # standard deaths still occur and traverse in place. One eval per 60 steps (~10 per leg)
-  # stays far below the ~400-eval GC crash documented in CLAUDE.md.
-  # No declarations in the eval: the REPL keeps state for the whole game session, so a
-  # `var` would compile once and fail as a redefinition on every later call - which is
-  # exactly what happened (silently, because the output was discarded) the first time a
-  # trial fired straight through life support. The result is logged; a non-ok result is
-  # loud but does not abort (one missed reset is survivable, a pattern of them is not).
-  if [ $((STEP % 60)) -eq 1 ]; then
-    LS=$(curl -s -m 10 -X POST "$BASE/eval" --data-binary '_Scripts.Managers.ParametersManager.Instance.Parameters.Death = 0; if (_Scripts.Managers.ParametersManager.Instance.Parameters.Will < 15) _Scripts.Managers.ParametersManager.Instance.Parameters.Will = 15; _Scripts.Managers.ParametersManager.Instance.OnBeforeSerialize(); "ls Death=" + _Scripts.Managers.ParametersManager.Instance.Parameters.Death + " Will=" + _Scripts.Managers.ParametersManager.Instance.Parameters.Will')
-    case "$LS" in
-      *"ls Death=0"*) echo "life support step $STEP: $LS" ;;
-      *) echo "life support step $STEP FAILED: $LS" ;;
-    esac
-  fi
 
   # Mod errors abort; the game's own errors (e.g. UIManager.SetAchievementInfo NREs in the
   # fourth-death Continue path, a game bug that also fires on mouse clicks) are noted and
@@ -133,8 +116,17 @@ while [ "$STEP" -lt "$MAX" ]; do
       echo "STOP step $STEP: chapter final window reached (chapter save written)"; exit 0 ;;
     "screen mainmenu")
       echo "STOP step $STEP: main menu"; exit 0 ;;
-    "screen death"|"screen interlude"|"screen popup"|"screen popup:trigger"|"screen chapterpicture")
-      # popup:trigger's Continue is its last node, so End+Enter dismisses it too.
+    "screen gameover"|"screen credits")
+      echo "STOP step $STEP: run ended on $ACTIVE"; exit 0 ;;
+    "screen popup:scene"|"screen tutorial"|"screen chaptersummary")
+      # Delivery-only surfaces: the mod claims no key on them, the GAME pages them (arrows /
+      # Enter). The driver cannot press a real key - legacy Input needs the game window focused -
+      # so it clicks the pager's own buttons through the game.next dev verb.
+      ACTION="gamenext" ;;
+    "screen popup:year"|"screen popup:daystage")
+      # Flash popups with no control: they play and hide themselves.
+      echo "note step $STEP: $ACTIVE flash - waiting"; sleep 3; continue ;;
+    "screen death"|"screen popup"|"screen chapterpicture"|"screen intro"|"screen scene:options")
       ACTION="endenter" ;;
     "screen chapterselect")
       # Two surfaces share this screen. The between-chapters loading screen: Continue is
@@ -181,6 +173,8 @@ while [ "$STEP" -lt "$MAX" ]; do
   C=$(cursor)
   if [ "$ACTION" = "endenter" ]; then
     press ui.end; sleep 0.3; press ui.activate
+  elif [ "$ACTION" = "gamenext" ]; then
+    press game.next
   elif [ "$ACTION" = "homeenter" ]; then
     press ui.home; sleep 0.3; press ui.activate
   elif [ "${ACTION%% *}" = "walk" ]; then

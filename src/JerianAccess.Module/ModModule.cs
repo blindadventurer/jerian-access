@@ -8,6 +8,8 @@ using JerianAccess.Module.Speech;
 using JerianAccess.Module.UI;
 using JerianAccess.Module.UI.Graph;
 using UnityEngine;
+using PageNavigationController =
+    _Scripts.AMVCC.Views.Windows.ChapterSummary.PageNavigation.PageNavigationController;
 
 namespace JerianAccess.Module
 {
@@ -166,12 +168,49 @@ namespace JerianAccess.Module
 
         public string DispatchUi(string action)
         {
+            if (action.StartsWith("game.")) return GamePage(action.Substring(5));
             if (InputManager.DispatchSuppressed) return "suppressed (raw input capture)";
             foreach (var a in InputManager.Actions)
                 if (a.Key == action && !InputManager.CategoryActive(a.Category))
                     return "not dispatched: category " + a.Category + " inactive";
             return InputManager.Dispatch(action) ? "dispatched " + action : null;
         }
+
+        /// <summary>Dev only: page a surface the GAME pages with its own keys (an interlude
+        /// popup, a tutorial, the chapter book - every screen that declares no input category).
+        /// The driver cannot press a real key (legacy Input needs the game window focused), so it
+        /// clicks the same buttons the game's own key handler drives, on the pager of the topmost
+        /// canvas. "next" takes the continue button when the game offers it, else the next page.</summary>
+        private static string GamePage(string which)
+        {
+            var pagers = Object.FindObjectsOfType<PageNavigationController>();
+            PageNavigationController top = null;
+            int topSort = int.MinValue;
+            foreach (var p in pagers)
+            {
+                if (!p.gameObject.activeInHierarchy) continue;
+                var canvas = p.GetComponentInParent<Canvas>();
+                int sort = canvas != null ? canvas.rootCanvas.sortingOrder : 0;
+                if (sort < topSort) continue;
+                topSort = sort;
+                top = p;
+            }
+            if (top == null) return "no active page navigation";
+            var cont = PagerButton(top, "continueButton");
+            var button = which == "next" && cont != null && cont.interactable
+                ? cont
+                : PagerButton(top, which == "prev" ? "previousPageButton" : "nextPageButton");
+            if (button == null) return "pager has no button for " + which;
+            if (!button.interactable) return "not interactable: " + button.name;
+            button.onClick.Invoke();
+            return "clicked " + button.name + " on " + top.name;
+        }
+
+        private static UnityEngine.UI.Button PagerButton(PageNavigationController pager, string field)
+            => (UnityEngine.UI.Button)typeof(PageNavigationController)
+                .GetField(field, System.Reflection.BindingFlags.NonPublic
+                                 | System.Reflection.BindingFlags.Instance)
+                .GetValue(pager);
 
         public string DescribeNav()
         {
