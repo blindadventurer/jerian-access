@@ -24,9 +24,15 @@ namespace JerianAccess.Module.Game
         /// group (OR-tree only).</summary>
         public static string UnavailableReason(ConsequenceButtonController choice)
         {
-            if (AllGroupsSatisfied(choice)) return null;
+            // A choice the game lets the player BUY open is interactable whatever its conditions
+            // say (ConsequenceButtonController.IsButtonInteractable returns true as soon as the
+            // button can be unlocked): its locks are the gate. So the offer is the whole answer
+            // while one is unpaid, and a choice whose locks are all paid is simply available -
+            // reading its conditions there announced a bought choice as unavailable.
             var offer = UnlockOffer(choice);
             if (offer != null) return offer;
+            if (Payable(choice)) return null;
+            if (AllGroupsSatisfied(choice)) return null;
             var reqs = new List<string>();
             foreach (var group in choice.ConditionGroups)
                 foreach (var cond in group.Conditions)
@@ -71,6 +77,18 @@ namespace JerianAccess.Module.Game
                 }));
             }
             return pending.Count == 0 ? null : string.Join(", ", pending.ToArray());
+        }
+
+        /// <summary>The game will let this choice be bought open: it carries armed locks and
+        /// every one of them is either paid or payable. Read live - the button's own
+        /// _canButtonBeUnlocked is computed once, in its Start.</summary>
+        private static bool Payable(ConsequenceButtonController choice)
+        {
+            var locks = Locks(choice);
+            if (locks.Count == 0) return false;
+            foreach (var view in locks)
+                if (!view.IsUnlocked && !view.IsUnlockable) return false;
+            return true;
         }
 
         /// <summary>The choice's live resource locks - the ones the game armed (a lock stays

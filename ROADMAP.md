@@ -174,12 +174,19 @@ debugging from scratch.
       delivery-only screen speaks each settled page (position + left summary + right params) off
       the controller page index; game pages it natively. Live: "1 из 4. 1120. Глава I.
       Небытие. Сюжеты главы..."
-- [x] built - Confirm popups (ConfirmPopupScreen, generic): detects the confirm controller
+- [x] verified - Confirm popups (ConfirmPopupScreen, generic): detects the confirm controller
       roots (chapter-restart, save-delete, case-of-year, exit), speaks the title+body as the
-      screen announcement, exposes each visible button as a node with game label + click. Not
-      yet triggered live (needs an unlocked chapter or a Backspace-delete on a save slot)
+      screen announcement, exposes each visible button as a node with game label + click. Live
+      2026-07-28 on the pause menu's exit confirm: "ВЫЙТИ ИЗ ИГРЫ. Вы уверены, что хотите выйти
+      в главное меню?..." then "Выйти, кнопка, 1 из 2" / "Отменить, кнопка, 2 из 2"; Cancel
+      returned to the scene
 
 ## Phase 4 - Windows
+
+- [x] verified - Pause menu (Screens/PauseScreen.cs, WindowPause read by reflection). Live
+      2026-07-28: "пауза" then all nine rows - three volume sliders with their percentages, the
+      four game-setting toggles with their states, exit to menu and back to game. The game's own
+      Escape opens and closes it; the mod adds no key of its own there
 
 - [x] verified - Generic OpenedWindowScreen: reads the open window's content (labels as text
       nodes, buttons/toggles as activatable nodes, reading order) + back-to-scene close node +
@@ -229,9 +236,14 @@ debugging from scratch.
       personality axis ends in "20") is the ruler, not a reading, so it is no longer a stop; and a
       "*Name" label pairs with a "*Value" only inside its own row - the hero's name had claimed a
       value from the far side of the page, leaving that row with none
-- [x] built - The UIManager popup slot's family (Screens/GenericPopupScreen.cs, re-pointed at
+- [x] verified - The UIManager popup slot's family (Screens/GenericPopupScreen.cs, re-pointed at
       Jerian): objective / info / condition-help / case-of-year / finals-remind popups read as
-      body text plus their buttons
+      body text plus their buttons. Live 2026-07-28 on the objective popup (raised through the
+      game's own UIManager.ShowPopup): it announces title, conditions and description in reading
+      order, "Продолжить" activates. Two fixes the pass found - the screen opened the frame the
+      game assigned the slot, before the texts localized and while the panel animated in, so the
+      body was read empty (a bare "1 из 2") or with its rows shuffled; and the click-away
+      backdrop was an unlabeled stop that answered nothing
 - [x] verified - The PopupControllersManager family (Screens/ScenePopupScreen.cs): interlude and
       creed-outcome popups deliver each settled page; the game pages them with its own keys.
       Live 2026-07-28 on three chapter-1 interludes (a nine-page newspaper among them). Two fixes

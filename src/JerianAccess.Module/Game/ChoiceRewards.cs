@@ -21,12 +21,11 @@ namespace JerianAccess.Module.Game
         public static string Summary(ConsequenceButtonController choice)
         {
             if (GameManager.Instance.HiddenConsequencesMode) return null;
-            var parts = new List<string>();
-            var description = Description(choice);
-            if (!string.IsNullOrEmpty(description)) parts.Add(description);
+            var sb = new System.Text.StringBuilder();
+            UI.PanelText.Append(sb, Description(choice));
             var rows = Rows(choice);
-            if (rows != null) parts.Add(Loc.T("scene.rewards") + " " + rows);
-            return parts.Count == 0 ? null : string.Join(". ", parts.ToArray());
+            if (rows != null) UI.PanelText.Append(sb, Loc.T("scene.rewards") + " " + rows);
+            return sb.Length == 0 ? null : sb.ToString();
         }
 
         /// <summary>The choice's own explanation line ("{scene master key}_ButtonDescription{n}",

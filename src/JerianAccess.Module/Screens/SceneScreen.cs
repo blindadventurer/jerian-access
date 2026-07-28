@@ -496,12 +496,10 @@ namespace JerianAccess.Module.Screens
         /// hover) followed by its requirements.</summary>
         private static string Detail(ConsequenceButtonController choice)
         {
-            var parts = new List<string>();
-            var rewards = ChoiceRewards.Summary(choice);
-            if (rewards != null) parts.Add(rewards);
-            var conditions = ChoiceConditions.Details(choice);
-            if (conditions != null) parts.Add(conditions);
-            return parts.Count == 0 ? null : string.Join(". ", parts.ToArray());
+            var sb = new StringBuilder();
+            PanelText.Append(sb, ChoiceRewards.Summary(choice));
+            PanelText.Append(sb, ChoiceConditions.Details(choice));
+            return sb.Length == 0 ? null : sb.ToString();
         }
 
         // The game's own click gate, in the game's own order: an uninteractable choice states
