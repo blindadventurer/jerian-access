@@ -78,9 +78,10 @@ namespace JerianAccess.Module.Screens
             b.PushContext("", role: null, positions: false);
             foreach (var it in items)
             {
-                if (it.Control is Button btn) AddButton(b, btn);
+                if (it.Control is Button btn) AddButton(b, btn, it.Selected);
                 else if (it.Control is Toggle tg) AddToggle(b, tg);
-                else if (it.Text != null) AddText(b, it.Text, it.ValueText);
+                else if (it.Zone != null) AddPicture(b, it.Zone, it.Label);
+                else if (it.Text != null) AddText(b, it.Text, it.ValueText, it.Row);
             }
             b.PopContext();
 
@@ -112,7 +113,50 @@ namespace JerianAccess.Module.Screens
             public Transform Tf;
             public Selectable Control;
             public TMPro.TMP_Text Text;
-            public TMPro.TMP_Text ValueText; // folded value for a "*Name" + "*Value" pair
+            public TMPro.TMP_Text ValueText;      // folded value for a "*Name" + "*Value" pair
+            public List<TMPro.TMP_Text> Row;      // labels sharing a parent, read as one stop
+            public GameObject Zone;               // a picture item, named from its containers
+            public string Label;
+            public bool Selected;                 // the one item of a list the window is showing
+        }
+
+        /// <summary>The one item in a list that the window is CURRENTLY showing. The game marks
+        /// that by switching its button off (RelationCharacterController.SelectCharacter), so a
+        /// list where exactly one twin is off and the others are live is a selection, not a lock -
+        /// and calling it unavailable would be a lie about the item the player is reading.</summary>
+        private static bool IsTheSelectedOne(Selectable control)
+        {
+            if (control.IsInteractable() || control.transform.parent == null) return false;
+            int twins = 0, off = 0;
+            foreach (Transform sibling in control.transform.parent)
+            {
+                if (sibling.gameObject.name != control.gameObject.name) continue;
+                var twin = sibling.GetComponent<Selectable>();
+                if (twin == null || !UiWidgets.Visible(twin.gameObject)) continue;
+                twins++;
+                if (!twin.IsInteractable()) off++;
+            }
+            return twins > 1 && off == 1;
+        }
+
+        private static bool IsNumber(string s)
+        {
+            s = s.Trim();
+            if (s.Length == 0) return false;
+            foreach (var c in s)
+                if (!char.IsDigit(c) && c != '+' && c != '-') return false;
+            return true;
+        }
+
+        private static bool HasText(GameObject go)
+        {
+            foreach (var t in go.GetComponentsInChildren<TMPro.TMP_Text>(false))
+            {
+                var s = t.text;
+                if (!string.IsNullOrEmpty(s) && s.Trim().Length > 0
+                    && UiWidgets.Visible(t.gameObject)) return true;
+            }
+            return false;
         }
 
         // Controls (buttons/toggles) and standalone labels, in reading order. A label that is
@@ -125,14 +169,24 @@ namespace JerianAccess.Module.Screens
             {
                 if (!(sel is Button) && !(sel is Toggle)) continue;
                 if (!UiWidgets.Visible(sel.gameObject)) continue;
-                items.Add(new Item { Tf = sel.transform, Control = sel });
+                items.Add(new Item
+                {
+                    Tf = sel.transform,
+                    Control = sel,
+                    Selected = IsTheSelectedOne(sel),
+                });
             }
 
             var texts = new List<TMPro.TMP_Text>();
             foreach (var t in w.GetComponentsInChildren<TMPro.TMP_Text>(false))
             {
                 if (!UiWidgets.Visible(t.gameObject)) continue;
-                if (t.GetComponentInParent<Selectable>() != null) continue;
+                // A label belonging to a real CONTROL is spoken by the control's node. Only
+                // buttons and toggles count: Jerian's hover zones are Selectables too, and
+                // treating those as controls dropped every label they cover - which is most of
+                // the content in the destiny and creed windows.
+                var owner = t.GetComponentInParent<Selectable>();
+                if (owner is Button || owner is Toggle) continue;
                 var s = t.text;
                 if (string.IsNullOrEmpty(s) || s.Trim().Length == 0) continue;
                 texts.Add(t);
@@ -153,13 +207,53 @@ namespace JerianAccess.Module.Screens
                 consumed.Add(value);
                 pairs[t] = value;
             }
+            // Labels that share a parent are one thing the game drew in pieces (a relation row's
+            // word and its number): they read as ONE stop, in reading order, so the number is
+            // never a stop of its own saying "1".
             foreach (var t in texts)
             {
                 if (consumed.Contains(t)) continue;
                 TMPro.TMP_Text value;
-                items.Add(pairs.TryGetValue(t, out value)
-                    ? new Item { Tf = t.transform, Text = t, ValueText = value }
-                    : new Item { Tf = t.transform, Text = t });
+                if (pairs.TryGetValue(t, out value))
+                {
+                    items.Add(new Item { Tf = t.transform, Text = t, ValueText = value });
+                    continue;
+                }
+                var row = new List<TMPro.TMP_Text>();
+                foreach (var sibling in texts)
+                    if (sibling.transform.parent == t.transform.parent
+                        && !consumed.Contains(sibling)) row.Add(sibling);
+                foreach (var member in row) consumed.Add(member);
+                // Reading order, except that a bare figure follows the words it belongs to
+                // ("Отношения 1"): the game stacks the number above its caption as often as
+                // beside it, and a stop that opens with a number states nothing.
+                row.Sort((a, c) =>
+                {
+                    bool numA = IsNumber(a.text), numC = IsNumber(c.text);
+                    if (numA != numC) return numA ? 1 : -1;
+                    int byY = c.transform.position.y.CompareTo(a.transform.position.y);
+                    return byY != 0 ? byY : a.transform.position.x.CompareTo(c.transform.position.x);
+                });
+                items.Add(new Item { Tf = t.transform, Text = t, Row = row });
+            }
+
+            // Picture items: a hover zone with no words of its own (a destiny objective, a
+            // chronicle entry, an article seal). They are most of what some windows SHOW, and a
+            // text sweep sees nothing of them - their name comes from the data containers the
+            // game's own tooltip reads, and Space reads that tooltip in full.
+            foreach (var zone in w.GetComponentsInChildren<_Scripts.Tooltips.TooltipZoneView>(false))
+            {
+                if (!zone.enabled || !UiWidgets.Visible(zone.gameObject)) continue;
+                if (HasText(zone.gameObject)) continue;
+                var label = ContainerLabel.Of(zone.gameObject);
+                if (string.IsNullOrEmpty(label)) continue;
+                // The window may already name this item in words next to the picture (the
+                // relation slider beside its own row) - then the picture adds nothing.
+                bool named = false;
+                foreach (var t in texts)
+                    if (label.StartsWith(t.text.Trim())) named = true;
+                if (named) continue;
+                items.Add(new Item { Tf = zone.transform, Zone = zone.gameObject, Label = label });
             }
 
             items.Sort((a, c) =>
@@ -186,7 +280,7 @@ namespace JerianAccess.Module.Screens
             return best;
         }
 
-        private static void AddButton(GraphBuilder b, Button btn)
+        private static void AddButton(GraphBuilder b, Button btn, bool selected)
         {
             var go = btn.gameObject;
             b.AddItem(ControlId.Referenced(btn, "window:btn:" + btn.GetInstanceID()), new NodeVtable
@@ -196,15 +290,17 @@ namespace JerianAccess.Module.Screens
                 {
                     new NodeAnnouncement(() => UiWidgets.LocalizedLabel(go), kind: AnnouncementKinds.Label),
                     new NodeAnnouncement(
-                        () => UiWidgets.Interactable(go) ? null : Loc.T("state.unavailable"),
-                        kind: AnnouncementKinds.Enabled),
+                        () => selected ? Loc.T("state.selected")
+                            : UiWidgets.Interactable(go) ? null : Loc.T("state.unavailable"),
+                        kind: selected ? AnnouncementKinds.Selected : AnnouncementKinds.Enabled),
                 },
                 OnTooltip = TooltipAction(go),
                 OnActivate = () =>
                 {
                     if (!UiWidgets.Interactable(go))
                     {
-                        Mod.Speech.Speak(Loc.T("state.unavailable"), interrupt: true);
+                        Mod.Speech.Speak(
+                            Loc.T(selected ? "state.selected" : "state.unavailable"), interrupt: true);
                         return;
                     }
                     UiWidgets.Click(go);
@@ -230,7 +326,41 @@ namespace JerianAccess.Module.Screens
             });
         }
 
-        private static void AddText(GraphBuilder b, TMPro.TMP_Text text, TMPro.TMP_Text value)
+        // The stop's words, re-read live: the label, its paired value, or the whole row of
+        // labels the game drew under one parent.
+        private static string RowText(TMPro.TMP_Text text, TMPro.TMP_Text value,
+            List<TMPro.TMP_Text> row)
+        {
+            if (value != null) return text.text + " " + value.text;
+            if (row == null || row.Count <= 1) return text.text;
+            var sb = new System.Text.StringBuilder();
+            foreach (var member in row)
+            {
+                var s = member.text;
+                if (string.IsNullOrEmpty(s) || s.Trim().Length == 0) continue;
+                if (sb.Length > 0) sb.Append(' ');
+                sb.Append(s.Trim());
+            }
+            return sb.ToString();
+        }
+
+        private static void AddPicture(GraphBuilder b, GameObject zone, string label)
+        {
+            b.AddItem(ControlId.Referenced(zone.transform, "window:item:" + zone.GetInstanceID()),
+                new NodeVtable
+                {
+                    ControlType = ControlTypes.Text,
+                    Announcements = new[]
+                    {
+                        new NodeAnnouncement(() => ContainerLabel.Of(zone) ?? label,
+                            kind: AnnouncementKinds.Label),
+                    },
+                    OnTooltip = TooltipAction(zone),
+                });
+        }
+
+        private static void AddText(GraphBuilder b, TMPro.TMP_Text text, TMPro.TMP_Text value,
+            List<TMPro.TMP_Text> row)
         {
             var go = text.gameObject;
             b.AddItem(ControlId.Referenced(text, "window:text:" + text.GetInstanceID()), new NodeVtable
@@ -238,8 +368,7 @@ namespace JerianAccess.Module.Screens
                 ControlType = ControlTypes.Text,
                 Announcements = new[]
                 {
-                    new NodeAnnouncement(
-                        () => value == null ? text.text : (text.text + " " + value.text),
+                    new NodeAnnouncement(() => RowText(text, value, row),
                         kind: AnnouncementKinds.Label),
                 },
                 OnTooltip = TooltipAction(go),

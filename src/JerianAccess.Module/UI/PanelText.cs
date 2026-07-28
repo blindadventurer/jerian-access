@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
+using Assets._Scripts.AMVCC.Views;
 using JerianAccess.Module.Game;
 using UnityEngine;
 
@@ -42,7 +43,25 @@ namespace JerianAccess.Module.UI
                 if (sb.Length > 0) sb.Append(". ");
                 sb.Append(texts[i]);
             }
-            return sb.ToString();
+            return SpokenOperators(sb.ToString());
+        }
+
+        /// <summary>The comparison operators as WORDS. The game renders a condition row's
+        /// operator as a bare symbol ("≥"), which readers voice unreliably or not at all; the
+        /// symbols are the game's own translations of its Operations terms, so each is swapped
+        /// for the mod's spoken word for that same operation.</summary>
+        private static string SpokenOperators(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return text;
+            foreach (Operations op in System.Enum.GetValues(typeof(Operations)))
+            {
+                var symbol = I2.Loc.LocalizationManager.GetTranslation("Operations." + op);
+                if (string.IsNullOrEmpty(symbol) || symbol.Length > 2) continue;
+                var word = Localization.LocalizationManager.GetOrDefault(
+                    "ui", "choice.op." + op.ToString().ToLowerInvariant(), null);
+                if (word != null) text = text.Replace(symbol, word);
+            }
+            return text;
         }
 
         private static void Take(GameObject go, string text, string[] skip,

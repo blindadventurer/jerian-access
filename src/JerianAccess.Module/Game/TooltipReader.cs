@@ -107,22 +107,17 @@ namespace JerianAccess.Module.Game
                 ?? Live(go.GetComponentInParent<TooltipZoneView>());
             if (own != null) return own;
 
+            // The zone a mouse pointing AT this label would be inside - nothing looser: a zone
+            // that merely sits nearby belongs to another row, and answering with its tooltip
+            // would state something false about the focused item.
             var point = (Vector2)go.transform.position;
             for (var row = go.transform.parent; row != null; row = row.parent)
-            {
-                TooltipZoneView nearest = null;
-                float best = float.MaxValue;
                 foreach (var zone in row.GetComponentsInChildren<TooltipZoneView>(false))
                 {
                     if (Live(zone) == null) continue;
                     var rect = zone.transform as RectTransform;
-                    if (rect == null) continue;
-                    if (Contains(rect, point)) return zone;
-                    float d = ((Vector2)rect.position - point).sqrMagnitude;
-                    if (d < best) { best = d; nearest = zone; }
+                    if (rect != null && Contains(rect, point)) return zone;
                 }
-                if (nearest != null) return nearest;
-            }
             return null;
         }
 
