@@ -224,7 +224,9 @@ while [ "$STEP" -lt "$MAX" ]; do
     UPS=$((TOTAL - POS))
     # A choice the game offers to sell open answers Enter with its price, not with a click -
     # so the driver pays it first, the way a player presses Backspace on the offer.
-    PICKLINE=$(echo "$NAVOUT" | grep "scene:choice:$PICKED," | head -1)
+    # The GRAPH line, not the focused-node header - that header repeats the id with no
+    # announcement text behind it, so matching it always answered "no lock".
+    PICKLINE=$(echo "$NAVOUT" | grep -E "^(\* |  )ControlId\(scene:choice:$PICKED," | head -1)
     case "$PICKLINE" in *"открыть за"*|*"unlock for"*) PAY=1 ;; *) PAY=0 ;; esac
     press ui.prev; sleep 0.2; press ui.home; sleep 0.2
     press ui.end
