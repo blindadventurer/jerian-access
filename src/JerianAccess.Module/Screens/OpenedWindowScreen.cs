@@ -23,15 +23,12 @@ namespace JerianAccess.Module.Screens
         public override string Key => "window";
         public override int Layer => 20;
 
-        // The window's CONTENT is what makes it a screen. The game instantiates the window
-        // prefab and then animates its page in, and for those frames the only node in the graph
-        // is the back button - the screen would open announcing "back to scene" and the content
-        // would need an arrow press to reach. Waiting for the first rendered label seats the
-        // opening focus on the window itself.
-        // Live reference for entry bookkeeping only, never content: the window this screen has
-        // already opened on. Once open it stays open until the game destroys the window - the
-        // page-in animation dips the CanvasGroup to zero on the way, and a screen that dropped
-        // out there would push again and announce the window twice (heard live).
+        // The window's CONTENT is what makes it a screen: the game instantiates the prefab and
+        // then animates its page in, so a screen that opened on the bare prefab would announce
+        // the window before it says anything. Once open it STAYS open until the game destroys
+        // the window - the page-in animation dips the CanvasGroup to zero on the way, and a
+        // screen that dropped out there would push again and announce the window twice (heard
+        // live). Live reference for that bookkeeping only, never content.
         private GameObject _entered;
 
         public override bool IsActive()
@@ -141,23 +138,28 @@ namespace JerianAccess.Module.Screens
                 texts.Add(t);
             }
 
+            // Pair every "*Name" label with its "*Value" FIRST, then emit: a value that appears
+            // ahead of its name in the sweep would otherwise be emitted as a bare stop of its own
+            // ("6") and then again folded onto the name ("Разум 6").
             var consumed = new HashSet<TMPro.TMP_Text>();
+            var pairs = new Dictionary<TMPro.TMP_Text, TMPro.TMP_Text>();
+            foreach (var t in texts)
+            {
+                var name = t.gameObject.name;
+                if (!name.EndsWith("Name")) continue;
+                var value = NearestValue(texts, consumed, t,
+                    name.Substring(0, name.Length - 4) + "Value");
+                if (value == null) continue;
+                consumed.Add(value);
+                pairs[t] = value;
+            }
             foreach (var t in texts)
             {
                 if (consumed.Contains(t)) continue;
-                var name = t.gameObject.name;
-                if (name.EndsWith("Name"))
-                {
-                    var value = NearestValue(texts, consumed, t,
-                        name.Substring(0, name.Length - 4) + "Value");
-                    if (value != null)
-                    {
-                        consumed.Add(value);
-                        items.Add(new Item { Tf = t.transform, Text = t, ValueText = value });
-                        continue;
-                    }
-                }
-                items.Add(new Item { Tf = t.transform, Text = t });
+                TMPro.TMP_Text value;
+                items.Add(pairs.TryGetValue(t, out value)
+                    ? new Item { Tf = t.transform, Text = t, ValueText = value }
+                    : new Item { Tf = t.transform, Text = t });
             }
 
             items.Sort((a, c) =>
@@ -244,13 +246,14 @@ namespace JerianAccess.Module.Screens
             });
         }
 
-        // The game shows most detail in a hover tooltip keyed off a serialized localization key
-        // (TooltipWithTitleBehavior / TooltipKeyHolder). Fold it onto Space so the detail is
-        // reachable - this is why some tooltips "did not read": a node with no tooltip fold has
-        // nothing to speak on Space.
+        // The game shows most detail in a hover tooltip. Jerian routes nearly all of it through
+        // TooltipZoneView (a per-type view the game builds on hover), so Space asks the game for
+        // that view and reads it; the older key-holder components are the fallback for the few
+        // places that still carry one. A node with neither has nothing to say on Space.
         private static System.Action TooltipAction(GameObject go)
         {
             if (go == null) return null;
+            if (TooltipReader.Available(go)) return () => TooltipReader.Request(go);
             var withTitle = go.GetComponentInParent<_Scripts.AMVCC.Views.TooltipWithTitleBehavior>();
             if (withTitle != null && !string.IsNullOrEmpty(withTitle.DescriptionKey))
                 return () => Speak(I2.Loc.LocalizationManager.GetTranslation(withTitle.DescriptionKey)

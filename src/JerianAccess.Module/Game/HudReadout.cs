@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using _Scripts.AMVCC.Models.Static;
 using _Scripts.AMVCC.Views.HUD;
+using _Scripts.AMVCC.Views.Windows.SceneConsequence.ParameterContainers;
 using _Scripts.Managers;
 
 namespace JerianAccess.Module.Game
@@ -68,7 +69,30 @@ namespace JerianAccess.Module.Game
                         value = ParametersManager.Instance.GetParameterValue(param),
                     }), kind: AnnouncementKinds.Label),
                 },
+                // Space reads the resource's own tooltip - the scale the game shows on hover
+                // (what this value means, what it is spent on).
+                OnTooltip = () => Tooltip(CounterZone(param)),
             });
+        }
+
+        // The HUD counter's hover zone. The counter widget carries the parameter through the
+        // container the game fills when it draws the value, so the zone under that container IS
+        // this parameter's zone.
+        private static GameObject CounterZone(Parameter param)
+        {
+            foreach (var zone in Object.FindObjectsOfType<_Scripts.Tooltips.TooltipZoneView>())
+            {
+                var container = zone.GetComponentInParent<NumericalParameterContainer>();
+                if (container != null && ReferenceEquals(container.Parameter, param))
+                    return zone.gameObject;
+            }
+            return null;
+        }
+
+        private static void Tooltip(GameObject go)
+        {
+            if (go == null || !TooltipReader.Request(go))
+                Mod.Speech.Speak(Loc.T("nav.no_details"));
         }
 
         private static void AddButton(GraphBuilder b, HudButtonController ctrl)

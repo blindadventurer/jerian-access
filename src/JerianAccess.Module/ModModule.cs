@@ -56,6 +56,8 @@ namespace JerianAccess.Module
             ScreenManager.Tick();
             InputManager.Tick();
             Navigation.TickTypeahead();
+            // A requested game tooltip is built a frame after the ask - it answers from here.
+            Game.TooltipReader.Tick();
         }
 
         public void Dispose()

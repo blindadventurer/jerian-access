@@ -30,6 +30,8 @@ namespace JerianAccess.Module.Screens
             typeof(_Scripts.AMVCC.Views.Windows.DeletePopupConfirmation.DeletePopupConfirmation),
             typeof(_Scripts.AMVCC.Views.Windows.Popup.ConfirmationPopupController),
             typeof(_Scripts.AMVCC.Views.Windows.Popup.ExitConfirmationPopup.ExitConfirmationPopupController),
+            typeof(_Scripts.AMVCC.Views.Windows.NewGameConfirmController),
+            typeof(_Scripts.AMVCC.Views.ConfirmPopupController),
         };
 
         private static GameObject Root()

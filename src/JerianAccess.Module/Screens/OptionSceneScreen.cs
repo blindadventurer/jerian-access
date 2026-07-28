@@ -83,7 +83,7 @@ namespace JerianAccess.Module.Screens
                         new NodeAnnouncement(() => PanelText.Read(option.gameObject),
                             kind: AnnouncementKinds.Label),
                     },
-                    OnTooltip = () => Mod.Speech.Speak(Tooltip(option.gameObject)),
+                    OnTooltip = () => Tooltip(option.gameObject),
                     OnActivate = () => Choose(option),
                 });
         }
@@ -136,14 +136,10 @@ namespace JerianAccess.Module.Screens
             return rows.Count == 0 ? Loc.T("nav.no_details") : string.Join(". ", rows.ToArray());
         }
 
-        private static string Tooltip(GameObject go)
+        // The option's own hover tooltip, read from the game's tooltip system.
+        private static void Tooltip(GameObject go)
         {
-            var holder = go.GetComponentInChildren<
-                _Scripts.AMVCC.Views.Windows.SceneConsequence.ParameterContainers.GenericTranslationKeyContainer>(true);
-            if (holder == null) return Loc.T("nav.no_details");
-            var text = I2.Loc.LocalizationManager.GetTranslation(
-                holder.DescriptionTranslationKey ?? "");
-            return string.IsNullOrEmpty(text) ? Loc.T("nav.no_details") : text;
+            if (!TooltipReader.Request(go)) Mod.Speech.Speak(Loc.T("nav.no_details"));
         }
     }
 }
