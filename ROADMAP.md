@@ -348,5 +348,11 @@ debugging from scratch.
 
 - [ ] R1 (standing) - Regression sweep: boot → menu → new game → first scene → choice →
       consequence → save/load → quit, all spoken correctly (last run 2026-07-28, above)
+- [x] verified - Driven playthrough pass, 2026-07-28: the chapter-1 test save driven forward
+      through chapters 1, 2, 3 and into 4 (~2000 driver steps) with every action's speech read
+      back. Every surface the run met is covered and listed above; the run met no silent screen
+      and no dead end after the fixes it found. NOT met by this run, so still unverified live:
+      the DEATH window, the TRIP SELECTION scene, the insurrection day-stage flash (chapter 5),
+      and the intro spread
 - [ ] todo - Full-game blind playthrough pass
 - [ ] todo - package.ps1 produces a working release zip against a clean game copy
