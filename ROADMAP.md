@@ -142,7 +142,7 @@ debugging from scratch.
       scene re-read its first page while the choices sat unheard. The start node is now the live
       surface (choices, else the offered Continue, else the newest page). Verified live 2026-07-28. Re-verified through the window pass: closing a window returns focus to the story row
 - [x] built - Consequence sheet reading - see the choice-detail item above (ChoiceRewards)
-- [x] built - The post-choice CONSEQUENCE PAGE (Game/RewardPage.cs) - what a resolved choice
+- [x] verified - The post-choice CONSEQUENCE PAGE (Game/RewardPage.cs) - what a resolved choice
       actually changed. USER BUG 2026-07-29, hidden-consequences mode on, the prologue wardrobe
       scene: a parameter changed, the game played its parameter-change sound and the mod said
       NOTHING. The page was read by a sweep of two row component types, and the game builds NINE:
@@ -155,7 +155,8 @@ debugging from scratch.
       delta at all (a skill slider renders "Закон – 3" and animates, an estate is a crest). Both
       screens a consequence page can appear under call it - the story scene and the option scene
       (case-for-a-year / trip) - sharing one delivery so neither doubles, and the option scene's
-      text sweep now leaves the rows to it. NOT yet verified live
+      text sweep now leaves the rows to it. Verified by the USER 2026-07-29 in the very scene
+      that reported it: the wardrobe pick spoke "Разум +1"
 - [x] verified - Scene title on a scene CHANGE (SceneScreen.DeliverTitle): the next scene loads in
       place inside one frame, so IsActive never dips, the screen never re-focuses and OnFocus's
       screen-name announcement never ran again - only the first page was spoken (observed live:
@@ -407,3 +408,10 @@ debugging from scratch.
       through the live screen reader. Note for anyone repeating this: without the dev server the
       game is a normal Unity app again and PAUSES while its window is not focused, so a boot
       driven from a terminal stalls until the window is brought forward
+- [x] built - 0.9.1 tester archive, 2026-07-29: the same package with the consequence-page fix.
+      The version was bumped rather than the 0.9.0 file overwritten - the mod logs its version at
+      load ("Loading [Jerian Access 0.9.x]"), so two different binaries under one number would
+      make a tester's log unreadable. The 0.9.0 zip is deleted; artifacts\ is gitignored, so the
+      archive lives only on disk. Contents checked in the zip: the packaged module carries
+      RewardPage and its three field lookups, the host reports 0.9.1. NOT re-installed clean
+      (the 0.9.0 run above covers the install path; nothing in the layout changed)
