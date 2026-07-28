@@ -196,9 +196,23 @@ namespace JerianAccess.Module.Game
                     });
                 case ConditionType.CharacterStatus:
                 {
-                    var status = I2.Loc.LocalizationManager.GetTranslation(
-                        ParametersManager.Instance.GetCharacterStatusKey(
-                            c.Character, c.CharacterStatusGroup, c.CharacterStatus) ?? "");
+                    // The game draws this row as the character's icon, their name and the status
+                    // word. A status the game has no word for (the ".None" key of a group nobody
+                    // has entered yet) would leave the row as a bare name - "требуется Тест",
+                    // which names no requirement at all - so the group is named instead, and a
+                    // condition that can be named neither way says nothing rather than nonsense.
+                    var key = ParametersManager.Instance.GetCharacterStatusKey(
+                        c.Character, c.CharacterStatusGroup, c.CharacterStatus);
+                    var status = I2.Loc.LocalizationManager.GetTranslation(key ?? "");
+                    if (string.IsNullOrEmpty(status))
+                    {
+                        status = I2.Loc.LocalizationManager.GetTranslation(
+                            ParametersManager.Instance.GetCharacterStatusGroupKey(
+                                c.Character, c.CharacterStatusGroup) ?? "");
+                        Mod.Log("character-status condition: no status text for key '" + key
+                                + "', naming the group instead ('" + status + "')");
+                    }
+                    if (string.IsNullOrEmpty(status)) return null;
                     var req = Loc.T("choice.req.status",
                         new { name = c.Character.GetNameLocalised(), status });
                     return c.Not ? Loc.T("choice.req.not", new { req }) : req;

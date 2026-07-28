@@ -40,6 +40,7 @@ namespace JerianAccess.Module.Screens
             typeof(ChapterSummaryWindowController).GetField("_chapterSummaryViews", NP);
 
         private int _spokenPage = -1;
+        private string _spokenBody;
 
         public override bool IsActive() => Controller() != null;
 
@@ -49,6 +50,7 @@ namespace JerianAccess.Module.Screens
         public override void OnPop()
         {
             _spokenPage = -1;
+            _spokenBody = null;
         }
 
         // Deliver each page exactly ONCE, and only after the controller reports the page has
@@ -65,7 +67,12 @@ namespace JerianAccess.Module.Screens
             if (page == _spokenPage) return;
             var body = PageText(c);
             if (string.IsNullOrEmpty(body)) return; // nothing rendered yet
+            // The controller reports itself ready a beat before the new page's text lands, so a
+            // page turned quickly read as the PREVIOUS page's content under the new page's
+            // number. Content that has not changed yet is not this page's content: wait for it.
+            if (body == _spokenBody) return;
             _spokenPage = page;
+            _spokenBody = body;
             Mod.Speech.Speak(Position(c, page) + body);
         }
 
@@ -106,11 +113,7 @@ namespace JerianAccess.Module.Screens
                 int byY = b.transform.position.y.CompareTo(a.transform.position.y);
                 return byY != 0 ? byY : a.transform.position.x.CompareTo(b.transform.position.x);
             });
-            foreach (var t in texts)
-            {
-                if (sb.Length > 0) sb.Append(". ");
-                sb.Append(t.text.Trim());
-            }
+            foreach (var t in texts) UI.PanelText.Append(sb, t.text.Trim());
         }
     }
 }

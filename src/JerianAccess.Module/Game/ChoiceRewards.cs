@@ -54,9 +54,11 @@ namespace JerianAccess.Module.Game
             return rows.Count == 0 ? null : string.Join(", ", rows.ToArray());
         }
 
-        // One reward row. Numeric rewards read as "name +2" (the sheet's own shape); the ones the
-        // sheet renders as a state change read as "name, value". Every word is the game's.
-        private static string Describe(Reward reward)
+        /// <summary>One reward row. Numeric rewards read as "name +2" (the sheet's own shape); the
+        /// ones the sheet renders as a state change read as "name, value". Every word is the
+        /// game's. Public because the interlude popup pages its own rewards one to a page, and
+        /// they are the same model shown the same way.</summary>
+        public static string Describe(Reward reward)
         {
             switch (reward.RewardType)
             {
@@ -99,14 +101,16 @@ namespace JerianAccess.Module.Game
         {
             var text = Name(reward);
             if (reward.CharacterStatusGroup != null && reward.RewardType != RewardType.CharacterRelation)
-                text = Loc.T("choice.cons.set", new
-                {
-                    name = text,
-                    value = I2.Loc.LocalizationManager.GetTranslation(
-                        ParametersManager.Instance.GetCharacterStatusKey(
-                            reward.Character, reward.CharacterStatusGroup,
-                            reward.CharacterStatus) ?? ""),
-                });
+            {
+                // A status the game has no word for would leave the row as "name, " - the status
+                // part is dropped instead, the way the requirement side does it.
+                var status = I2.Loc.LocalizationManager.GetTranslation(
+                    ParametersManager.Instance.GetCharacterStatusKey(
+                        reward.Character, reward.CharacterStatusGroup,
+                        reward.CharacterStatus) ?? "");
+                if (!string.IsNullOrEmpty(status))
+                    text = Loc.T("choice.cons.set", new { name = text, value = status });
+            }
             if (reward.Value != 0 && reward.RewardType != RewardType.CharacterStatus)
                 text = Loc.T("choice.cons.relation", new { name = text, delta = Signed(reward.Value) });
             return text;

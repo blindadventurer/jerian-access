@@ -5,6 +5,8 @@ using JerianAccess.Module.Input;
 using JerianAccess.Module.Speech;
 using JerianAccess.Module.UI;
 using UnityEngine;
+using _Scripts.AMVCC.Views.Windows.Popup.Interlude;
+using _Scripts.AMVCC.Views.Windows.SceneInterlude;
 using _Scripts.Popups;
 
 namespace JerianAccess.Module.Screens
@@ -35,6 +37,13 @@ namespace JerianAccess.Module.Screens
 
         private static readonly FieldInfo ContainerField = typeof(PopupControllersManager)
             .GetField("popupViewsContainer", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        private static readonly FieldInfo RewardIndexField = typeof(InterludePopupController)
+            .GetField("_rewardIndex", BindingFlags.NonPublic | BindingFlags.Instance);
+        private static readonly FieldInfo InterludeField = typeof(InterludePopupController)
+            .GetField("_interlude", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        private int _spokenReward = -1;
 
         private readonly SettledDelivery _delivery = new SettledDelivery(0.25f);
 
@@ -80,12 +89,14 @@ namespace JerianAccess.Module.Screens
         {
             _delivery.Reset();
             _spokenTitle = null;
+            _spokenReward = -1;
         }
 
         public override void OnUpdate()
         {
             var popup = Popup();
             if (popup == null) return;
+            if (DeliverReward(popup)) return;
             bool grew;
             var text = _delivery.Poll(PanelText.Read(popup, TitleRow), out grew);
             if (string.IsNullOrEmpty(text)) return;
@@ -96,6 +107,25 @@ namespace JerianAccess.Module.Screens
                 text = title + ". " + text;
             }
             Mod.Speech.Speak(text);
+        }
+
+        // An interlude ends on its REWARD pages - one reward to a page, drawn as a row whose
+        // figure counts from the old value to the new one. Read mid-count that row says
+        // "Догма 4 0" and a beat later "Догма 3 0": the animation, not the change. The reward is
+        // read from the same model the row is built from instead, the way a choice's sheet is.
+        private bool DeliverReward(GameObject popup)
+        {
+            var controller = popup.GetComponentInChildren<InterludePopupController>(true);
+            if (controller == null) return false;
+            int index = (int)RewardIndexField.GetValue(controller);
+            if (index < 0) return false;
+            if (index == _spokenReward) return true;
+            _spokenReward = index;
+            var rewards = ((Interlude)InterludeField.GetValue(controller)).VisibleRewards;
+            if (index >= rewards.Count) return true;
+            var text = ChoiceRewards.Describe(rewards[index]);
+            if (!string.IsNullOrEmpty(text)) Mod.Speech.Speak(text);
+            return true;
         }
     }
 }

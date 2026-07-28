@@ -128,6 +128,10 @@ while [ "$STEP" -lt "$MAX" ]; do
       echo "note step $STEP: $ACTIVE flash - waiting"; sleep 3; continue ;;
     "screen death"|"screen popup"|"screen chapterpicture"|"screen intro"|"screen scene:options")
       ACTION="endenter" ;;
+    "screen gameloading")
+      # The between-chapters loading screen: Continue is the start node (End would land on the
+      # on-screen hint), so Home+Enter resumes at the chapter the run just reached.
+      ACTION="homeenter" ;;
     "screen chapterselect")
       # Two surfaces share this screen. The between-chapters loading screen: Continue is
       # the start node (End would land on a locked chapter station and refuse), so
@@ -174,6 +178,9 @@ while [ "$STEP" -lt "$MAX" ]; do
   if [ "$ACTION" = "endenter" ]; then
     press ui.end; sleep 0.3; press ui.activate
   elif [ "$ACTION" = "gamenext" ]; then
+    # These surfaces fade a page in before its text lands; a click on the frame the page
+    # reports itself ready turns past content nobody heard. A player waits for the words.
+    sleep 1
     press game.next
   elif [ "$ACTION" = "homeenter" ]; then
     press ui.home; sleep 0.3; press ui.activate

@@ -38,12 +38,24 @@ namespace JerianAccess.Module.UI
             });
 
             var sb = new StringBuilder();
-            foreach (var i in order)
-            {
-                if (sb.Length > 0) sb.Append(". ");
-                sb.Append(texts[i]);
-            }
+            foreach (var i in order) Append(sb, texts[i]);
             return SpokenOperators(sb.ToString());
+        }
+
+        /// <summary>Add one more fragment to a spoken line, separated as a sentence - and never
+        /// doubly punctuated: a fragment that ends in its own punctuation (a chapter card's
+        /// "1132г.") keeps it and gets a plain space.</summary>
+        public static void Append(StringBuilder sb, string text)
+        {
+            if (string.IsNullOrEmpty(text)) return;
+            if (sb.Length > 0)
+            {
+                char last = sb[sb.Length - 1];
+                bool punctuated = last == '.' || last == '!' || last == '?' || last == ':'
+                                  || last == ',' || last == ';' || last == '…';
+                sb.Append(punctuated ? " " : ". ");
+            }
+            sb.Append(text);
         }
 
         /// <summary>The comparison operators as WORDS. The game renders a condition row's
