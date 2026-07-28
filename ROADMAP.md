@@ -235,8 +235,9 @@ debugging from scratch.
 - [x] verified - Windows: the generic OpenedWindowScreen covers every WindowType the game has
       (Personality, Destiny, Relations, Empire, Map, Creed, Council) - they all open through
       WindowControllersManager, so there is no per-window porting left to make them readable.
-      Live 2026-07-28 on Personality, Destiny, Empire and Map (the four a chapter-2 run can
-      reach). Four fixes the pass found: the MAP was read by nothing at all (a picture with
+      Live 2026-07-28 on all seven: Personality, Destiny, Relations, Empire and Map in
+      chapters 2-3, then Creed and Council once chapter 4 unlocked them (the creed articles with
+      each council seat's position, the council seats with their holders and loyalty). Four fixes the pass found: the MAP was read by nothing at all (a picture with
       fourteen hover zones and no text - the screen's content test wanted text, so the window
       never opened as a screen and the player was left on a dead scene); figures the game leaves
       to its hover tooltip read as stops that said a number and nothing else ("22", "15", "0"),
