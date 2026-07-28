@@ -183,6 +183,24 @@ namespace JerianAccess.Module
         /// canvas. "next" takes the continue button when the game offers it, else the next page.</summary>
         private static string GamePage(string which)
         {
+            // The interlude's trigger-conditions page has a next button of its own (and its own
+            // Enter read), and it locks the pager until it is dismissed - so it goes first.
+            var conditions = Object.FindObjectOfType<
+                _Scripts.AMVCC.Views.Windows.Popup.Interlude.InterludeConditionsPanel>();
+            if (conditions != null && conditions.gameObject.activeInHierarchy)
+            {
+                var next = (UnityEngine.UI.Button)typeof(
+                    _Scripts.AMVCC.Views.Windows.Popup.Interlude.InterludeConditionsPanel)
+                    .GetField("nextButton", System.Reflection.BindingFlags.NonPublic
+                                            | System.Reflection.BindingFlags.Instance)
+                    .GetValue(conditions);
+                if (next != null && next.interactable)
+                {
+                    next.onClick.Invoke();
+                    return "clicked the conditions page's next button";
+                }
+            }
+
             var pagers = Object.FindObjectsOfType<PageNavigationController>();
             PageNavigationController top = null;
             int topSort = int.MinValue;
