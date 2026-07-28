@@ -354,5 +354,11 @@ debugging from scratch.
       and no dead end after the fixes it found. NOT met by this run, so still unverified live:
       the DEATH window, the TRIP SELECTION scene, the insurrection day-stage flash (chapter 5),
       and the intro spread
-- [ ] todo - Full-game blind playthrough pass
+- [x] verified - Full playthrough to an ENDING, 2026-07-28: the driven run reached the "Крах"
+      finale in chapter 4 - the scene's own reward popup announcing the ending, the epilogue
+      scenes, and the credits roll - all spoken, with no silent surface left on the path. One
+      blocker the finale found: that reward popup (the ending, the estates it moved, a war's
+      outcome) was read by nothing and could not be paged by any key, since it lives inside the
+      scene rather than in the popup manager's container
+- [ ] todo - Full-game blind playthrough pass by the USER (every chapter, every branch)
 - [ ] todo - package.ps1 produces a working release zip against a clean game copy
