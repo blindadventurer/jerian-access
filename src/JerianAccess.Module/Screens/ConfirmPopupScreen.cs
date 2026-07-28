@@ -108,8 +108,14 @@ namespace JerianAccess.Module.Screens
         {
             var list = new List<Button>();
             foreach (var btn in root.GetComponentsInChildren<Button>(false))
-                if (UiWidgets.Visible(btn.gameObject))
-                    list.Add(btn);
+            {
+                if (!UiWidgets.Visible(btn.gameObject)) continue;
+                // The full-screen click-away backdrop behind the popup carries no caption. It is
+                // a real button, but as a stop it is an unlabeled one that answers nothing - and
+                // the graph's first node seats focus, so it would open every confirm on it.
+                if (string.IsNullOrEmpty(UiWidgets.LocalizedLabel(btn.gameObject))) continue;
+                list.Add(btn);
+            }
             list.Sort((a, c) => a.transform.position.x.CompareTo(c.transform.position.x));
             return list;
         }

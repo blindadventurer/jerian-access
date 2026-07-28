@@ -42,10 +42,21 @@ namespace JerianAccess.Module.Screens
         public override string Key => "scene";
         public override int Layer => 0;
 
+        // Live reference for entry bookkeeping only, never content: the controller of the scene
+        // this screen entered on. The game DEACTIVATES the scene prefab while a window or a
+        // between-events popup covers it, which hides the controller from a type search - and a
+        // screen that dropped out there would pop and push again, re-announcing the scene every
+        // time one closed. The scene is still the scene; only a destroyed controller (the scene
+        // really unloaded) ends it, which Unity's own null reports for us.
+        private MonoBehaviour _entered;
+
         public override bool IsActive()
-            => GameUi.State == GameState.RUNNING
-            && SceneController() != null
-            && !CutsceneScreen.CutsceneShowing;
+        {
+            if (GameUi.State != GameState.RUNNING || CutsceneScreen.CutsceneShowing) return false;
+            var controller = SceneController();
+            if (controller != null) _entered = controller;
+            return _entered != null;
+        }
 
         public override Message ScreenName => Message.MaybeRaw(TitleText());
 
@@ -154,6 +165,7 @@ namespace JerianAccess.Module.Screens
 
         public override void OnPop()
         {
+            _entered = null;
             _watched = null;
             _spokenRewards = null;
             _pendingRewards = null;

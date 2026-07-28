@@ -136,6 +136,7 @@ namespace JerianAccess.Module
                 new NameRequestScreen(),
                 new DisclaimerScreen(),
                 new SceneScreen(),
+                new IntroSceneScreen(),
                 new OptionSceneScreen(),
                 new ChapterPictureScreen(),
                 new ChapterSummaryScreen(),
