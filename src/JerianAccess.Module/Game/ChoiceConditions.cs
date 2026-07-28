@@ -36,11 +36,14 @@ namespace JerianAccess.Module.Game
             var reqs = new List<string>();
             foreach (var group in choice.ConditionGroups)
                 foreach (var cond in group.Conditions)
-                    if (!cond.IsHidden && !Satisfied(cond, choice))
-                    {
-                        var d = Describe(cond);
-                        if (d != null) reqs.Add(d);
-                    }
+                {
+                    if (cond.IsHidden) continue;
+                    // Describe FIRST: a condition with no player-facing words (a reference to
+                    // another group) is not a reason, and evaluating one costs the game an error
+                    // in its own log every time the mod reads a choice.
+                    var d = Describe(cond);
+                    if (d != null && !Satisfied(cond, choice)) reqs.Add(d);
+                }
             if (reqs.Count == 0) return Loc.T("state.unavailable");
             return Loc.T("choice.unavailable", new { req = string.Join(", ", reqs.ToArray()) });
         }
