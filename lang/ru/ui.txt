@@ -47,7 +47,7 @@ choice.op.less = меньше
 choice.op.equal = ровно
 choice.op.moreequal = не менее
 choice.op.lessequal = не более
-choice.op.not = не
+choice.op.notequal = не равно
 
 choice.unlock = открыть за {cost} {name}
 choice.unlock.paid = открыто, потрачено {cost} {name}
@@ -74,6 +74,8 @@ yearpopup.summary = {year} год, {chapter}, {age}
 
 pager.next = следующая страница
 pager.prev = предыдущая страница
+
+screen.disclaimer = предупреждение
 
 screen.credits = титры
 

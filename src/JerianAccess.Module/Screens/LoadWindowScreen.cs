@@ -46,7 +46,11 @@ namespace JerianAccess.Module.Screens
             foreach (var slot in slots)
             {
                 var s = slot;
-                b.AddItem(ControlId.Referenced(s, "loadwindow:slot:" + s.gameObject.name),
+                // The instance, not the object NAME: the game clones every slot from one prefab,
+                // so a second save gave two nodes the same id - the graph rejected the duplicate
+                // and the whole window went silent and unnavigable (a save could not be picked
+                // at all once the player had more than one).
+                b.AddItem(ControlId.Referenced(s, "loadwindow:slot:" + s.GetInstanceID()),
                     new NodeVtable
                     {
                         ControlType = ControlTypes.Button,

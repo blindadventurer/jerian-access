@@ -100,11 +100,24 @@ namespace JerianAccess.Module.UI
         internal GraphNode FocusedNode => _graph?.CurrentNode;
 
         // Screens declare fresh from live game state on every render (immediate mode).
+        // A screen that declares something the builder refuses (two nodes claiming one id, seen
+        // live when a second save slot cloned the first slot's name) must not take the whole
+        // module down with it: the throw is logged loudly and this screen renders nothing, while
+        // speech, input and every other screen keep working. A silent mod is total for a player
+        // who cannot see the screen.
         private GraphRender BuildRender(Screens.Screen screen)
         {
             var b = new GraphBuilder(_state.Expanded); // groups consult the persistent expansion set
-            screen.Build(b);
-            return b.Build();
+            try
+            {
+                screen.Build(b);
+                return b.Build();
+            }
+            catch (System.Exception e)
+            {
+                Mod.Error("Screen.Build threw for '" + screen.Key + "': " + e);
+                return new GraphBuilder(_state.Expanded).Build();
+            }
         }
 
         public override void Blur()

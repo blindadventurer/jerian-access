@@ -60,7 +60,7 @@ choice.op.less = less than
 choice.op.equal = exactly
 choice.op.moreequal = at least
 choice.op.lessequal = at most
-choice.op.not = not
+choice.op.notequal = not equal to
 
 # A choice whose requirements are unmet but BUYABLE: the game offers it behind a resource lock
 # (Sanity, Tempest Legacy) that the player clicks to pay. Backspace pays it and pays it back.
@@ -103,6 +103,8 @@ pager.next = next page
 pager.prev = previous page
 
 # Credits roll (no on-screen title; the menu button label is not an I2 term either)
+screen.disclaimer = disclaimer
+
 screen.credits = credits
 
 # Chapter-timeline / loading screen (shown after picking a save; Continue resumes, the
