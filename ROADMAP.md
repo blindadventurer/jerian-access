@@ -142,6 +142,20 @@ debugging from scratch.
       scene re-read its first page while the choices sat unheard. The start node is now the live
       surface (choices, else the offered Continue, else the newest page). Verified live 2026-07-28. Re-verified through the window pass: closing a window returns focus to the story row
 - [x] built - Consequence sheet reading - see the choice-detail item above (ChoiceRewards)
+- [x] built - The post-choice CONSEQUENCE PAGE (Game/RewardPage.cs) - what a resolved choice
+      actually changed. USER BUG 2026-07-29, hidden-consequences mode on, the prologue wardrobe
+      scene: a parameter changed, the game played its parameter-change sound and the mod said
+      NOTHING. The page was read by a sweep of two row component types, and the game builds NINE:
+      the skills, personality, relations, resources, estates and empire groups - everything a
+      prologue choice grants - use their own row prefabs and were all missed. With the sheet
+      hidden before the pick, that page is the only word the player gets, so the change was
+      unknowable. Now composed from the model the rows are built from
+      (SceneConsequenceController._rewardGroups at its own page index, through
+      ChoiceRewards.Describe), which is also the only correct source: the rendered rows carry no
+      delta at all (a skill slider renders "Закон – 3" and animates, an estate is a crest). Both
+      screens a consequence page can appear under call it - the story scene and the option scene
+      (case-for-a-year / trip) - sharing one delivery so neither doubles, and the option scene's
+      text sweep now leaves the rows to it. NOT yet verified live
 - [x] verified - Scene title on a scene CHANGE (SceneScreen.DeliverTitle): the next scene loads in
       place inside one frame, so IsActive never dips, the screen never re-focuses and OnFocus's
       screen-name announcement never ran again - only the first page was spoken (observed live:

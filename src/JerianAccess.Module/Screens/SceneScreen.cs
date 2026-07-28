@@ -149,12 +149,6 @@ namespace JerianAccess.Module.Screens
             return text;
         }
 
-        // Reward-sheet delivery state (the stat changes after a choice): read once, when the
-        // slider/counter animations have settled, off the rendered content.
-        private string _spokenRewards;
-        private string _pendingRewards;
-        private int _pendingRewardsFrame;
-
         public override void OnPush() { _entryPending = true; }
 
         // The screen-name announcement IS the scene title, and a scene's title is announced ONCE -
@@ -173,8 +167,6 @@ namespace JerianAccess.Module.Screens
         {
             _entered = null;
             _watched = null;
-            _spokenRewards = null;
-            _pendingRewards = null;
             _spokenTitle = null;
             _continueOffered = false;
         }
@@ -182,7 +174,8 @@ namespace JerianAccess.Module.Screens
         public override void OnUpdate()
         {
             DeliverTitle();
-            DeliverRewards();
+            // The stat changes a resolved choice brought, from the scene's own consequence page.
+            RewardPage.Deliver();
             var tc = Pager();
             if (tc == null) return;
             DeliverContinue(tc);
@@ -256,52 +249,6 @@ namespace JerianAccess.Module.Screens
             if (string.IsNullOrEmpty(title) || title == _spokenTitle) return;
             _spokenTitle = title;
             Mod.Speech.Speak(title);
-        }
-
-        // The post-choice reward sheet (parameter/relation/status/... changes). The rows render
-        // the game's own localized "name, delta, become N" text; sliders animate the value up,
-        // so this speaks ONCE the rendered text stops changing (settled), off the final content.
-        private void DeliverRewards()
-        {
-            var sig = RewardSheetText();
-            if (string.IsNullOrEmpty(sig)) { _pendingRewards = null; return; }
-            if (sig != _pendingRewards)
-            {
-                _pendingRewards = sig;
-                _pendingRewardsFrame = UnityEngine.Time.frameCount;
-                return;
-            }
-            if (UnityEngine.Time.frameCount - _pendingRewardsFrame < 20) return; // still animating
-            if (sig == _spokenRewards) return;
-            _spokenRewards = sig;
-            Mod.Speech.Speak(Loc.T("scene.rewards") + sig);
-        }
-
-        private static string RewardSheetText()
-        {
-            var rows = new List<UnityEngine.Component>();
-            foreach (var r in Object.FindObjectsOfType<
-                _Scripts.AMVCC.Views.Windows.SceneConsequence.SceneConsequenceRewardRow>())
-                if (UiWidgets.Visible(r.gameObject)) rows.Add(r);
-            foreach (var r in Object.FindObjectsOfType<
-                _Scripts.AMVCC.Views.Windows.SceneConsequence.ConsequenceRewardRow.ParameterConsequenceRewardRow>())
-                if (UiWidgets.Visible(r.gameObject)) rows.Add(r);
-            if (rows.Count == 0) return null;
-            rows.Sort((a, c) => c.transform.position.y.CompareTo(a.transform.position.y));
-
-            var sb = new StringBuilder();
-            foreach (var row in rows)
-            {
-                foreach (var t in row.GetComponentsInChildren<TMPro.TMP_Text>(false))
-                {
-                    if (!UiWidgets.Visible(t.gameObject)) continue;
-                    var s = t.text;
-                    if (string.IsNullOrEmpty(s) || s.Trim().Length == 0) continue;
-                    if (sb.Length > 0) sb.Append(", ");
-                    sb.Append(s.Trim());
-                }
-            }
-            return sb.ToString();
         }
 
         public override void Build(GraphBuilder b)

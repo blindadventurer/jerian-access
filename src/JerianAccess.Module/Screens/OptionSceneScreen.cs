@@ -58,8 +58,12 @@ namespace JerianAccess.Module.Screens
             var page = Consequence();
             if (page == null) return;
             bool grew;
-            var text = _consequence.Poll(PanelText.Read(page), out grew);
+            // The consequence's own reward rows are announced from the model (RewardPage) rather
+            // than from the sliders and crests the game draws them as, so the sweep reads the
+            // page's words and leaves the rows to it.
+            var text = _consequence.Poll(PanelText.Read(page, RewardPage.OwnsLabel), out grew);
             if (!string.IsNullOrEmpty(text)) Mod.Speech.Speak(text);
+            RewardPage.Deliver();
         }
 
         // The scene root: whichever of the two controllers is loaded.

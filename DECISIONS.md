@@ -132,3 +132,32 @@ The game copy on this machine lives at `F:\games\The Life and Suffering of Princ
 (no Steam appmanifest; a `.rne` file sits beside the exe). All launch tooling uses the exe
 directly; the Steam/GOG locator paths remain in JerianGameLocator.ps1 for other machines, with
 the F:\games path added as a known-local candidate checked first.
+
+## 2026-07-29 - The consequence page is composed from the reward model, not read off its rows
+
+The page a scene turns into after a choice (`SceneConsequenceController`) shows one reward group
+at a time as animated sliders, counters and crests. Its rendered text does NOT carry the change:
+a skill row renders "Закон – 3" (name and the NEW value) and the delta lives only in the slider
+movement, a parameter row hides its name and delta labels entirely behind `ParameterSliderView`,
+an estate row is a crest with a number. So the page is composed from
+`SceneConsequenceController._rewardGroups` at its own page index, through the same
+`ChoiceRewards.Describe` the pre-choice sheet and the interlude reward pages use. The previous
+implementation swept two of the NINE row component types the game builds and was silent for
+every group a normal choice grants.
+
+Two sub-calls that follow from that:
+
+* The AUTHORED reward is announced, not the clamped one the rows animate from
+  (`_invertedRewardGroups`). The inverted copies read live parameter state at page-setup time and
+  invert character statuses and article values against whatever is current, so re-reading them at
+  speech time can compose a change that never happened. The authored value is also exactly what
+  the choice's own sheet promises, so a pick reads the same before and after.
+* No "стало N" resulting value. Whether a group's rewards are applied before or after the page
+  that shows them differs by path (`NextPage` receives the inverted group, `AdjustRewards` the
+  real one), so a resulting value read at speech time would be wrong on one of them - and a wrong
+  number is worse to a player who cannot see the slider than no number. The delta is unambiguous;
+  the current value is a Tab away on the HUD.
+
+Delivery is a single static in `Game/RewardPage.cs` rather than per-screen state: a story scene
+and an option scene (case-for-a-year, trip selection) raise the SAME page, and both call it, so
+sharing the "already spoken" key is what keeps it from being announced twice.
