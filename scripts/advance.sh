@@ -127,7 +127,9 @@ while [ "$STEP" -lt "$MAX" ]; do
       # Flash popups with no control: they play and hide themselves.
       echo "note step $STEP: $ACTIVE flash - waiting"; sleep 3; continue ;;
     "screen death"|"screen popup"|"screen chapterpicture"|"screen intro"|"screen scene:options")
-      ACTION="endenter" ;;
+      # A screen with no nodes at all has handed the keyboard to the game for this phase (the
+      # case-for-a-year scene turns into a consequence page the game pages itself).
+      if echo "$NAVOUT" | grep -q '^graph ('; then ACTION="endenter"; else ACTION="gamenext"; fi ;;
     "screen gameloading")
       # The between-chapters loading screen: Continue is the start node (End would land on the
       # on-screen hint), so Home+Enter resumes at the chapter the run just reached.

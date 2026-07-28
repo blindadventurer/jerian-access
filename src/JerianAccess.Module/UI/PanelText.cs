@@ -20,19 +20,32 @@ namespace JerianAccess.Module.UI
         /// Names in <paramref name="skip"/> are matched against the object name and dropped -
         /// persistent chrome (a year label, a page counter) that would repeat on every page.</summary>
         public static string Read(GameObject root, params string[] skip)
+            => Read(root, null, skip);
+
+        /// <summary>The same read with a subtree filter: a label the filter excludes belongs to
+        /// something else on the page (an option card that is its own stop), not to this panel.</summary>
+        public static string Read(GameObject root, System.Func<GameObject, bool> exclude,
+            params string[] skip)
         {
             if (root == null) return "";
             var rows = new List<Transform>();
             var texts = new List<string>();
             foreach (var tmp in root.GetComponentsInChildren<TMPro.TMP_Text>(false))
-                Take(tmp.gameObject, tmp.text, skip, rows, texts);
+                Take(tmp.gameObject, tmp.text, skip, exclude, rows, texts);
             foreach (var legacy in root.GetComponentsInChildren<UnityEngine.UI.Text>(false))
-                Take(legacy.gameObject, legacy.text, skip, rows, texts);
+                Take(legacy.gameObject, legacy.text, skip, exclude, rows, texts);
 
             var order = new List<int>();
             for (int i = 0; i < rows.Count; i++) order.Add(i);
             order.Sort((a, c) =>
             {
+                // A bare figure follows the words it belongs to: the game lays a row's value
+                // ahead of its name as often as after it, and "0 Прогресс" states it backwards.
+                if (rows[a].parent == rows[c].parent)
+                {
+                    bool figureA = IsFigure(texts[a]), figureC = IsFigure(texts[c]);
+                    if (figureA != figureC) return figureA ? 1 : -1;
+                }
                 int byY = rows[c].position.y.CompareTo(rows[a].position.y);
                 return byY != 0 ? byY : rows[a].position.x.CompareTo(rows[c].position.x);
             });
@@ -53,7 +66,9 @@ namespace JerianAccess.Module.UI
                 char last = sb[sb.Length - 1];
                 bool punctuated = last == '.' || last == '!' || last == '?' || last == ':'
                                   || last == ',' || last == ';' || last == '…';
-                sb.Append(punctuated ? " " : ". ");
+                // A bare figure is the value of the words just read ("Прогресс 0"), not a
+                // sentence of its own.
+                sb.Append(punctuated || IsFigure(text) ? " " : ". ");
             }
             sb.Append(text);
         }
@@ -77,14 +92,24 @@ namespace JerianAccess.Module.UI
         }
 
         private static void Take(GameObject go, string text, string[] skip,
-            List<Transform> rows, List<string> texts)
+            System.Func<GameObject, bool> exclude, List<Transform> rows, List<string> texts)
         {
             if (string.IsNullOrEmpty(text) || text.Trim().Length == 0) return;
             if (!UiWidgets.Visible(go)) return;
             foreach (var name in skip)
                 if (go.name.Contains(name)) return;
+            if (exclude != null && exclude(go)) return;
             rows.Add(go.transform);
             texts.Add(text.Trim());
+        }
+
+        private static bool IsFigure(string s)
+        {
+            s = s.Trim();
+            if (s.Length == 0) return false;
+            foreach (var c in s)
+                if (!char.IsDigit(c) && c != '+' && c != '-') return false;
+            return true;
         }
     }
 }

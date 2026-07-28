@@ -1,11 +1,13 @@
 using System.Collections.Generic;
 using JerianAccess.Module.Game;
+using JerianAccess.Module.Input;
 using JerianAccess.Module.Speech;
 using JerianAccess.Module.UI;
 using JerianAccess.Module.UI.Graph;
 using UnityEngine;
 using _Scripts.AMVCC.Views.Windows.CaseForAYear;
 using _Scripts.AMVCC.Views.Windows.TripSelection;
+using _Scripts.PageScene;
 
 namespace JerianAccess.Module.Screens
 {
@@ -27,6 +29,38 @@ namespace JerianAccess.Module.Screens
 
         public override Message ScreenName => Message.MaybeRaw(Title());
 
+        private static readonly InputCategory[] None = new InputCategory[0];
+
+        /// <summary>Once the pick is made the scene turns into its CONSEQUENCE - a story page the
+        /// game pages with its own keys - so the screen claims nothing there, the way every
+        /// delivery-only surface does, and the game's pager stays live. Claiming input there left
+        /// the page unturnable: the mod had no node to page it with and the game's own keys were
+        /// suppressed for as long as the mod claimed UI.</summary>
+        public override IReadOnlyList<InputCategory> InputCategories
+            => Consequence() != null ? None : base.InputCategories;
+
+        private readonly SettledDelivery _consequence = new SettledDelivery(0.25f);
+
+        /// <summary>The consequence page this scene turned into, or null while the options are up.</summary>
+        private static GameObject Consequence()
+        {
+            var root = Root();
+            if (root == null) return null;
+            var page = root.GetComponentInChildren<PageConsequenceController>(false);
+            return page != null && UiWidgets.Visible(page.gameObject) ? page.gameObject : null;
+        }
+
+        public override void OnPop() => _consequence.Reset();
+
+        public override void OnUpdate()
+        {
+            var page = Consequence();
+            if (page == null) return;
+            bool grew;
+            var text = _consequence.Poll(PanelText.Read(page), out grew);
+            if (!string.IsNullOrEmpty(text)) Mod.Speech.Speak(text);
+        }
+
         // The scene root: whichever of the two controllers is loaded.
         private static GameObject Root()
         {
@@ -42,15 +76,34 @@ namespace JerianAccess.Module.Screens
         {
             var root = Root();
             if (root == null) return null;
-            var text = PanelText.Read(root);
+            var text = PanelText.Read(root, InsideOption);
             int stop = text.IndexOf(". ");
             return stop <= 0 ? text : text.Substring(0, stop);
         }
 
+        /// <summary>This label belongs to an option card, which is a stop of its own.</summary>
+        private static bool InsideOption(GameObject go)
+            => go.GetComponentInParent<CaseForAYearOptionView>() != null
+            || go.GetComponentInParent<TripOptionView>() != null;
+
         public override void Build(GraphBuilder b)
         {
             var root = Root();
-            if (root == null) return;
+            if (root == null || Consequence() != null) return; // the game owns the consequence page
+
+            // The page's own words first (the section headings, the year, what the picks would do
+            // to the empire), then the options - the transcript shape: context, then the choices.
+            // The option cards' own words are excluded: each card is its own stop, and reading
+            // them here made the context stop a recital of every option on the page.
+            b.AddItem(ControlId.Structural("options:page"), new NodeVtable
+            {
+                ControlType = ControlTypes.Text,
+                Announcements = new[]
+                {
+                    new NodeAnnouncement(() => PanelText.Read(root, InsideOption),
+                        kind: AnnouncementKinds.Label),
+                },
+            });
 
             b.PushContext("", role: null);
             foreach (var view in root.GetComponentsInChildren<TripOptionView>(false))
@@ -58,17 +111,6 @@ namespace JerianAccess.Module.Screens
             foreach (var view in root.GetComponentsInChildren<CaseForAYearOptionView>(false))
                 AddCase(b, view);
             b.PopContext();
-
-            // The rest of the page (status line, estate outcomes) as one text stop - context for
-            // the pick, not controls.
-            b.AddItem(ControlId.Structural("options:page"), new NodeVtable
-            {
-                ControlType = ControlTypes.Text,
-                Announcements = new[]
-                {
-                    new NodeAnnouncement(() => PanelText.Read(root), kind: AnnouncementKinds.Label),
-                },
-            });
         }
 
         private static void AddTrip(GraphBuilder b, TripOptionView view)
