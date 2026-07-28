@@ -353,7 +353,9 @@ debugging from scratch.
       back. Every surface the run met is covered and listed above; the run met no silent screen
       and no dead end after the fixes it found. NOT met by this run, so still unverified live:
       the DEATH window, the TRIP SELECTION scene, the insurrection day-stage flash (chapter 5),
-      and the intro spread
+      and the intro spread. Chapter 4 was then replayed from its own save for another 800 driver
+      steps (a second set of choices) hunting the chapter-5 surfaces - it stayed inside chapter 4
+      and turned up nothing unread, so those three wait for a run that gets past it
 - [x] verified - Full playthrough to an ENDING, 2026-07-28: the driven run reached the "Крах"
       finale in chapter 4 - the scene's own reward popup announcing the ending, the epilogue
       scenes, and the credits roll - all spoken, with no silent surface left on the path. One
