@@ -92,24 +92,31 @@ debugging from scratch.
       SceneScreen choice nodes. Live 2026-07-28: a met condition read correctly on the prologue's
       third choice ("Разум не менее 6, выполнено"); FAILING ones read through the chapter-1 run
       ("Заступиться за семью Марты, кнопка, недоступно, требуется Страсть не менее 6")
-- [x] built - Choice RESOURCE LOCKS (Jerian mechanic Brante had no equivalent of): a choice whose
+- [x] verified - Choice RESOURCE LOCKS (Jerian mechanic Brante had no equivalent of): a choice whose
       conditions fail can be bought open with Sanity / Tempest Legacy, and until its
       ConditionLockView is clicked the choice's own click does nothing - so without this the
       choice was unreachable by keyboard. The choice now announces "открыть за N <ресурс>",
       Backspace pays every lock (and pays it back) through the game's own OnClick, and Enter
       states the price instead of clicking into nothing. Availability is computed LIVE from the
       condition groups, not from the button's interactable flag (that flag is set once in Start,
-      so on the frame the panel appears every choice read as unavailable)
-- [x] built - Hold-to-choose setting: with it on the game leaves the choice button's onClick
+      so on the frame the panel appears every choice read as unavailable). Live 2026-07-28 across chapters 1-2: the offer is announced on focus ("открыть за 30
+      Наследие Темпестов"), Backspace pays it ("открыто, потрачено 30 Наследие Темпестов") and
+      pays it back, and a bought choice reads as AVAILABLE - a fix this pass found, since
+      availability was read off the conditions the game itself stops consulting once a choice
+      can be bought open
+- [x] verified - Hold-to-choose setting: with it on the game leaves the choice button's onClick
       unwired and resolves from the hold sequence, so keyboard activation reached nothing at all.
       Game/HoldChoice.cs runs the view's own ResolveClickEvent instead (scene choices, trip
-      options, case-for-a-year options share the shape)
-- [x] built - Consequence sheet as choice detail (Game/ChoiceRewards.cs): Space on a choice reads
+      options, case-for-a-year options share the shape). The setting is off in the test save, so the direct-click path is what the chapter 1-3 run
+      exercised; the hold path shares its resolve call with the option scenes
+- [x] verified - Consequence sheet as choice detail (Game/ChoiceRewards.cs): Space on a choice reads
       what the game paints on the right page for a sighted player - the choice's own description
       key plus its reward rows, composed from the model (name + signed value, character rows
       following the game's own status/relation rules). Hidden-consequences mode is honored - the
       game hides the rows there, so the mod says nothing either. Live 2026-07-28: composition
-      checked on the prologue's three choices ("Эмиль, отношение +1, Закон +1")
+      checked on the prologue's three choices ("Эмиль, отношение +1, Закон +1"). Live 2026-07-28 in chapter 2 with hidden consequences turned off: "Ты откажешься от
+      перстня... изменения: Уттер Темпест, Разочарование, отношение -1, Сервилия Темпест,
+      отношение -1, Корнелий Темпест, отношение +1, Воля +1"
 - [x] verified - HUD readout as a Tab-stop (Game/HudReadout.cs): Sanity + Tempest Legacy counters
       from the model, HUD window buttons with game labels + locked reasons + click activation.
       Live: Tab from the transcript speaks "HUD, Рассудок 5, 1 из 10", "Наследие Темпестов 0,
@@ -120,19 +127,20 @@ debugging from scratch.
       it was SILENT. Now "Карта Империи, кнопка, недоступно, В главе II, 10 из 10" and Enter
       speaks "недоступно, В главе II"; a button the game blocks without locking (IsButtonsBlocked)
       answers with the bare unavailable word instead of clicking into nothing
-- [x] built - Trigger-scene page (-20) reading: the page a scene opens on when the player's own
+- [x] verified - Trigger-scene page (-20) reading: the page a scene opens on when the player's own
       earlier choices summoned it. Was SILENT and Enter was dead there (the transcript exposed the
       whole unread scene instead), so the page could only be left with the game's own keys. Now one
       node: the page's own header row, the trigger scene's title, and each condition with a met
-      marker (the page shows those as dimming); Enter pages on through TextPanelClick
-- [x] built - Transcript rows are the pages the game will actually SHOW: a text block whose
+      marker (the page shows those as dimming); Enter pages on through TextPanelClick. Live 2026-07-28: "Условие. За горизонт. Фердинанд эль Бер не Разбитые надежды, выполнено" -
+      and the pass moved the negation to where the game draws it, between the name and the value
+- [x] verified - Transcript rows are the pages the game will actually SHOW: a text block whose
       conditions this playthrough fails is skipped by the pager, and reading it meant reading
       passages that are not in the player's story (TextControllerExtensions.GetNextUnlockedTextIndex
-      is the game's own rule)
-- [x] built - Focus seating on scene re-entry: closing a window re-pushes the scene screen, and
+      is the game's own rule). Exercised by every scene of the chapter 1-3 run
+- [x] verified - Focus seating on scene re-entry: closing a window re-pushes the scene screen, and
       with the choice panel up the graph's first node (the opening passage) won the seat - the
       scene re-read its first page while the choices sat unheard. The start node is now the live
-      surface (choices, else the offered Continue, else the newest page). Verified live 2026-07-28
+      surface (choices, else the offered Continue, else the newest page). Verified live 2026-07-28. Re-verified through the window pass: closing a window returns focus to the story row
 - [x] built - Consequence sheet reading - see the choice-detail item above (ChoiceRewards)
 - [x] verified - Scene title on a scene CHANGE (SceneScreen.DeliverTitle): the next scene loads in
       place inside one frame, so IsActive never dips, the screen never re-focuses and OnFocus's
@@ -144,15 +152,16 @@ debugging from scratch.
       transitions through chapter 1 - and the title no longer DOUBLES when the year flash (or any
       overlay) hands focus back: the title is announced once per scene, keyed to content like a
       page, never on re-focus (the navigator's re-seat speaks the row the player is on)
-- [x] built - Chapter transitions announced: SceneType.ChapterStart and ChapterFinish are
+- [x] verified - Chapter transitions announced: SceneType.ChapterStart and ChapterFinish are
       ChapterSummaryWindowController scenes on Jerian, which ChapterSummaryScreen already reads
-      (Brante's own chapter-transition panels are gone - their screens stay excluded)
-- [x] built - Inconsequential scenes (SceneType.Inconsequential / InconsequentialSceneController,
+      (Brante's own chapter-transition panels are gone - their screens stay excluded). Live 2026-07-28 on both the chapter 1 to 2 and the 2 to 3 transition - closing book, chapter
+      picture, opening book, each page spoken once with its position
+- [x] verified - Inconsequential scenes (SceneType.Inconsequential / InconsequentialSceneController,
       "Window_Inconsequential" - text pages, no choices) were read by NO screen: SceneScreen gated
       on BasicSceneController, so such a scene was silent. SceneScreen now accepts either
       controller, and the title is delivered off the RENDERED title label, not TitleKey, because
       such a scene swaps its title mid-run on a special-scenery block ("ChangeSceneTitleEvent"
-      writes the label only)
+      writes the label only). Exercised repeatedly through chapters 1-3
 - [x] verified - The two option-picking scene types (Screens/OptionSceneScreen.cs): "Дело на год"
       (CaseForAYear) and the trip selection are whole scenes with no BasicSceneController, so
       nothing saw them. Each option is a node (game label, availability, Space for the tooltip /
@@ -162,9 +171,9 @@ debugging from scratch.
       now come FIRST and no longer recite every option card; and after the pick the scene turns
       into a CONSEQUENCE page the game pages itself, where the screen used to keep claiming UI and
       left the page unturnable by any key (now delivery-only, like the interlude popups)
-- [x] built - Chapter-picture scene (SceneType.ChapterPicture): the two title lines as one node
+- [x] verified - Chapter-picture scene (SceneType.ChapterPicture): the two title lines as one node
       plus the game's own click handler on Enter (rewritten off ChapterPictureController; Brante's
-      StartPictureHelper is gone)
+      StartPictureHelper is gone). Live 2026-07-28: "1134г. Глава III. Великий Цензор, Enter продолжить", Enter continues
 - [x] verified - LoadWindow (save slots) ported: slots read chapter+hero+date+time, Enter
       loads, Backspace deletes, Escape (game's own) closes. Written from decompiled source
 - [x] verified - GameLoadingScreen / chapter-timeline: Continue (focus home), five chapter
@@ -298,14 +307,14 @@ debugging from scratch.
 
 ## Phase 6 - Input & navigation polish
 
-- [x] built - The game's own pagers no longer act under the mod's arrows: GameInputPatches now
+- [x] verified - The game's own pagers no longer act under the mod's arrows: GameInputPatches now
       also suppresses PageNavigationController.Update (the pager the story scenes actually run on
       once BasicSceneController hands it the TextController - so one physical Right both moved mod
       focus and turned the game's page) and SimplePageTurner.Update (the death window's). Still
-      gated on the mod OWNING input, so delivery-only screens keep the game's keys live
-- [x] built - Popups that PopupControllersManager instantiates are found by TYPE, not through
+      gated on the mod OWNING input, so delivery-only screens keep the game's keys live. And the invariant behind it is structural now - see the delivery-only blocker item above
+- [x] verified - Popups that PopupControllersManager instantiates are found by TYPE, not through
       UIManager's popup slot: Jerian never writes that slot for them, so the year-increment and
-      day-stage screens could never wake up
+      day-stage screens could never wake up. Live: the year flash reads on every year change of the chapter 1-3 run
 - [x] verified - Full key map reviewed against Jerian's own keys (GlobalConfig: left = A /
       Left, right = D / Right / Space, continue = Enter / keypad Enter, skip = either Shift):
       the mod's own bindings match the habits those keys teach, so a surface the game pages

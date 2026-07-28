@@ -191,7 +191,7 @@ while [ "$STEP" -lt "$MAX" ]; do
   elif [ "$ACTION" = "gamenext" ]; then
     # These surfaces fade a page in before its text lands; a click on the frame the page
     # reports itself ready turns past content nobody heard. A player waits for the words.
-    sleep 1
+    sleep 2
     press game.next
   elif [ "$ACTION" = "homeenter" ]; then
     press ui.home; sleep 0.3; press ui.activate
