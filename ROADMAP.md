@@ -274,7 +274,11 @@ debugging from scratch.
       DeathWindowBehaviour / SimplePageTurner / ResolveBehaviour shapes; the page-text helper now
       reflects on the type that declares it and the pager's own arrow reads are suppressed while
       the mod owns input)
-- [x] built - Credits roll (skipping stays the game's own InputSystem Escape)
+- [x] verified - Credits roll (skipping stays the game's own InputSystem Escape). Live
+      2026-07-28 from the main menu: announces "титры", the credit block reads as a text row,
+      and the game's own Escape returns to the menu. Known limit: the roll exposes ONE block at a
+      time and the mod does not re-announce as the scroll replaces it - a player reads the block
+      on the stop and skips when done
 - [x] verified - Tooltip controller set (Game/TooltipReader.cs): Jerian hangs nearly all detail on
       TooltipZoneView, and Space now asks the zone to open, waits for the game to build its view,
       speaks it and closes it - one path for all ten tooltip types, no per-type modelling. A
@@ -292,8 +296,11 @@ debugging from scratch.
       showing announces "выбрано", not "недоступно"; comparison operators speak as words
 - [x] verified - The confirm popups' click-away backdrop is no longer a stop (it took the opening
       focus, so "exit to menu?" opened on an unlabeled button)
-- [x] built - The intro spread a new game opens on (IntroSceneController): two pages of setup text
-      and the button on to the story, previously read by nothing. Needs a new-game pass
+- [ ] built - The intro spread (IntroSceneController): two pages of setup text and the button on
+      to the story. A full new-game pass on 2026-07-28 (menu -> new game -> name -> disclaimer ->
+      cutscene -> prologue -> chapter 1) never reached it, and nothing in the decompiled tree
+      references the controller outside its own prefab - it may be demo-only. The screen keys off
+      the type, so it reads if the game ever raises it
 
 ## Phase 5 - Cutscenes & interludes
 
@@ -329,7 +336,16 @@ debugging from scratch.
 
 ## Phase 8 - Regression & release
 
+- [x] verified - R1 sweep, 2026-07-28: boot -> main menu -> NEW GAME (name entry with the game's
+      own validation reason on the Start button, the three setting radio pairs) -> disclaimer ->
+      opening cutscene (all subtitles) -> prologue scene -> choice panel -> chapter picture ->
+      chapter book -> chapter 1 scene; then exit to menu -> load window -> the older save ->
+      chapter 3 resumed. Two blockers the sweep found are fixed: a SECOND save made the load
+      window unusable (and silenced the whole module), and the disclaimer announced a raw
+      localization key
+
+
 - [ ] R1 (standing) - Regression sweep: boot → menu → new game → first scene → choice →
-      consequence → save/load → quit, all spoken correctly
+      consequence → save/load → quit, all spoken correctly (last run 2026-07-28, above)
 - [ ] todo - Full-game blind playthrough pass
 - [ ] todo - package.ps1 produces a working release zip against a clean game copy
