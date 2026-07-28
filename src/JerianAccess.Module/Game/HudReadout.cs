@@ -46,6 +46,7 @@ namespace JerianAccess.Module.Game
             b.BeginStop("hud");
             b.PushContext(Loc.T("hud.region"), role: null);
 
+            AddWhen(b);
             if (sanity != null && sanity.gameObject.activeInHierarchy)
                 AddCounter(b, "hud:sanity", (Parameter)SanityParamField.GetValue(sanity));
             if (tempest != null && tempest.gameObject.activeInHierarchy)
@@ -53,6 +54,24 @@ namespace JerianAccess.Module.Game
 
             foreach (var btn in buttons) AddButton(b, btn);
             b.PopContext();
+        }
+
+        /// <summary>When the story stands, as the page's own corner states it. A sighted player
+        /// has the year in view the whole time; this is the stop that answers it without leaving
+        /// the scene.</summary>
+        private static void AddWhen(GraphBuilder b)
+        {
+            var year = Object.FindObjectOfType<_Scripts.PageScene.YearTextController>();
+            if (year == null || !UiWidgets.Visible(year.gameObject)) return;
+            b.AddItem(ControlId.Referenced(year, "hud:when"), new NodeVtable
+            {
+                ControlType = ControlTypes.Text,
+                Announcements = new[]
+                {
+                    new NodeAnnouncement(() => UiWidgets.LocalizedLabel(year.gameObject),
+                        kind: AnnouncementKinds.Label),
+                },
+            });
         }
 
         private static void AddCounter(GraphBuilder b, string id, Parameter param)
