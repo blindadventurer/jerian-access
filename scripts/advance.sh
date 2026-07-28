@@ -133,7 +133,11 @@ while [ "$STEP" -lt "$MAX" ]; do
       # is as often a completed one (which refuses, as it should) - so take the first option
       # instead: node 1 is the page, node 2 the first option. With no nodes at all the scene has
       # turned into its consequence page, which the game pages itself.
-      if echo "$NAVOUT" | grep -q '^graph ('; then ACTION="walk 2"; else ACTION="gamenext"; fi ;;
+      # Walk to the first option the game will actually take: an unavailable or already
+      # completed one refuses (as it should) and the run would press it forever.
+      TARGET=$(echo "$NAVOUT" | awk '/^graph \(/{g=1;next} /^stack:/{g=0} g && /^(\* |  )ControlId\(/{n++; if ($0 ~ /options:(case|trip):/ && $0 !~ /, недоступно/ && $0 !~ /, unavailable/ && $0 !~ /, выполнено/ && $0 !~ /, completed/ && !first) {first=n}} END{if (first) print first}')
+      if [ -n "$TARGET" ]; then ACTION="walk $TARGET";
+      elif echo "$NAVOUT" | grep -q '^graph ('; then ACTION="walk 2"; else ACTION="gamenext"; fi ;;
     "screen death"|"screen popup"|"screen chapterpicture"|"screen intro")
       if echo "$NAVOUT" | grep -q '^graph ('; then ACTION="endenter"; else ACTION="gamenext"; fi ;;
     "screen window"|"screen pause"|"screen settings")
