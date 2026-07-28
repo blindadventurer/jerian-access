@@ -45,13 +45,39 @@ decompiled Jerian code before any feature relies on them.
   `UIManager`, `ParametersManager`, `SoundManager`, plus new `WindowControllersManager`,
   `TooltipControllersManager`, `GameSettingsManager`, `SaveLoadManager`. Bolt visual-scripting
   graphs still present ("TalismanFlowMachine") - opaque to decompile; observe at runtime.
-- **Choices**: `ParameterButtonChanger` is gone. Candidate successors seen in the binary:
-  `ChoiseButton` (sic), `DecisionButton`, `AnswerButton`, `ConsequenceButton`. Map these from
-  the decompiled source before porting the choice reader.
-- **Windows**: Brante set partially survives (CharacterWindow, ChapterWindow, LoadWindow,
-  WorkWindow, InsurrectionWindow, HomeWindow...) plus NEW Jerian systems: `CouncilWindow`,
-  `SoulWindow`, `ArticlesWindow`, `BindWindowController`, `CharacterStatusWindow`,
-  `BilateralParametersWindow`, `ChapterSummaryWindowController`, rich tooltip controller set.
+- **Choices** (mapped): `ConsequenceButtonController` is the choice. Its `ConditionGroup[]` is
+  the requirement model (typed `Condition`s, live-evaluable via `IsConditionSatisfied`); a group
+  that fails but is not `IsLocked` can be BOUGHT open through a `ConditionLockView` (Sanity /
+  Tempest Legacy), and until that lock is clicked the choice's own click does nothing.
+  `GetIsButtonInteractable`/`GetCanButtonBeUnlocked` are computed once in the button's `Start`,
+  so read the groups live for anything announced on the frame the panel appears. With
+  `GameSettings.UseAnswerButtonHolding` on, `onClick` is left UNWIRED and the pick resolves from
+  the hold sequence - keyboard activation must call the view's private `ResolveClickEvent`
+  (`Game/HoldChoice.cs`). Rewards live on `ConsequenceButtonController.Rewards`; the sheet the
+  game paints from them is hidden entirely in `GameManager.HiddenConsequencesMode`.
+- **Scene types** (`SceneType`, 7): Basic (`BasicSceneController`), Inconsequential,
+  ChapterStart + ChapterFinish (both `ChapterSummaryWindowController`), CaseForAYear,
+  ChapterPicture (`ChapterPictureController`), TripSelection. Only the first two are story
+  pagers; the rest are their own controllers.
+- **Pager**: `TextController` + a `PageNavigationController` the scene controllers hand it.
+  Page indices: -1 default, -5 none, **-10 choices**, **-15 consequence continue**, **-20 the
+  trigger page** (`TriggerScenePageView`: this scene opened because of what you did earlier).
+  Text blocks whose conditions fail are SKIPPED by the pager - never read one.
+  `TextPanelClick()` is the click-zone entry (it hands the turn to whichever pager owns the
+  page); calling `NextPage()` directly leaves a PageNavigationController's model behind.
+- **Windows**: exactly the 7 `WindowType`s (Personality, Destiny, Relations, Empire, Map, Creed,
+  Council), all instantiated by `WindowControllersManager` into `_activeWindow`
+  (`UIManager.OpenedWindow` stays null). No Soul/Articles/Bind/CharacterStatus/
+  BilateralParameters windows exist in this build.
+- **Popups come in TWO families**: the `UIManager` slot (`OpenedPopup`: objective, info,
+  condition-help, case-of-year, finals-remind) and `PopupControllersManager`, which instantiates
+  interlude / year-increment / creed-outcome / demo popups into its own container and NEVER
+  touches the slot - find those by type. Tutorials are a third manager
+  (`TutorialControllersManager`) and LOCK scene navigation while open.
+- **Tooltips**: `TooltipZoneView` (a Selectable - so never treat "owned by a Selectable" as
+  "owned by a control" when sweeping labels) broadcasts on hover; a per-type `ITooltipController`
+  builds a view prefab into `TooltipControllersManager.TooltipViewsContainer` one frame later.
+  `Game/TooltipReader.cs` drives that and reads the result.
 - **Text access**: I2 Localization confirmed compiled into Assembly-CSharp (`GetTranslation`
   present) - read live TMP components or `I2.Loc.LocalizationManager.GetTranslation(key)`.
   Placeholder substitution helpers: VERIFY their Jerian names, reuse them, never re-implement.

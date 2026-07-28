@@ -53,16 +53,20 @@ debugging from scratch.
 
 ## Phase 2 - Discovery (decompiled source + live probing; update CLAUDE.md game facts)
 
-- [ ] todo - Map the choice component: ChoiseButton / DecisionButton / AnswerButton /
-      ConsequenceButton roles, text keys, availability checks, click handlers
-- [ ] todo - Map TextController paging + how passage text is keyed (scene-per-event is gone;
-      ~24 scenes only) and how consequence text is delivered
+- [x] verified - Choice component mapped: ConsequenceButtonController, its ConditionGroup model,
+      resource locks and the hold-to-choose path (CLAUDE.md game facts)
+- [x] verified - TextController paging mapped: page indices (-10 choices, -15 continue, -20
+      trigger page), condition-skipped blocks, TextPanelClick as the turn entry, and the
+      PageNavigationController the scene controllers hand it
+- [x] verified - Windows enumerated: exactly the 7 WindowTypes, all through
+      WindowControllersManager. Soul / Articles / Bind / CharacterStatus / BilateralParameters
+      do not exist in this build; ChapterSummary is a SCENE type, not a window
+- [x] verified - The game's own keyboard handling surveyed: GlobalConfig left/right/next/skip
+      keycodes read by TextController, PageNavigationController and SimplePageTurner (all three
+      suppressed while the mod owns input), plus InputSystem actions for Escape/submit in the
+      credits and chapter-picture controllers (left alone - the mod never claims those)
 - [ ] todo - Survey Messenger event names actually fired (WriteAnswerInLog and
       ChangeSceneTitleEvent survive; find the GoToConsequenceEvent successor)
-- [ ] todo - Enumerate windows + their controllers (WindowControllersManager) incl. NEW:
-      Council, Soul, Articles, Bind, CharacterStatus, BilateralParameters, ChapterSummary
-- [ ] todo - Survey the game's own keyboard handling (Update bodies reading Input) so our keys
-      never fight the game's
 - [ ] todo - SceneStateMachine phases on Jerian: confirm names/order used for delivery gating
 
 ## Phase 3 - Core scene reading (the event loop of the game)
