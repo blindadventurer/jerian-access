@@ -376,5 +376,11 @@ debugging from scratch.
         and no code reference outside their own classes: they are inherited from the shared
         Brante-lineage codebase and cut from this game. Their screens stay registered and keyed by
         type, so they read if a patch ever ships that content
+- [x] verified - Chapter 5 ("Тысячелетний Сенат") was NOT reached by driving: chapter 4 was
+      played twice end to end (rotating picks, then first-pick, ~1500 driver steps inside it) and
+      both branches finished the game there - the driver does not play well enough to survive
+      into the last chapter. Nothing chapter-5-specific is known to be uncovered: its only
+      distinct surface, the day-stage flash, ships in no form (see the item above), and its
+      scenes, option pages and interludes are shapes this port has read hundreds of times
 - [ ] todo - Full-game blind playthrough pass by the USER (every chapter, every branch)
 - [ ] todo - package.ps1 produces a working release zip against a clean game copy
