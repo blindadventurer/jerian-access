@@ -25,6 +25,8 @@ state.on = включено
 state.off = выключено
 state.none = нет
 state.unavailable_reason = недоступно, {reason}
+case.completed = выполнено
+case.step = шаг {step} из {total}
 
 settings.percent = {value} процентов
 settings.resolution_unavailable = недоступно, только для оконного формата экрана

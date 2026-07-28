@@ -126,9 +126,13 @@ while [ "$STEP" -lt "$MAX" ]; do
     "screen popup:year"|"screen popup:daystage")
       # Flash popups with no control: they play and hide themselves.
       echo "note step $STEP: $ACTIVE flash - waiting"; sleep 3; continue ;;
-    "screen death"|"screen popup"|"screen chapterpicture"|"screen intro"|"screen scene:options")
-      # A screen with no nodes at all has handed the keyboard to the game for this phase (the
-      # case-for-a-year scene turns into a consequence page the game pages itself).
+    "screen scene:options")
+      # The option page reads its own words first and the options after it, and the LAST option
+      # is as often a completed one (which refuses, as it should) - so take the first option
+      # instead: node 1 is the page, node 2 the first option. With no nodes at all the scene has
+      # turned into its consequence page, which the game pages itself.
+      if echo "$NAVOUT" | grep -q '^graph ('; then ACTION="walk 2"; else ACTION="gamenext"; fi ;;
+    "screen death"|"screen popup"|"screen chapterpicture"|"screen intro")
       if echo "$NAVOUT" | grep -q '^graph ('; then ACTION="endenter"; else ACTION="gamenext"; fi ;;
     "screen window"|"screen pause"|"screen settings")
       # A window the walk opened by accident (End lands on a HUD button when the scene offers

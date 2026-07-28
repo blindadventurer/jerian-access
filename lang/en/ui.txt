@@ -31,6 +31,8 @@ state.off = off
 state.none = none
 # A locked control whose reason is a game string (the Destiny chapter tabs' hover title)
 state.unavailable_reason = unavailable, {reason}
+case.completed = completed
+case.step = step {step} of {total}
 
 # Settings window (value/reason strings the game renders only visually)
 settings.percent = {value} percent

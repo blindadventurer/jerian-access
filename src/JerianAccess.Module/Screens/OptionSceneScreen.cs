@@ -139,23 +139,59 @@ namespace JerianAccess.Module.Screens
                     ControlType = ControlTypes.Button,
                     Announcements = new[]
                     {
-                        new NodeAnnouncement(() => PanelText.Read(option.gameObject),
-                            kind: AnnouncementKinds.Label),
-                        new NodeAnnouncement(
-                            () => option.IsUnlocked ? null : Loc.T("state.unavailable"),
+                        new NodeAnnouncement(() => CaseLabel(option), kind: AnnouncementKinds.Label),
+                        new NodeAnnouncement(() => CaseState(option),
                             kind: AnnouncementKinds.Enabled),
+                        new NodeAnnouncement(() => CaseProgress(option),
+                            kind: AnnouncementKinds.Value),
                     },
                     OnTooltip = () => Mod.Speech.Speak(Conditions(option)),
                     OnActivate = () =>
                     {
-                        if (!option.IsUnlocked)
+                        var state = CaseState(option);
+                        if (state != null)
                         {
-                            Mod.Speech.Speak(Conditions(option), interrupt: true);
+                            Mod.Speech.Speak(
+                                Completed(option) ? state : Conditions(option), interrupt: true);
                             return;
                         }
                         Choose(option);
                     },
                 });
+        }
+
+        private static bool Completed(CaseForAYearOptionView view)
+            => view.CaseForAYearOption.IsCompleted
+            || view.OptionState == CaseForAYearOptionState.Achieved;
+
+        /// <summary>The project's name. A COMPLETED project's card drops its caption (the game
+        /// swaps in a seal), so the name comes from the same model the card is built from -
+        /// otherwise that card is a stop that says only "button".</summary>
+        private static string CaseLabel(CaseForAYearOptionView view)
+        {
+            var rendered = PanelText.Read(view.gameObject);
+            if (!string.IsNullOrEmpty(rendered)) return rendered;
+            return I2.Loc.LocalizationManager.GetTranslation(
+                view.CaseForAYearOption.GetShortDescriptionTerm() ?? "");
+        }
+
+        /// <summary>What the game says about this project with an icon: done, taken for this
+        /// year, or not open yet. Null when it is simply available.</summary>
+        private static string CaseState(CaseForAYearOptionView view)
+        {
+            if (Completed(view)) return Loc.T("case.completed");
+            if (view.OptionState == CaseForAYearOptionState.Chosen) return Loc.T("state.selected");
+            if (view.OptionState == CaseForAYearOptionState.Disabled || !view.IsUnlocked)
+                return Loc.T("state.unavailable");
+            return null;
+        }
+
+        /// <summary>How far the project has come - the game draws it as a row of rhombus steps.</summary>
+        private static string CaseProgress(CaseForAYearOptionView view)
+        {
+            var option = view.CaseForAYearOption;
+            if (option.TotalSteps <= 1 || Completed(view)) return null;
+            return Loc.T("case.step", new { step = option.CurrentStep, total = option.TotalSteps });
         }
 
         // Both option views resolve their pick the same way the scene's choices do - through the
