@@ -1,39 +1,39 @@
+using System.Collections.Generic;
 using System.Reflection;
 using JerianAccess.Module.Game;
-using UnityEngine;
+using JerianAccess.Module.Input;
+using JerianAccess.Module.Speech;
 using JerianAccess.Module.UI;
-using JerianAccess.Module.UI.Graph;
-using TMPro;
-using UnityEngine.UI;
+using UnityEngine;
 using GameManager = _Scripts.Managers.GameManager;
 using YearPopup = _Scripts.AMVCC.Views.Windows.Popup.YearIncrementPopup.YearIncrementPopupController;
 
 namespace JerianAccess.Module.Screens
 {
     /// <summary>
-    /// The year-increment flash (YearIncrementPopup) shown between events when the year
-    /// advances: animated year digits, chapter picture and name, and the age scale. The year
-    /// is rendered as digit sprites and the age slider is animation, so a text sweep cannot
-    /// read them - the row folds the serializer's current year with the popup's own localized
-    /// chapter and age texts. Enter clicks the popup's next button (the game's skip; the
-    /// button gates itself until the animation enables it); the popup hides itself after its
-    /// animation either way, so no hint.
+    /// The year-increment flash shown between events when the year advances: the year as animated
+    /// digit sprites, the chapter it belongs to, and the hero's age on a scale. It carries NO
+    /// control - it plays and hides itself - so this screen claims no input and only DELIVERS the
+    /// line once. The year is read from the serializer because the digits are sprites with no
+    /// text behind them; the chapter and age are the popup's own localized labels.
     /// </summary>
     public sealed class YearPopupScreen : Screen
     {
         public override string Key => "popup:year";
         public override int Layer => 22;
 
-        private static readonly FieldInfo ChapterNameField = typeof(YearPopup)
-            .GetField("_chapterName", BindingFlags.NonPublic | BindingFlags.Instance);
-        private static readonly FieldInfo AgeField = typeof(YearPopup)
-            .GetField("_ageTmp", BindingFlags.NonPublic | BindingFlags.Instance);
-        private static readonly FieldInfo NextButtonField = typeof(YearPopup)
-            .GetField("_nextButton", BindingFlags.NonPublic | BindingFlags.Instance);
+        private static readonly InputCategory[] None = new InputCategory[0];
+        public override IReadOnlyList<InputCategory> InputCategories => None;
 
-        // Live reference for first-frame bookkeeping only, never content.
-        private YearPopup _seen;
-        private int _seenFrame;
+        private const BindingFlags NP = BindingFlags.NonPublic | BindingFlags.Instance;
+        private static readonly FieldInfo ChapterNumberField = typeof(YearPopup)
+            .GetField("chapterCountText", NP);
+        private static readonly FieldInfo ChapterNameField = typeof(YearPopup)
+            .GetField("chapterNameText", NP);
+        private static readonly FieldInfo AgeField = typeof(YearPopup)
+            .GetField("protagonistAgeText", NP);
+
+        private bool _spoken;
 
         // Found by TYPE, not through UIManager's popup slot: Jerian's PopupControllersManager
         // instantiates this popup into its own container and never touches that slot, so a
@@ -44,43 +44,45 @@ namespace JerianAccess.Module.Screens
             return p != null && UiWidgets.Visible(p.gameObject) ? p : null;
         }
 
-        public override bool IsActive()
-        {
-            var p = Popup();
-            if (p == null)
-            {
-                _seen = null;
-                return false;
-            }
-            // The popup localizes its texts in Start: activate one frame after first
-            // observation so the row never reads the prefab's serialized editor text.
-            if (!ReferenceEquals(p, _seen))
-            {
-                _seen = p;
-                _seenFrame = UnityEngine.Time.frameCount;
-            }
-            return UnityEngine.Time.frameCount > _seenFrame;
-        }
+        public override bool IsActive() => Popup() != null;
 
-        public override void Build(GraphBuilder b)
+        public override Message ScreenName => null; // the line below is the announcement
+
+        public override void OnPop() => _spoken = false;
+
+        // The popup fills its labels in SetUp, a beat after it is instantiated: deliver once the
+        // line is complete, and only once.
+        public override void OnUpdate()
         {
+            if (_spoken) return;
             var popup = Popup();
             if (popup == null) return;
-            b.AddItem(ControlId.Referenced(popup, "yearpopup:summary"), new NodeVtable
+            var line = Summary(popup);
+            if (string.IsNullOrEmpty(line)) return;
+            _spoken = true;
+            Mod.Speech.Speak(line);
+        }
+
+        private static string Summary(YearPopup popup)
+        {
+            var chapter = Label(ChapterNumberField, popup);
+            var name = Label(ChapterNameField, popup);
+            var age = Label(AgeField, popup);
+            if (string.IsNullOrEmpty(name) && string.IsNullOrEmpty(age)) return null;
+            return Loc.T("yearpopup.summary", new
             {
-                ControlType = ControlTypes.Text,
-                Announcements = new[]
-                {
-                    new NodeAnnouncement(() => Loc.T("yearpopup.summary", new
-                    {
-                        year = GameManager.Instance.GameManagerSerializer.CurrentYear,
-                        chapter = ((TextMeshProUGUI)ChapterNameField.GetValue(Popup())).text,
-                        age = ((TextMeshProUGUI)AgeField.GetValue(Popup())).text,
-                    }), kind: AnnouncementKinds.Label),
-                },
-                OnActivate = () => UiWidgets.Click(
-                    ((Button)NextButtonField.GetValue(Popup())).gameObject),
+                year = GameManager.Instance.GameManagerSerializer.CurrentYear,
+                chapter = string.IsNullOrEmpty(chapter) ? name : chapter + " " + name,
+                age,
             });
+        }
+
+        // The labels resolve through the game's own localization - a freshly instantiated prefab
+        // shows the authoring language until its Start runs.
+        private static string Label(FieldInfo field, YearPopup popup)
+        {
+            var component = (Component)field.GetValue(popup);
+            return component == null ? null : UiWidgets.LocalizedLabel(component.gameObject);
         }
     }
 }

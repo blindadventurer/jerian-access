@@ -51,6 +51,7 @@ namespace JerianAccess.Module
             GraphAnnouncer.ExpandedStateText = expanded =>
                 Loc.T(expanded ? "nav.expanded" : "nav.collapsed");
             GameInputPatches.Apply();
+            Game.ReflectionAudit.Run();
             // TODO(J): SubtitleSpeechPatches.Apply() returns with the subtitle port (Phase 5).
             // Generation is not logged here: the loader bumps it only after Load succeeds (so a
             // failed reload leaves the old module live), and it logs the real number itself.
