@@ -33,6 +33,10 @@ state.none = none
 state.unavailable_reason = unavailable, {reason}
 case.completed = completed
 case.step = step {step} of {total}
+# The two families of year projects. The game separates them only by which half of the page it
+# draws them on, which is not a difference speech can carry.
+case.empire = imperial projects
+case.personal = personal projects
 
 # Settings window (value/reason strings the game renders only visually)
 settings.percent = {value} percent
@@ -57,6 +61,9 @@ choice.req.param_range = {name} {min} to {max}
 choice.req.relation = {name} relation {op} {value}
 choice.req.status = {name} {status}
 choice.req.not = not {req}
+# A group the game opens on ANY of several alternatives (its OR lists); the alternatives are
+# separated from one another, each one an AND of its own rows
+choice.req.any = one of, {rows}
 choice.op.more = more than
 choice.op.less = less than
 choice.op.equal = exactly
@@ -68,6 +75,8 @@ choice.op.notequal = not equal to
 # (Sanity, Tempest Legacy) that the player clicks to pay. Backspace pays it and pays it back.
 choice.unlock = unlock for {cost} {name}
 choice.unlock.paid = unlocked, {cost} {name} spent
+# The same lock when the player cannot afford it - the game shows only a dimmed icon
+choice.unlock.short = not enough {name}, {cost} needed, {current} held
 
 # Choice detail readout (Space/F1 on a choice) - composed from the same serialized data the
 # game's hover tooltips render. Section headers ("Conditions Met", "Consequences") and the
@@ -80,6 +89,11 @@ choice.cond.any = any of, {rows}
 choice.cons.param = {name} {delta}
 choice.cons.relation = {name} relation {delta}
 choice.cons.set = {name}, {value}
+# Where a changed figure now stands - the slider a consequence page animates says it only by
+# moving. The ceiling is the parameter's own maximum. The "now" word is authored here: this
+# build ships no translation for the term its own tooltips ask for.
+choice.cons.now = {row}, now {current}
+choice.cons.now_max = {row}, now {current} of {max}
 
 # Parameter scale readout (Space/F1 on a stat row) - the game's ParameterValueTooltip data;
 # segment texts and the parameter name and description are the game's strings.
@@ -103,6 +117,10 @@ yearpopup.summary = year {year}, {chapter}, {age}
 # Page-turner windows (the game's pager arrows are image-only buttons - no game string)
 pager.next = next page
 pager.prev = previous page
+# Where a paged document stands. The game marks both only by dimming its pager arrows, so a
+# letter, a newspaper cutting or a pamphlet reads as endless text without them.
+page.position = page {index} of {count}
+page.last = last page
 
 # Credits roll (no on-screen title; the menu button label is not an I2 term either)
 screen.disclaimer = disclaimer
@@ -114,6 +132,8 @@ screen.credits = credits
 screen.gameloading = load game
 gameloading.age = age: {age}
 screen.chaptersummary = chapter summary
+# The chapter book's way on. The game draws its continue as a sprite, with no text term
+chaptersummary.continue = continue
 # The tutorial popup - the game names its steps but not the popup itself
 screen.tutorial = tutorial
 screen.window = window

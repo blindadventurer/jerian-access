@@ -161,3 +161,63 @@ Two sub-calls that follow from that:
 Delivery is a single static in `Game/RewardPage.cs` rather than per-screen state: a story scene
 and an option scene (case-for-a-year, trip selection) raise the SAME page, and both call it, so
 sharing the "already spoken" key is what keeps it from being announced twice.
+
+## 2026-08-16 - The tester's report: seven fixes, and the reversal of "no resulting value"
+
+A blind tester played the 0.9.x build through and filed seven items. What each turned out to be:
+
+* **A choice announced a bare "недоступно".** Two condition shapes carried no words:
+  `ConditionGroup.OrConditionLists` (the group opens on ANY of several alternatives) were not
+  walked at all, and a `SceneGroupReference` (the requirement lives in the scene's shared
+  container) described as nothing - the GAME renders that one as a developer string with the
+  group's INDEX, so there was nothing to copy. Both are expanded now, the second recursively with
+  a depth guard. When neither produces words the announcement names the resource the choice falls
+  short of, and only a choice where even THAT is empty says the bare word - and logs the group
+  and lock state when it does, because a bare "unavailable" is the one answer a blind player
+  cannot act on.
+* **Conditions are evaluated against the scene's CONTAINER, not the choice.** Jerian hangs the
+  choice buttons outside the `ConditionGroupsContainer`, so evaluating from the button logged
+  "GroupConditionsContainer is not found!!" in the game's own log (three per choice read) and
+  answered false for every scene-group reference. The scene carries exactly one container - the
+  same instance Zenject injects into the buttons - so its own object is the parent that resolves.
+* **A tutorial choice did not name its price.** The offer was read off `ConditionLockView`, which
+  the button arms in its own `Start`; a panel read before that has no locks and fell through to
+  the requirement text. The offer now falls back to the CONDITION GROUPS the views are built from
+  (`IsLocked` / `UnlockCost` / `UnlockParameter`), summed per resource the way the view sums them,
+  so the price does not depend on when the view was armed.
+* **A document went silent after its reward pages.** `InterludePopupController.ShowPage` never
+  resets `_rewardIndex`, so the mod's reward reader kept claiming every page once the player had
+  paged into the rewards even once - the rest of the letter was silent. The reader gates on the
+  rewards PANEL being shown instead, which is the game's own signal.
+* **Documents now say where they stand** ("страница 3 из 14", "последняя страница" on the last).
+  The count walks only the blocks this playthrough unlocked, which is what the game's own pager
+  walks (`GetPageIndices`) - counting all of them would promise pages that never come.
+* **Projects (`CaseForAYear`) are grouped and explained.** The two families are separated by
+  nothing but which half of the page the game draws them on, so each is a context of its own; a
+  closed project names the chapter that opens it (the game's own `HUD.WillOpenN`, the string its
+  padlock tooltip uses) or the requirements it is waiting on; Space reads the long description and
+  what the step would grant, from the same reward model a choice's sheet reads.
+* **The chapter book is navigated, not recited.** It was delivery-only, speaking a whole page in
+  one line - which on the objectives page is every event of the chapter and every number of every
+  requirement, run together. It is now ONE FLAT LIST on the conversion book's pattern: each page's
+  rows behind a region, the game's visible page following focus through the controller's own
+  `ShowPage`, an objective as its own stop (name, reached-or-not, and on Space the description and
+  each requirement with a live met marker), and the game's own `ContinueToNextScene` as the last
+  stop. The game's pager keys stand down here now, the way they do on every screen the mod owns.
+
+**Reversal**: the 2026-07-29 entry above decided AGAINST announcing a resulting value on the
+consequence page, on the grounds that a value read at speech time would be wrong on one of the two
+paths that show a page. Re-read, both paths apply the change before the page can be observed:
+`NextPage` calls `ReceiveRewards` in the same call that reveals the rows, and `ShowRewardPage`
+calls `AdjustRewards` before revealing. The mod polls at least a frame later, so it always reads
+the applied value. The tester asked for exactly this ("Страсть: плюс 1. Текущее значение: 5 из
+20"), it is what the Brante mod did, and it costs a walk to the parameter window otherwise. The
+signature the delivery differ keys on deliberately stays value-free, so a figure that moves while
+the page is up cannot deliver the same page twice.
+
+A side effect worth keeping: the mod announces the AUTHORED delta and the APPLIED value, so a
+reward the game clamped now reads as what it is ("Разум +2, сейчас 20 из 20").
+
+The "now" word is mod-authored: this build ships no translation for the `Now` term its own
+tooltips ask for (it resolves to an empty string in every language, which is why the game's own
+condition rows read "( 5)").

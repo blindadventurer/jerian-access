@@ -33,8 +33,8 @@ game's stock keys everywhere else (cutscene skips, text entry).
 
 ## Surfaces the game turns itself
 
-Some pages carry no navigation of their own - an interlude or a newspaper between events, a
-tutorial card, the chapter book, and the outcome page after you pick a case for the year.
+Some pages carry no navigation of their own - a letter, a newspaper cutting or a pamphlet
+between events, a tutorial card, and the outcome page after you pick a project for the year.
 The mod reads each page as the game settles it and leaves the keys to the game, so these use
 the game's own paging keys:
 
@@ -42,6 +42,14 @@ the game's own paging keys:
 - Left arrow or A: previous page.
 - Enter (main or keypad): continue, once the page offers it.
 - Hold either Shift: skip to the last page.
+
+Each of those pages says where it stands ("page 3 of 14") and marks the last one, so a document
+that has ended is not mistaken for one that has stopped answering.
+
+The CHAPTER BOOK is navigated like any other list instead: Up and Down walk its rows, Ctrl plus
+Up and Ctrl plus Down jump between its pages (the book turns to follow), Space on an event reads
+its description and every requirement with whether you have met it, and Continue is the last
+item in the list.
 
 ## Type-ahead search
 

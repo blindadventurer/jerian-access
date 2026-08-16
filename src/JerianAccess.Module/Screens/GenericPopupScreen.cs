@@ -4,6 +4,11 @@ using JerianAccess.Module.UI;
 using JerianAccess.Module.UI.Graph;
 using UnityEngine;
 using UnityEngine.UI;
+using _Scripts.AMVCC.Models.Static;
+using _Scripts.AMVCC.Views.Windows;
+using _Scripts.AMVCC.Views.Windows.UnlockSceneConsequencePopup;
+using _Scripts.Helpers;
+using _Scripts.Managers;
 
 namespace JerianAccess.Module.Screens
 {
@@ -13,6 +18,11 @@ namespace JerianAccess.Module.Screens
     /// game-composed panels - title, body text, one or two buttons - with no shared model to
     /// adapt, so the swept live components are the readout. The body is the screen announcement;
     /// each visible button is a node that activates through the game's own wiring.
+    ///
+    /// One of them does have a model: the TRIGGER popup, which announces that an event fired
+    /// because of what the player did earlier. Its rows are the scene's own trigger conditions,
+    /// and whether each is met is drawn as dimming - so those rows are composed from the model
+    /// with met markers rather than swept off the screen.
     /// </summary>
     public sealed class GenericPopupScreen : Screen
     {
@@ -64,7 +74,7 @@ namespace JerianAccess.Module.Screens
                 ControlType = ControlTypes.Text,
                 Announcements = new[]
                 {
-                    new NodeAnnouncement(() => PanelText.Read(p), kind: AnnouncementKinds.Label),
+                    new NodeAnnouncement(() => Body(p), kind: AnnouncementKinds.Label),
                 },
             });
 
@@ -91,6 +101,37 @@ namespace JerianAccess.Module.Screens
                         OnActivate = () => UiWidgets.Click(btn.gameObject),
                     });
             }
+        }
+
+        /// <summary>The popup's words: the panel's own title and text, and - on the trigger popup -
+        /// the requirements that opened this event, each with whether it is met.</summary>
+        private static string Body(GameObject popup)
+        {
+            var trigger = TriggerConditions(popup);
+            if (trigger == null) return PanelText.Read(popup);
+            // The rendered rows say the same names and figures the model rows do, minus the met
+            // marker - reading both said every requirement twice.
+            return PanelText.Read(popup, InsideConditionRow) + ". " + trigger;
+        }
+
+        private static bool InsideConditionRow(GameObject go)
+            => go.GetComponentInParent<ConditionRowController>() != null;
+
+        /// <summary>The trigger popup's condition rows from the game's own model. The popup builds
+        /// them from the opened scene's TriggerScene entry (TriggerScenePopupController.
+        /// SetConditionText); the rendered rows carry the names and figures but not the one thing
+        /// the player is being told - which of them their playthrough actually met.</summary>
+        private static string TriggerConditions(GameObject popup)
+        {
+            if (popup.GetComponentInChildren<TriggerScenePopupController>(true) == null) return null;
+            var collector = Singleton<SceneConditionsCollector>.Instance;
+            if (collector == null) return null;
+            TriggerScene scene;
+            // TryGet, not GetTriggerSceneConditionGroup: the getter logs an error of its own for a
+            // scene with no entry, every time the popup's announcement is composed.
+            if (!collector.TryGetTriggerScene(GameManager.Instance.OpenedSceneName, out scene)
+                || scene == null) return null;
+            return ChoiceConditions.GroupDetails(scene.ConditionGroup, popup);
         }
     }
 }

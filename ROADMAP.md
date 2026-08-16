@@ -397,7 +397,41 @@ debugging from scratch.
       into the last chapter. Nothing chapter-5-specific is known to be uncovered: its only
       distinct surface, the day-stage flash, ships in no form (see the item above), and its
       scenes, option pages and interludes are shapes this port has read hundreds of times
-- [ ] todo - Full-game blind playthrough pass by the USER (every chapter, every branch)
+- [x] verified - Full-game blind playthrough pass by a TESTER (0.9.x): seven items filed, all seven
+      fixed and (six of seven) exercised live on 2026-08-16 against a chapter-3 replay -
+      * a choice's bare "недоступно" now names the requirement: OR lists and scene-group
+        references are expanded, conditions are evaluated against the scene's own
+        ConditionGroupsContainer (which also silenced three "GroupConditionsContainer is not
+        found!!" errors per choice read in the GAME's log), and a choice with no words left
+        names the resource it falls short of. Live: "Заплатить из казны, кнопка, недоступно,
+        требуется Управление не менее 10, Наследие Темпестов не менее 10" - the exact choice
+        that used to say only "недоступно"
+      * the unlock price no longer depends on ConditionLockView being armed: it falls back to
+        the condition groups the views are built from (the tutorial-choice case the tester hit;
+        the only item not reproduced live, since a tutorial fires once per save)
+      * an interlude's conditions page reads why the event fired, from the model with met
+        markers. Live: "Условие. Традиции не менее 0, выполнено..." on
+        040.TyrantPlot.070.I_HonoringHeir. The same composer answers for 167 of the 176
+        registered trigger scenes (checked over the whole SceneConditionsCollector), and the
+        UIManager trigger POPUP appends it the same way (code path shared; the popup's prefab
+        is per-scene and could not be raised from the chapter-3 scene)
+      * letters, newspaper cuttings and pamphlets say "страница N из M" and mark the last page.
+        Live on a 15-page letter and a 14-page newspaper
+      * the document silence is gone: paging back out of the reward pages used to leave the mod
+        mute for the rest of the letter (ShowPage never resets _rewardIndex). Live: pages 5,4,3,
+        2,1 all re-read after stepping back through the rewards
+      * projects group into "дела империи" / "личные дела", state WHY they are closed (the
+        game's own HUD.WillOpenN, else the failed requirements), and read their long description
+        plus what they grant on Space. Live on FourthCaseForAYear: 6 imperial + 3 personal
+      * a change now says where the figure stands ("Догма +1, сейчас 3", "Науки +1, сейчас 8 из
+        20") on the consequence page and the interlude reward pages - see DECISIONS.md for why
+        this reverses the 2026-07-29 call
+- [x] verified - The chapter book is navigable (tester item 6): every page's rows behind a
+      region, an objective its own stop with the description and each requirement on Space, the
+      controller's own ShowPage following focus and its own ContinueToNextScene as the last
+      stop. Live 2026-08-16: 27 nodes over 3 pages, Ctrl+Down moved the game's page to index 1,
+      Space on "Любовь Старшего" read "Ты отказался от долга Предстоятеля... Закон не более 7,
+      выполнено", and Continue carried the run into the chapter
 - [x] verified - package.ps1 produces a working release zip against a clean game copy. Built
       artifacts\JerianAccess-0.9.0.zip (1.1 MB: BepInEx 5.4.23.5, the Release plugin + module,
       the locale tables, prism.dll, steam_appid.txt, Russian README and key reference, licenses),
@@ -415,3 +449,6 @@ debugging from scratch.
       archive lives only on disk. Contents checked in the zip: the packaged module carries
       RewardPage and its three field lookups, the host reports 0.9.1. NOT re-installed clean
       (the 0.9.0 run above covers the install path; nothing in the layout changed)
+- [ ] built - 0.9.2 tester archive, 2026-08-16: the seven fixes from the tester's report. Version
+      bumped rather than the 0.9.1 file overwritten - the mod logs its version at load, so two
+      binaries under one number make a tester's log unreadable.

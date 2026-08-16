@@ -1,13 +1,16 @@
 using System.Collections.Generic;
 using System.Reflection;
+using System.Text;
 using JerianAccess.Module.Game;
 using JerianAccess.Module.Input;
 using JerianAccess.Module.Speech;
 using JerianAccess.Module.UI;
 using JerianAccess.Module.UI.Graph;
 using UnityEngine;
+using _Scripts.AMVCC.Models.Static;
 using _Scripts.AMVCC.Views.Windows.CaseForAYear;
 using _Scripts.AMVCC.Views.Windows.TripSelection;
+using _Scripts.Managers;
 using _Scripts.PageScene;
 
 namespace JerianAccess.Module.Screens
@@ -113,8 +116,25 @@ namespace JerianAccess.Module.Screens
             b.PushContext("", role: null);
             foreach (var view in root.GetComponentsInChildren<TripOptionView>(false))
                 AddTrip(b, view);
+            b.PopContext();
+
+            // The projects come in two families the game separates only by which half of the page
+            // they are drawn on - the empire's and the character's own - and from chapter 3 both
+            // are on screen at once. Each is its own context so the family is announced when focus
+            // enters it and the positions count within it.
+            AddCases(b, root, CaseForAYearOptionType.Empire, "case.empire");
+            AddCases(b, root, CaseForAYearOptionType.Personal, "case.personal");
+        }
+
+        private static void AddCases(GraphBuilder b, GameObject root,
+            CaseForAYearOptionType type, string labelKey)
+        {
+            var views = new List<CaseForAYearOptionView>();
             foreach (var view in root.GetComponentsInChildren<CaseForAYearOptionView>(false))
-                AddCase(b, view);
+                if (view.CaseForAYearOption.Type == type) views.Add(view);
+            if (views.Count == 0) return;
+            b.PushContext(Loc.T(labelKey), role: null);
+            foreach (var view in views) AddCase(b, view);
             b.PopContext();
         }
 
@@ -184,14 +204,14 @@ namespace JerianAccess.Module.Screens
                         new NodeAnnouncement(() => CaseProgress(option),
                             kind: AnnouncementKinds.Value),
                     },
-                    OnTooltip = () => Mod.Speech.Speak(Conditions(option)),
+                    OnTooltip = () => Mod.Speech.Speak(Details(option)),
                     OnActivate = () =>
                     {
                         var state = CaseState(option);
                         if (state != null)
                         {
                             Mod.Speech.Speak(
-                                Completed(option) ? state : Conditions(option), interrupt: true);
+                                Completed(option) ? state : Details(option), interrupt: true);
                             return;
                         }
                         Choose(option);
@@ -215,14 +235,33 @@ namespace JerianAccess.Module.Screens
         }
 
         /// <summary>What the game says about this project with an icon: done, taken for this
-        /// year, or not open yet. Null when it is simply available.</summary>
+        /// year, or not open yet - and for the last, WHY. The game draws the reason as a padlock
+        /// whose hover tooltip names the chapter, or as a dimmed card whose requirements live only
+        /// in the model. Null when the project is simply available.</summary>
         private static string CaseState(CaseForAYearOptionView view)
         {
             if (Completed(view)) return Loc.T("case.completed");
             if (view.OptionState == CaseForAYearOptionState.Chosen) return Loc.T("state.selected");
-            if (view.OptionState == CaseForAYearOptionState.Disabled || !view.IsUnlocked)
-                return Loc.T("state.unavailable");
-            return null;
+            if (view.OptionState != CaseForAYearOptionState.Disabled && view.IsUnlocked) return null;
+            var reason = LockReason(view);
+            return reason == null
+                ? Loc.T("state.unavailable")
+                : Loc.T("state.unavailable_reason", new { reason });
+        }
+
+        /// <summary>Why a project is closed: the chapter it opens in (the game's own padlock
+        /// string, the one CaseForAYearLockView puts in its tooltip), else the requirements its
+        /// condition groups are still waiting on. Null when neither names anything.</summary>
+        private static string LockReason(CaseForAYearOptionView view)
+        {
+            var option = view.CaseForAYearOption;
+            if (!GameManager.Instance.IsChapterUnlocked(option.UnlockChapter))
+            {
+                var text = I2.Loc.LocalizationManager.GetTranslation(
+                    "HUD.WillOpen" + option.UnlockChapter);
+                if (!string.IsNullOrEmpty(text)) return text;
+            }
+            return ChoiceConditions.FailedRequirementText(view.ConditionGroups, view.gameObject);
         }
 
         /// <summary>How far the project has come - the game draws it as a row of rhombus steps.</summary>
@@ -241,16 +280,37 @@ namespace JerianAccess.Module.Screens
             else UiWidgets.Click(option.gameObject);
         }
 
-        // A case-for-a-year option carries the same typed condition groups a scene choice does.
-        private static string Conditions(CaseForAYearOptionView option)
+        /// <summary>Everything the page holds about a project and does not say out loud: the
+        /// game's own long description (the card shows the short one), what taking it would
+        /// change, and its requirements with live met markers. A project is a commitment for the
+        /// whole year, so picking one blind is the one thing this list must not force.</summary>
+        private static string Details(CaseForAYearOptionView view)
         {
+            var sb = new StringBuilder();
+            var option = view.CaseForAYearOption;
+            PanelText.Append(sb, I2.Loc.LocalizationManager.GetTranslation(
+                option.GetLongDescriptionTerm() ?? ""));
+            var rewards = Rewards(option);
+            if (rewards != null) PanelText.Append(sb, Loc.T("scene.rewards") + " " + rewards);
+            // A case-for-a-year option carries the same typed condition groups a scene choice does.
+            foreach (var group in view.ConditionGroups)
+                PanelText.Append(sb, ChoiceConditions.GroupDetails(group, view.gameObject));
+            return sb.Length == 0 ? Loc.T("nav.no_details") : sb.ToString();
+        }
+
+        /// <summary>What the project's step would grant, from the same reward model a choice's
+        /// consequence sheet reads.</summary>
+        private static string Rewards(CaseForAYearOption option)
+        {
+            if (option.SceneConsequence == null) return null;
             var rows = new List<string>();
-            foreach (var group in option.ConditionGroups)
+            foreach (var reward in option.SceneConsequence.Rewards)
             {
-                var text = ChoiceConditions.GroupDetails(group, option.gameObject);
-                if (text != null) rows.Add(text);
+                if (!reward.ShownToPlayer) continue;
+                var text = ChoiceRewards.Describe(reward);
+                if (!string.IsNullOrEmpty(text)) rows.Add(text);
             }
-            return rows.Count == 0 ? Loc.T("nav.no_details") : string.Join(". ", rows.ToArray());
+            return rows.Count == 0 ? null : string.Join(", ", rows.ToArray());
         }
 
         // The option's own hover tooltip, read from the game's tooltip system.

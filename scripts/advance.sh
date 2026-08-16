@@ -120,7 +120,11 @@ while [ "$STEP" -lt "$MAX" ]; do
       echo "STOP step $STEP: main menu"; exit 0 ;;
     "screen gameover"|"screen credits")
       echo "STOP step $STEP: run ended on $ACTIVE"; exit 0 ;;
-    "screen popup:scene"|"screen popup:reward"|"screen tutorial"|"screen chaptersummary")
+    "screen chaptersummary")
+      # The chapter book is a mod-navigated list now (every page's rows behind a region, the
+      # Continue as its last stop), so it advances the way any list does: End, then Enter.
+      ACTION="endenter" ;;
+    "screen popup:scene"|"screen popup:reward"|"screen tutorial")
       # Delivery-only surfaces: the mod claims no key on them, the GAME pages them (arrows /
       # Enter). The driver cannot press a real key - legacy Input needs the game window focused -
       # so it clicks the pager's own buttons through the game.next dev verb.

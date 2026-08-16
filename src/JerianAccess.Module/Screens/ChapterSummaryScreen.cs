@@ -1,22 +1,36 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Text;
 using JerianAccess.Module.Game;
-using JerianAccess.Module.Input;
 using JerianAccess.Module.Speech;
+using JerianAccess.Module.UI;
+using JerianAccess.Module.UI.Graph;
 using UnityEngine;
 using _Scripts.AMVCC.Views.Windows.ChapterSummary;
+using _Scripts.AMVCC.Views.Windows.ChapterSummary.ChapterParametersViews;
+using _Scripts.AMVCC.Views.Windows.ChapterSummary.ChapterSummaryViews;
+using _Scripts.AMVCC.Views.Windows.Destiny;
+using _Scripts.Localization;
 
 namespace JerianAccess.Module.Screens
 {
     /// <summary>
-    /// The chapter-summary book (Window_ChapterSummary): a paged recap - left page a summary
-    /// (name, title, description), right page the chapter's parameters. The game pages it
-    /// NATIVELY (PageNavigationController.Update reads the arrow / continue keys), so this
-    /// screen claims NO input and only DELIVERS: each settled page is spoken once, off the
-    /// controller's own page index and the rendered visible text. Speaking off the rendered
-    /// content means whatever the game shows is what is read, in reading order (left page then
-    /// right). The player pages with the same keys a sighted player uses.
+    /// The chapter book (Window_ChapterSummary): the recap the game opens and closes a chapter
+    /// with - left page a summary, right page that page's subject, one page per
+    /// ChapterSummaryType the chapter was configured with (objectives, personality, skills,
+    /// creed, the empire, the timeline...). The objectives page is the one the player plans a
+    /// chapter from: which events can still happen and what each of them is waiting on.
+    ///
+    /// It is BUILT AS ONE FLAT LIST (the pattern the interlude's conversion book uses): every
+    /// page's rows behind a per-page region, so a page is a Ctrl+Up/Ctrl+Down away and its rows
+    /// are ordinary Up/Down stops. The game's visible page follows focus - the mod calls the
+    /// controller's own ShowPage, so the animation, the tooltips and the page help all run. The
+    /// game's own pager keys stand down while this screen owns input (GameInputPatches), and the
+    /// Continue at the end of the list runs the controller's own ContinueToNextScene.
+    ///
+    /// An objective row is a stop of its own: its name, whether this playthrough has reached it,
+    /// and on Space the game's description plus each requirement with a live met marker - the
+    /// page shows that marker only by dimming the row, which no text sweep can hear.
     /// </summary>
     public sealed class ChapterSummaryScreen : Screen
     {
@@ -24,96 +38,200 @@ namespace JerianAccess.Module.Screens
         public override Message ScreenName => Message.Localized("ui", "screen.chaptersummary");
         public override int Layer => 0;
 
-        private static readonly InputCategory[] None = new InputCategory[0];
-        public override IReadOnlyList<InputCategory> InputCategories => None;
-
         private const BindingFlags NP = BindingFlags.NonPublic | BindingFlags.Instance;
-        private static readonly FieldInfo LeftPageField =
-            typeof(ChapterSummaryWindowController).GetField("leftPage", NP);
-        private static readonly FieldInfo RightPageField =
-            typeof(ChapterSummaryWindowController).GetField("rightPage", NP);
         private static readonly FieldInfo PageIndexField =
             typeof(ChapterSummaryWindowController).GetField("_currentPageIndex", NP);
         private static readonly FieldInfo ReadyField =
             typeof(ChapterSummaryWindowController).GetField("_isReadyToShowPage", NP);
         private static readonly FieldInfo SummaryViewsField =
             typeof(ChapterSummaryWindowController).GetField("_chapterSummaryViews", NP);
-
-        private int _spokenPage = -1;
-        private string _spokenBody;
+        private static readonly FieldInfo ParametersViewsField =
+            typeof(ChapterSummaryWindowController).GetField("_chapterParametersViews", NP);
+        private static readonly FieldInfo CategoryTitleField =
+            typeof(ObjectiveContainerController).GetField("titleLocalization", NP);
+        private static readonly FieldInfo CategoryContainerField =
+            typeof(ObjectiveContainerController).GetField("container", NP);
 
         public override bool IsActive() => Controller() != null;
 
         private static ChapterSummaryWindowController Controller()
             => Object.FindObjectOfType<ChapterSummaryWindowController>();
 
-        public override void OnPop()
+        private static int PageCount(ChapterSummaryWindowController c)
         {
-            _spokenPage = -1;
-            _spokenBody = null;
+            var views = ParametersViewsField.GetValue(c) as ICollection;
+            return views == null ? 0 : views.Count;
         }
 
-        // Deliver each page exactly ONCE, and only after the controller reports the page has
-        // finished its fade (_isReadyToShowPage). Keying off the stable page index - not the
-        // rendered text - stops the fade animation from re-speaking partial content every frame
-        // (the persistent year label made every partial read say the year, hence the "year
-        // keeps mixing in").
+        private static GameObject Page(FieldInfo field, ChapterSummaryWindowController c, int index)
+        {
+            var views = field.GetValue(c) as IList;
+            if (views == null || index < 0 || index >= views.Count) return null;
+            var summary = views[index] as IChapterSummaryView;
+            if (summary != null) return summary.GameObject;
+            var parameters = views[index] as IChapterParametersView;
+            return parameters == null ? null : parameters.GameObject;
+        }
+
+        private const string RegionPrefix = "chaptersummary:page:";
+
         public override void OnUpdate()
         {
             var c = Controller();
             if (c == null) return;
-            if (!(bool)ReadyField.GetValue(c)) return; // page still animating in
-            int page = (int)PageIndexField.GetValue(c);
-            if (page == _spokenPage) return;
-            var body = PageText(c);
-            if (string.IsNullOrEmpty(body)) return; // nothing rendered yet
-            // The controller reports itself ready a beat before the new page's text lands, so a
-            // page turned quickly read as the PREVIOUS page's content under the new page's
-            // number. Content that has not changed yet is not this page's content: wait for it.
-            if (body == _spokenBody) return;
-            _spokenPage = page;
-            _spokenBody = body;
-            Mod.Speech.Speak(Position(c, page) + body);
+            var region = Navigation.FocusedRegionKey as string;
+            if (region == null || !region.StartsWith(RegionPrefix)) return;
+            int target = int.Parse(region.Substring(RegionPrefix.Length));
+            if (target == (int)PageIndexField.GetValue(c)) return;
+            // The controller refuses a swap while the last one is still fading; the next frame's
+            // poll picks the move up again.
+            if (!(bool)ReadyField.GetValue(c)) return;
+            c.ShowPage(target);
         }
 
-        private static string Position(ChapterSummaryWindowController c, int page)
+        public override void Build(GraphBuilder b)
         {
-            var views = SummaryViewsField.GetValue(c) as System.Collections.ICollection;
-            int count = views == null ? 0 : views.Count;
-            if (count <= 1) return "";
-            return Loc.T("nav.position", new { index = page + 1, count }) + ". ";
+            var c = Controller();
+            if (c == null) return;
+            int pages = PageCount(c);
+            if (pages == 0) return;
+
+            b.PushContext("", role: null, positions: false);
+            for (int i = 0; i < pages; i++)
+            {
+                b.SetRegion(RegionPrefix + i);
+                int page = i;
+                b.AddItem(ControlId.Structural("chaptersummary:pos:" + i),
+                    TextRow(() => Loc.T("page.position", new { index = page + 1, count = pages })));
+                BuildPage(b, Page(SummaryViewsField, c, i), i, "summary");
+                BuildPage(b, Page(ParametersViewsField, c, i), i, "parameters");
+            }
+            b.SetRegion(null);
+            b.PopContext();
+
+            // The book's own way out. The game reveals its Continue on the last page only, at the
+            // end of the pager's reveal animation; as the last stop of the list it is reached the
+            // same way - by walking to the end - and runs the controller's own handler.
+            b.AddItem(ControlId.Structural("chaptersummary:continue"), new NodeVtable
+            {
+                ControlType = ControlTypes.Button,
+                Announcements = new[]
+                {
+                    new NodeAnnouncement(() => Loc.T("chaptersummary.continue"),
+                        kind: AnnouncementKinds.Label),
+                },
+                OnActivate = () => { var live = Controller(); if (live != null) live.ContinueToNextScene(); },
+            });
         }
 
-        // Visible text of the current page: left page (summary) then right page (parameters),
-        // each top-to-bottom. Reads rendered content, so it always matches the screen.
-        private static string PageText(ChapterSummaryWindowController c)
-        {
-            var sb = new StringBuilder();
-            Collect(sb, (GameObject)LeftPageField.GetValue(c));
-            Collect(sb, (GameObject)RightPageField.GetValue(c));
-            return sb.ToString().Trim();
-        }
-
-        private static void Collect(StringBuilder sb, GameObject page)
+        // One side of one page. The objectives page hangs its rows under the game's own category
+        // containers (personal, family, political...), which is the structure the page is read
+        // with; every other page is game-composed rows with no model behind them, so its visible
+        // labels are the rows.
+        private static void BuildPage(GraphBuilder b, GameObject page, int index, string side)
         {
             if (page == null) return;
-            var texts = new List<TMPro.TMP_Text>();
-            foreach (var t in page.GetComponentsInChildren<TMPro.TMP_Text>(false))
+            var folded = new HashSet<GameObject>();
+            foreach (var category in page.GetComponentsInChildren<ObjectiveContainerController>(true))
             {
-                if (!UiWidgets.Visible(t.gameObject)) continue;
-                // The year label is persistent context, not page content - skip it so it is
-                // not re-read on every page (the position prefix already orients the reader).
-                if (t.gameObject.name.Contains("Year")) continue;
-                var s = t.text;
-                if (string.IsNullOrEmpty(s) || s.Trim().Length == 0) continue;
-                texts.Add(t);
+                var container = (RectTransform)CategoryContainerField.GetValue(category);
+                if (container == null || container.childCount == 0) continue;
+                var title = (TextMeshProLocalization)CategoryTitleField.GetValue(category);
+                if (title != null) folded.Add(title.gameObject);
+                b.PushContext(title == null ? "" : UiWidgets.LocalizedLabel(title.gameObject),
+                    role: null);
+                foreach (var view in category.GetComponentsInChildren<DestinyObjectiveView>(true))
+                {
+                    foreach (var tmp in view.GetComponentsInChildren<TMPro.TMP_Text>(true))
+                        folded.Add(tmp.gameObject);
+                    AddObjective(b, view, index, side);
+                }
+                b.PopContext();
             }
-            texts.Sort((a, b) =>
+
+            foreach (var tmp in page.GetComponentsInChildren<TMPro.TMP_Text>(true))
             {
-                int byY = b.transform.position.y.CompareTo(a.transform.position.y);
-                return byY != 0 ? byY : a.transform.position.x.CompareTo(b.transform.position.x);
-            });
-            foreach (var t in texts) UI.PanelText.Append(sb, t.text.Trim());
+                if (folded.Contains(tmp.gameObject)) continue;
+                if (!WouldShow(page, tmp.transform)) continue;
+                if (string.IsNullOrEmpty(tmp.text) || tmp.text.Trim().Length == 0) continue;
+                var t = tmp;
+                b.AddItem(ControlId.Referenced(t,
+                        "chaptersummary:" + index + ":" + side + ":" + t.GetInstanceID()),
+                    TextRow(() => t.text.Trim()));
+            }
         }
+
+        private static void AddObjective(GraphBuilder b, DestinyObjectiveView view,
+            int index, string side)
+        {
+            var v = view;
+            b.AddItem(ControlId.Referenced(v,
+                    "chaptersummary:" + index + ":" + side + ":obj:" + v.GetInstanceID()),
+                new NodeVtable
+                {
+                    ControlType = ControlTypes.Text,
+                    Announcements = new[]
+                    {
+                        new NodeAnnouncement(() => ObjectiveLabel(v), kind: AnnouncementKinds.Label),
+                        new NodeAnnouncement(() => ObjectiveState(v), kind: AnnouncementKinds.Value),
+                    },
+                    SearchText = () => ObjectiveLabel(v),
+                    OnTooltip = () => Mod.Speech.Speak(ObjectiveDetails(v)),
+                });
+        }
+
+        // The row's own words, with the figures the game draws beside a stepped objective folded
+        // in. A row on a page the book is not showing renders nothing, so the model's name stands
+        // in - that is the whole point of building every page at once.
+        private static string ObjectiveLabel(DestinyObjectiveView view)
+        {
+            var rendered = PanelText.Read(view.gameObject);
+            if (!string.IsNullOrEmpty(rendered)) return rendered;
+            if (view.Objective != null) return view.Objective.GetNameLocalised();
+            // An ENDING row shares this prefab and carries no objective model, so its name comes
+            // from the text the game already wrote into the row - read past the inactive page.
+            var sb = new System.Text.StringBuilder();
+            foreach (var tmp in view.GetComponentsInChildren<TMPro.TMP_Text>(true))
+                PanelText.Append(sb, tmp.text == null ? null : tmp.text.Trim());
+            return sb.Length == 0 ? null : sb.ToString();
+        }
+
+        // Reached or not - drawn as black against gray, which speech cannot carry. An ENDING row
+        // (the chapter's finales share the objective prefab) carries no objective model and no
+        // reached state of its own.
+        private static string ObjectiveState(DestinyObjectiveView view)
+        {
+            var objective = view.Objective;
+            if (objective == null) return null;
+            return Loc.T(objective.Unlocked ? "destiny.achieved" : "destiny.notachieved");
+        }
+
+        private static string ObjectiveDetails(DestinyObjectiveView view)
+        {
+            var objective = view.Objective;
+            if (objective == null) return Loc.T("nav.no_details");
+            var sb = new System.Text.StringBuilder();
+            PanelText.Append(sb, objective.GetDescriptionLocalised());
+            PanelText.Append(sb, ChoiceConditions.ObjectiveDetails(objective, view.gameObject));
+            return sb.Length == 0 ? Loc.T("nav.no_details") : sb.ToString();
+        }
+
+        // Shown-when-its-page-shows: every ancestor below the page root is individually active
+        // (the page root itself toggles as the book turns, so it is exempt).
+        private static bool WouldShow(GameObject page, Transform t)
+        {
+            for (; t != null && t.gameObject != page; t = t.parent)
+                if (!t.gameObject.activeSelf) return false;
+            return t != null;
+        }
+
+        private static NodeVtable TextRow(System.Func<string> text) => new NodeVtable
+        {
+            ControlType = ControlTypes.Text,
+            Announcements = new[]
+            {
+                new NodeAnnouncement(text, kind: AnnouncementKinds.Label),
+            },
+        };
     }
 }

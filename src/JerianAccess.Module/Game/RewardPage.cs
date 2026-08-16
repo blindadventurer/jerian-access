@@ -42,7 +42,8 @@ namespace JerianAccess.Module.Game
             if (signature == null) { _spoken = null; return; }
             if (signature == _spoken) return;
             _spoken = signature;
-            Mod.Speech.Speak(Loc.T("scene.rewards") + " " + Words(signature));
+            var words = Words();
+            if (words != null) Mod.Speech.Speak(Loc.T("scene.rewards") + " " + words);
         }
 
         /// <summary>True for a label that belongs to a consequence page - the rows are announced
@@ -53,40 +54,59 @@ namespace JerianAccess.Module.Game
 
         // The page index leads the signature so two scenes granting the same single reward in a
         // row are still two deliveries, and so a player paging back and forth over the groups
-        // hears each one again.
+        // hears each one again. The signature deliberately carries the changes WITHOUT their
+        // resulting values: the game applies a change while its page is up, so a signature that
+        // moved with the figures would deliver the same page twice, once per value.
         private static string Signature()
         {
+            int index;
+            var group = VisibleGroup(out index);
+            if (group == null) return null;
+            var rows = Rows(group, withCurrent: false);
+            return rows == null ? null : index + "|" + rows;
+        }
+
+        /// <summary>The changes as they are spoken: each one followed by where its figure now
+        /// stands, read live at speech time.</summary>
+        private static string Words()
+        {
+            int index;
+            var group = VisibleGroup(out index);
+            return group == null ? null : Rows(group, withCurrent: true);
+        }
+
+        /// <summary>The reward group the game is SHOWING, or null when no consequence page is up.
+        /// The group's rows are one child of the container, activated when the game shows the page
+        /// and faded in with it: they are the game's own "this page is up now".</summary>
+        private static RewardGrouping VisibleGroup(out int pageIndex)
+        {
+            pageIndex = -1;
             foreach (var controller in Object.FindObjectsOfType<SceneConsequenceController>())
             {
                 var container = (Transform)RowsContainerField.GetValue(controller);
-                // The group's rows are one child of the container, activated when the game shows
-                // the page and faded in with it: they are the game's own "this page is up now".
                 if (container == null || container.childCount == 0
                     || !UiWidgets.Visible(container.GetChild(0).gameObject)) continue;
                 int index = (int)PageIndexField.GetValue(controller);
                 var groups = (List<RewardGrouping>)GroupsField.GetValue(controller);
                 if (groups == null || index < 0 || index >= groups.Count) continue;
-                var rows = Rows(groups[index]);
-                if (rows != null) return index + "|" + rows;
+                pageIndex = index;
+                return groups[index];
             }
             return null;
         }
-
-        private static string Words(string signature)
-            => signature.Substring(signature.IndexOf('|') + 1);
 
         /// <summary>The group's changes in the game's own order and words. The rewards are the
         /// ones the choice was authored with (the inverted copies the rows animate from carry the
         /// same changes backwards), so a row reads the way the consequence sheet reads it. Rows
         /// follow the order the group controllers lay them out in - the reward's own Order, which
         /// is 0 for the character rewards the game leaves in model order.</summary>
-        private static string Rows(RewardGrouping group)
+        private static string Rows(RewardGrouping group, bool withCurrent)
         {
             var rows = new List<string>();
             foreach (var reward in group.Rewards.OrderBy(r => r.Order))
             {
                 if (!reward.ShownToPlayer) continue;
-                var text = ChoiceRewards.Describe(reward);
+                var text = ChoiceRewards.Describe(reward, withCurrent);
                 if (!string.IsNullOrEmpty(text)) rows.Add(text);
             }
             return rows.Count == 0 ? null : string.Join(", ", rows.ToArray());

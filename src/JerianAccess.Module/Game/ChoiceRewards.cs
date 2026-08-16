@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using _Scripts.AMVCC.Models.Character;
 using _Scripts.AMVCC.Views.ConsequenceButton;
 using _Scripts.Helpers;
 using _Scripts.Managers;
@@ -57,7 +58,13 @@ namespace JerianAccess.Module.Game
         /// ones the sheet renders as a state change read as "name, value". Every word is the
         /// game's. Public because the interlude popup pages its own rewards one to a page, and
         /// they are the same model shown the same way.</summary>
-        public static string Describe(Reward reward)
+        public static string Describe(Reward reward) => Describe(reward, withCurrent: false);
+
+        /// <summary>The same row, optionally followed by where the figure now STANDS - what a
+        /// sighted player reads off the slider the row animates. Used on the pages the game shows
+        /// AFTER applying a change (the scene's consequence page, an interlude's reward pages), so
+        /// the player hears the result without walking to the parameter window to look it up.</summary>
+        public static string Describe(Reward reward, bool withCurrent)
         {
             switch (reward.RewardType)
             {
@@ -66,13 +73,16 @@ namespace JerianAccess.Module.Game
                 case RewardType.Parameter:
                 case RewardType.Estate:
                 case RewardType.BilateralParameter:
-                    return Loc.T("choice.cons.param", new
+                {
+                    var row = Loc.T("choice.cons.param", new
                     {
                         name = Name(reward),
                         delta = Signed(reward.Value),
                     });
+                    return withCurrent ? WithCurrent(row, reward) : row;
+                }
                 case RewardType.CharacterRelation:
-                    return Character(reward);
+                    return withCurrent ? WithCurrent(Character(reward), reward) : Character(reward);
                 case RewardType.CreedEnding:
                     // The creed ending row has no name term of its own (the game paints it as a
                     // seal from the creed model); the ending sheet that carries it is read where
@@ -114,6 +124,46 @@ namespace JerianAccess.Module.Game
                 text = Loc.T("choice.cons.relation", new { name = text, delta = Signed(reward.Value) });
             return text;
         }
+
+        /// <summary>The row plus where its figure now stands - with the parameter's ceiling where
+        /// the game defines one (a parameter is drawn as a slider from its minimum to its maximum;
+        /// an estate or a relation figure is not). The "now" word is the mod's own: this build
+        /// ships no translation for the term its own tooltips ask for ("Now" resolves to an empty
+        /// string in every language, which is why the game's own rows read "( 5)").
+        /// The row alone when the reward moves nothing countable.</summary>
+        private static string WithCurrent(string row, Reward reward)
+        {
+            if (string.IsNullOrEmpty(row)) return row;
+            switch (reward.RewardType)
+            {
+                case RewardType.Parameter:
+                    return Loc.T("choice.cons.now_max", new
+                    {
+                        row,
+                        current = ParametersManager.Instance.GetParameterValue(reward.Parameter),
+                        max = reward.Parameter.MaxValue,
+                    });
+                case RewardType.Estate:
+                    return Now(row, ParametersManager.Instance.GetEstateParameter(
+                        reward.Estate, reward.EstateParameterKey,
+                        EstatesSerializeHelper.Initiate.EstateModels));
+                case RewardType.BilateralParameter:
+                    return Now(row, ParametersManager.Instance.GetBilateralParameter(
+                        reward.BilateralParameter, reward.BilateralParameterSide,
+                        BilateralParameterSerializeHelper.Initiate.BilateralParameterModels));
+                case RewardType.CharacterRelation:
+                    // A relation reward can also carry a status change; the figure is the part
+                    // that moved on a scale, and it is only there when the value moved.
+                    if (reward.Value == 0) return row;
+                    return Now(row, Singleton<CharacterConfigCollector>.Instance
+                        .GetCharacterRelation(reward.Character));
+                default:
+                    return row;
+            }
+        }
+
+        private static string Now(string row, int current)
+            => Loc.T("choice.cons.now", new { row, current });
 
         private static string Name(Reward reward)
             => I2.Loc.LocalizationManager.GetTranslation(reward.GetNameTerm() ?? "");

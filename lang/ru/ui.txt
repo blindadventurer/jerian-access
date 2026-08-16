@@ -27,6 +27,8 @@ state.none = нет
 state.unavailable_reason = недоступно, {reason}
 case.completed = выполнено
 case.step = шаг {step} из {total}
+case.empire = дела империи
+case.personal = личные дела
 
 settings.percent = {value} процентов
 settings.resolution_unavailable = недоступно, только для оконного формата экрана
@@ -44,6 +46,7 @@ choice.req.param_range = {name} от {min} до {max}
 choice.req.relation = {name}, отношение {op} {value}
 choice.req.status = {name} {status}
 choice.req.not = не {req}
+choice.req.any = одно из, {rows}
 choice.op.more = больше
 choice.op.less = меньше
 choice.op.equal = ровно
@@ -53,6 +56,7 @@ choice.op.notequal = не равно
 
 choice.unlock = открыть за {cost} {name}
 choice.unlock.paid = открыто, потрачено {cost} {name}
+choice.unlock.short = не хватает: {name} {cost}, есть {current}
 
 tooltip.section = {title}, {rows}
 choice.cond.now = {row}, {now} {current}
@@ -62,6 +66,8 @@ choice.cond.any = одно из условий, {rows}
 choice.cons.param = {name} {delta}
 choice.cons.relation = {name}, отношение {delta}
 choice.cons.set = {name}, {value}
+choice.cons.now = {row}, сейчас {current}
+choice.cons.now_max = {row}, сейчас {current} из {max}
 
 param.scale.single = {value}, {text}
 param.scale.range = от {min} до {max}, {text}
@@ -76,6 +82,8 @@ yearpopup.summary = {year} год, {chapter}, {age}
 
 pager.next = следующая страница
 pager.prev = предыдущая страница
+page.position = страница {index} из {count}
+page.last = последняя страница
 
 screen.disclaimer = предупреждение
 
@@ -84,6 +92,7 @@ screen.credits = титры
 screen.gameloading = загрузка игры
 gameloading.age = возраст: {age}
 screen.chaptersummary = сводка главы
+chaptersummary.continue = продолжить
 screen.tutorial = обучение
 screen.window = окно
 screen.pause = пауза
