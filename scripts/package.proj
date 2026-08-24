@@ -63,11 +63,13 @@
          the check passes either way, so the file is safe on every install. -->
     <WriteLinesToFile File="$(StageDir)steam_appid.txt" Lines="2936290" Overwrite="true" WriteOnlyWhenDifferent="true" />
 
-    <!-- Player docs at the archive root, readable before (and after) extracting. Russian: the
-         testers this build goes to play the game in Russian. -->
+    <!-- Player docs at the archive root, readable before (and after) extracting. English is the
+         shipped default; the Russian pair ships beside it for the testers who play in Russian.
+         package-keys.txt is the plain-text twin of KEYS.md - change the two together. -->
     <Copy SourceFiles="$(MSBuildThisFileDirectory)package-readme.txt" DestinationFiles="$(StageDir)JerianAccess-README.txt" />
     <Copy SourceFiles="$(MSBuildThisFileDirectory)package-keys.txt" DestinationFiles="$(StageDir)JerianAccess-KEYS.txt" />
-    <Copy SourceFiles="$(RepoRoot)KEYS.md" DestinationFiles="$(StageDir)JerianAccess-KEYS-en.txt" />
+    <Copy SourceFiles="$(MSBuildThisFileDirectory)package-readme-ru.txt" DestinationFiles="$(StageDir)JerianAccess-README-ru.txt" />
+    <Copy SourceFiles="$(MSBuildThisFileDirectory)package-keys-ru.txt" DestinationFiles="$(StageDir)JerianAccess-KEYS-ru.txt" />
 
     <!-- Licenses for everything redistributed. The LGPL-2.1 text shipped for BepInEx is the
          same canonical text prism vendors for the NVDA controller client. -->

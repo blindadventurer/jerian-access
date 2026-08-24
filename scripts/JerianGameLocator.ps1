@@ -1,14 +1,33 @@
 # JerianGameLocator.ps1 - Shared game-install resolution for setup-bepinex.ps1 and
 # build.ps1. Dot-source this file, then call Resolve-JerianGame / Test-JerianGameDir.
-# Resolution order: JERIAN_GAME env var, then Steam (registry roots + every library in
-# libraryfolders.vdf), then GOG (uninstall registry entries + default Galaxy paths).
+# Resolution order: JERIAN_GAME env var, then plain (non-store) copies on any fixed drive,
+# then Steam (registry roots + every library in libraryfolders.vdf), then GOG (uninstall
+# registry entries + default Galaxy paths).
 
 $JerianGameFolderName = "The Life and Suffering of Prince Jerian"
 $JerianExeName = "The Life and Suffering of Prince Jerian.exe"
 $JerianManagedRelPath = "The Life and Suffering of Prince Jerian_Data\Managed\Assembly-CSharp.dll"
 $JerianDefaultSteamPath = "C:\Program Files (x86)\Steam\steamapps\common\$JerianGameFolderName"
-# Non-store installs checked before Steam/GOG detection (this machine keeps the game here).
-$JerianKnownLocalPaths = @("F:\games\$JerianGameFolderName")
+# Non-store installs: a hand-placed copy of the game folder, on its own or under a "games"
+# folder, on any fixed drive. Checked before the store lookups, which by definition cannot
+# find a copy no store installed.
+function Get-LocalJerianCandidates {
+    $roots = @()
+    try {
+        $roots = @(Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3" -ErrorAction Stop |
+            ForEach-Object { $_.DeviceID + "\" })
+    } catch {
+        $roots = @(Get-PSDrive -PSProvider FileSystem -ErrorAction SilentlyContinue |
+            Where-Object { $_.Root -match '^[A-Za-z]:' } | ForEach-Object { $_.Root })
+    }
+
+    $candidates = @()
+    foreach ($root in $roots) {
+        $candidates += (Join-Path $root "games\$JerianGameFolderName")
+        $candidates += (Join-Path $root $JerianGameFolderName)
+    }
+    return $candidates
+}
 
 function Normalize-JerianPath {
     param([string]$Path)
@@ -161,7 +180,7 @@ function Get-JerianGameCandidates {
 
     Add-JerianCandidate $candidates $seen $ManualGame
 
-    foreach ($candidate in $JerianKnownLocalPaths) {
+    foreach ($candidate in Get-LocalJerianCandidates) {
         Add-JerianCandidate $candidates $seen $candidate
     }
 

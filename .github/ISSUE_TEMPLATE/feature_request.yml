@@ -1,0 +1,18 @@
+name: Ask for something to be read differently
+description: An announcement that is technically correct but hard to play with, or information the mod does not read at all.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is hard right now
+      description: Where it happens, and what playing through it currently sounds like.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you would like to hear instead
+      description: If you can, write the announcement the way you would want it spoken.
+    validations:
+      required: false

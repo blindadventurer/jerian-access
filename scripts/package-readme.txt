@@ -1,103 +1,110 @@
-Jerian Access - озвучка для незрячих
-====================================
+Jerian Access - screen reader support for blind players
+=======================================================
 
-Мод озвучки для игры "The Life and Suffering of Prince Jerian".
-Вся игра проходится с клавиатуры и экранного диктора: текст сюжета, выборы
-(включая закрытые - с причиной, почему они закрыты), характеристики, меню,
-сохранения, всплывающие окна и концовки. Мышь не нужна нигде.
+An accessibility mod for "The Life and Suffering of Prince Jerian". The whole
+game is playable with a screen reader and the keyboard alone: story text,
+choices (including locked ones, with the reason they are locked), parameters,
+menus, saves, popups and endings. The mouse is not needed anywhere.
 
-Это тестовая сборка. Если что-то молчит или не отвечает - см. раздел
-"Если что-то пошло не так" в конце: там написано, какой файл прислать.
-
-
-Что нужно
----------
-
-- Windows-версия игры "The Life and Suffering of Prince Jerian".
-- Экранный диктор. NVDA и JAWS мод озвучивает напрямую через вложенную
-  библиотеку Prism; без них речь пойдёт через стандартный голос SAPI.
+Project page: https://github.com/blindadventurer/jerian-access
+A Russian version of this file is next to it, as JerianAccess-README-ru.txt.
 
 
-Установка
----------
+What you need
+-------------
 
-1. Откройте папку с игрой - ту, где лежит файл
-   "The Life and Suffering of Prince Jerian.exe".
-   В Steam: правый клик по игре в библиотеке, "Управление", "Посмотреть
-   локальные файлы".
-2. Распакуйте туда всё содержимое архива, сохраняя структуру папок.
-   После распаковки рядом с exe-файлом игры должны оказаться winhttp.dll,
-   prism.dll, steam_appid.txt и папка BepInEx.
-3. Запустите игру как обычно. Первый запуск с модом занимает на несколько
-   секунд больше - загрузчик дописывает свой конфиг. Когда мод готов, он
-   произносит короткую строку приветствия.
-
-Язык озвучки мод берёт из настроек игры: русский интерфейс - русская речь.
+- The Windows version of "The Life and Suffering of Prince Jerian".
+- A screen reader. NVDA and JAWS are spoken through directly, using the
+  bundled Prism library; with neither one running, speech falls back to the
+  standard SAPI voice.
 
 
-Управление
+Installing
 ----------
 
-Полный список клавиш - в файле JerianAccess-KEYS.txt рядом с этим файлом.
-Коротко самое нужное:
+1. Open the game folder - the one holding
+   "The Life and Suffering of Prince Jerian.exe".
+   On Steam: right-click the game in your library, "Manage", "Browse local
+   files".
+2. Extract the whole archive into it, keeping the folder structure. When you
+   are done, winhttp.dll, prism.dll, steam_appid.txt and a BepInEx folder sit
+   next to the game's exe.
+3. Start the game as usual. The first launch with the mod takes a few seconds
+   longer - the loader writes its config. The mod speaks a short greeting line
+   once it is ready.
 
-- Стрелки вверх и вниз: предыдущий и следующий элемент.
-- Enter: активировать (выбор, кнопку, следующую страницу).
-- Escape: назад, закрыть окно; в сцене открывает меню паузы.
-- Tab и Shift+Tab: следующая и предыдущая группа элементов - например, из
-  текста сцены на панель HUD и обратно.
-- Пробел или F1: подробности о том, на чём стоит курсор - условия выбора и
-  его последствия, описание характеристики, персонажа, цели.
-- Backspace: дополнительное действие. На выборе, который игра предлагает
-  выкупить за Рассудок или Наследие Темпестов, - заплатить (нажать ещё раз -
-  вернуть). На слоте сохранения - удалить.
-
-Отдельные страницы игра листает сама: интерлюдии и газеты между событиями,
-подсказки-туториалы, книга главы, страница последствий "Дела на год". Там
-работают клавиши самой игры: стрелка вправо, D или Пробел - вперёд;
-стрелка влево или A - назад; Enter - "Далее"; Shift - пропустить.
+The mod speaks the language the game is set to: a Russian interface gets
+Russian speech.
 
 
-Если что-то пошло не так
-------------------------
+Keys
+----
 
-Мод пишет свой журнал прямо в папку игры:
+The complete key reference is in JerianAccess-KEYS.txt, next to this file.
+The short version:
 
-    <папка с игрой>\BepInEx\LogOutput.log
+- Up and Down arrows: previous and next item.
+- Enter: activate (a choice, a button, the next page).
+- Escape: back, close a window; in a scene it opens the pause menu.
+- Tab and Shift plus Tab: next and previous group of items - for example from
+  the scene text to the HUD bar and back.
+- Space or F1: details about the focused item - a choice's conditions and its
+  consequences, a parameter's scale, a character or objective description.
+- Backspace: the secondary action. On a choice the game offers to unlock for
+  Sanity or Tempest Legacy, it pays the price (press it again to take the
+  payment back). On a save slot, it deletes.
 
-Например:
+Some pages the game turns itself: interludes and newspapers between events,
+tutorial cards, the chapter book, the outcome page of a project for the year.
+There the game's own keys work: Right arrow, D or Space go forward; Left arrow
+or A goes back; Enter is "Continue"; hold Shift to skip.
+
+
+If something goes wrong
+-----------------------
+
+The mod writes its log straight into the game folder:
+
+    <game folder>\BepInEx\LogOutput.log
+
+For example:
     C:\Program Files (x86)\Steam\steamapps\common\The Life and Suffering of
     Prince Jerian\BepInEx\LogOutput.log
 
-Что делать:
+What to do:
 
-1. Запомните, ГДЕ это случилось: какая была сцена или окно, что вы нажали,
-   что услышали (или не услышали).
-2. Выйдите из игры - файл дописывается до самого выхода.
-3. Пришлите файл LogOutput.log целиком и пару фраз о том, что случилось.
+1. Note WHERE it happened: which scene or window, what you pressed, what you
+   heard (or did not hear).
+2. Quit the game - the file is written up to the moment you leave.
+3. Open an issue at https://github.com/blindadventurer/jerian-access/issues with
+   the whole LogOutput.log attached and a couple of sentences about what
+   happened.
 
-Журнал перезаписывается при каждом запуске игры, поэтому отправляйте его до
-того, как запустите игру снова. Строки мода в нём начинаются со слов
-"Jerian Access".
+The log is overwritten every time the game starts, so save a copy before you
+launch it again. The mod's own lines in it start with "Jerian Access".
 
-Ещё один журнал, игровой, лежит по адресу
+There is a second, game-side log at
     %USERPROFILE%\AppData\LocalLow\Schisma\The Life and Suffering of Prince Jerian\Player.log
-Его стоит приложить, если игра вылетела или зависла.
+Attach that one too if the game crashed or froze.
 
-Сохранения лежат там же, в папке Saves, и мод их не трогает.
-
-
-Как выключить
--------------
-
-Удалите winhttp.dll из папки с игрой - мод перестанет загружаться. Чтобы
-убрать его совсем, удалите также prism.dll, doorstop_config.ini,
-.doorstop_version и папку BepInEx. Сохранения останутся нетронутыми.
+Your saves live in the Saves folder next to it, and the mod never touches them.
 
 
-Лицензии
+Turning it off
+--------------
+
+Delete winhttp.dll from the game folder and the mod stops loading. To remove
+it completely, delete prism.dll, doorstop_config.ini, .doorstop_version and
+the BepInEx folder as well. Your saves are left alone.
+
+
+Licenses
 --------
 
-Мод распространяется по лицензии MIT. В него вложены BepInEx (LGPL-2.1) и
-Prism (MPL-2.0); тексты лицензий лежат в
+The mod is distributed under the MIT license. It bundles BepInEx (LGPL-2.1)
+and Prism (MPL-2.0); the license texts are in
 BepInEx\plugins\JerianAccess\licenses.
+
+Jerian Access is a port of Rashad Naqeeb's brante-access, the screen reader
+mod for the first game in the series, "The Life and Suffering of Sir Brante":
+https://github.com/rashadnaqeeb/brante-access

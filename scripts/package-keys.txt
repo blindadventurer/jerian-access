@@ -1,74 +1,76 @@
-Jerian Access - клавиши
-=======================
+Jerian Access - keys
+====================
 
-Один набор навигации на все экраны. Мод забирает клавиатуру там, где у него
-есть свой экран, и отдаёт её игре везде, где страницы листает сама игра.
+One navigation set for every screen. The mod owns the keyboard wherever it has
+a screen of its own, and hands it back to the game everywhere the game turns
+its own pages.
 
 
-Навигация (на любом экране)
+Navigation (any screen)
+-----------------------
+
+- Up arrow, Down arrow: previous and next item. Held keys repeat at your
+  Windows keyboard rate.
+- Left arrow, Right arrow: the same where a row runs horizontally (the HUD bar
+  buttons), and adjusting a slider or cycling a setting.
+- Tab, Shift plus Tab: next and previous group of items - for example from the
+  scene text to the HUD bar and back.
+- Enter (main or keypad): activate the item through the game's own handler. An
+  unavailable item refuses and says why.
+- Escape: back. Closes an open window; in a scene it opens the pause menu; in
+  a popup it cancels, where the game allows cancelling.
+- Space or F1: details about the focused item - a choice's conditions and its
+  consequences, a parameter's scale, a character or objective description. If
+  the item has no details of its own, the window's help text is read when the
+  game provides one.
+- Backspace: the secondary action. On a choice the game offers to unlock for
+  Sanity or Tempest Legacy, it pays the price; pressing it again takes the
+  payment back. Enter never pays by itself - it states the price. On a save
+  slot, Backspace opens the delete confirmation.
+- Home, End: first and last item. Pressed again at the edge, they re-read the
+  current item in full.
+- Ctrl plus Up arrow, Ctrl plus Down arrow: previous and next region on
+  screens whose rows are grouped.
+- Ctrl plus V: speech verbosity. Concise drops the role word ("button") and
+  the position ("3 of 9") from announcements; verbose, the default, keeps
+  them. The setting persists between sessions.
+
+
+Pages the game turns itself
 ---------------------------
 
-- Стрелка вверх, стрелка вниз: предыдущий и следующий элемент. Удержание
-  повторяет нажатие с той же скоростью, что и в Windows.
-- Стрелка влево, стрелка вправо: то же, где ряд идёт по горизонтали
-  (кнопки панели HUD), а также изменение ползунка и перебор значений.
-- Tab, Shift+Tab: следующая и предыдущая группа элементов - например, из
-  текста сцены на панель HUD и обратно.
-- Enter (основной или на цифровой клавиатуре): активировать элемент через
-  собственный обработчик игры. Недоступный элемент откажет и назовёт причину.
-- Escape: назад. Закрывает открытое окно; в сцене открывает меню паузы; во
-  всплывающем окне отменяет, если игра позволяет отмену.
-- Пробел или F1: подробности о том, на чём стоит курсор - условия выбора и
-  его последствия, шкала характеристики, описание персонажа или цели. Если у
-  элемента своих подробностей нет, читается подсказка окна, когда она есть.
-- Backspace: дополнительное действие. На выборе, который игра предлагает
-  выкупить за Рассудок или Наследие Темпестов, - заплатить цену; нажатие ещё
-  раз возвращает потраченное. Enter никогда не платит сам - он называет цену.
-  На слоте сохранения Backspace открывает подтверждение удаления.
-- Home, End: первый и последний элемент. Повторное нажатие на краю
-  перечитывает текущий элемент целиком.
-- Ctrl+стрелка вверх, Ctrl+стрелка вниз: предыдущая и следующая область на
-  экранах, где строки сгруппированы.
-- Ctrl+V: подробность речи. Краткий режим убирает из объявлений слово-роль
-  ("кнопка") и позицию ("3 из 9"); подробный, он же обычный, оставляет.
-  Настройка сохраняется между запусками.
+Some pages carry no navigation of their own: letters, newspaper cuttings and
+pamphlets between events, tutorial cards, the outcome page after you pick a
+project for the year. The mod reads each page as soon as it settles, and the
+pages turn with the game's own keys:
+
+- Right arrow, D or Space: next page.
+- Left arrow or A: previous page.
+- Enter (main or keypad): "Continue", once the game offers it.
+- Hold either Shift: skip to the last page.
+
+Each of those pages says where it stands ("page 3 of 14") and marks the last
+one, so a document that has ended is not mistaken for one that has gone quiet.
+
+The CHAPTER BOOK (the summary before and after a chapter) is navigated
+differently - like an ordinary list: Up and Down walk its rows, Ctrl plus Up
+and Ctrl plus Down move between its pages (the book turns to follow), Space on
+an event reads its description and every requirement with whether you have met
+it, and "Continue" is the last item in the list.
 
 
-Страницы, которые листает сама игра
------------------------------------
+Type-ahead search
+-----------------
 
-Часть страниц не имеет своей навигации: письма, газетные вырезки и памфлеты
-между событиями, подсказки-туториалы, страница последствий после выбора "Дела
-на год". Мод читает каждую страницу, как только она встала на место, а листаются
-они клавишами самой игры:
-
-- Стрелка вправо, D или Пробел: следующая страница.
-- Стрелка влево или A: предыдущая страница.
-- Enter (основной или на цифровой клавиатуре): "Далее", когда игра его
-  предлагает.
-- Удержание любого Shift: пропустить до последней страницы.
-
-Каждая такая страница называет своё место ("страница 3 из 14") и отмечает
-последнюю, чтобы законченный документ не путался с замолчавшим.
-
-Книга главы (сводка перед главой и после неё) листается иначе - как обычный
-список: стрелки вверх и вниз идут по строкам, Ctrl со стрелками вверх и вниз
-переходят между страницами (книга переворачивается следом), Пробел на событии
-читает его описание и каждое требование с отметкой, выполнено ли оно, а
-"Продолжить" - последний элемент списка.
+Typing letters starts a search inside the current group of items. Space is
+allowed after the first letter. Up and Down move through the matches, focus
+follows each one and speaks it, so Enter activates what you found as usual.
+Escape clears the search (the next Escape is Back as usual).
 
 
-Поиск по первым буквам
-----------------------
+Text entry
+----------
 
-Набор букв начинает поиск внутри текущей группы элементов. Пробел допустим
-после первой буквы. Стрелки вверх и вниз переходят по совпадениям, курсор
-следует за каждым и произносит его, так что Enter активирует найденное как
-обычно. Escape очищает поиск (следующий Escape работает как "назад").
-
-
-Ввод текста
------------
-
-В полях ввода игры (имя героя при новой игре) мод отходит в сторону: клавиши
-идут прямо в поле, а набранные символы проговариваются самим полем.
+In the game's text fields (the hero's name at the start of a new game) the mod
+stands aside: keys go straight into the field, and the characters you type are
+spoken by the field itself.

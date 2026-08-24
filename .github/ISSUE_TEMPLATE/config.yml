@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Key reference
+    url: https://github.com/blindadventurer/jerian-access/blob/main/KEYS.md
+    about: Every key the mod uses, and the surfaces where the game keeps its own keys.
+  - name: Latest release
+    url: https://github.com/blindadventurer/jerian-access/releases/latest
+    about: Download the zip and the install instructions that ship inside it.

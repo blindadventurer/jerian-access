@@ -23,7 +23,11 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <GameDir>F:\games\The Life and Suffering of Prince Jerian</GameDir>
+    <!-- Resolution order: -p:GameDir=... (build.ps1 and package.ps1 pass what the locator
+         found), then Directory.Build.local.props, then the JERIAN_GAME environment variable,
+         then the default Steam path. -->
+    <GameDir Condition="'$(GameDir)' == ''">$(JERIAN_GAME)</GameDir>
+    <GameDir Condition="'$(GameDir)' == ''">C:\Program Files (x86)\Steam\steamapps\common\The Life and Suffering of Prince Jerian</GameDir>
     <ManagedDir>$(GameDir)\The Life and Suffering of Prince Jerian_Data\Managed</ManagedDir>
     <BepInExCoreDir>$(GameDir)\BepInEx\core</BepInExCoreDir>
     <ModuleDeployDir>$(GameDir)\BepInEx\plugins\JerianAccess\module</ModuleDeployDir>

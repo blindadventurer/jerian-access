@@ -5,18 +5,20 @@ speech and keyboard only - no mouse interaction required anywhere. Speech is the
 interface: a silent failure or stale announcement is invisible to the player, so log
 loudly and verify by driving the live game, never by assuming.
 
-Reference projects (read these before inventing anything - most problems here are already
-solved there):
-- `C:\Users\rasha\Documents\wotr-access` - Wrath of the Righteous mod. Same runtime family
-  (Unity/Mono/net4x). Port from here: speech backends (Prism/SAPI/clipboard), input manager +
-  OS-matched key repeat, screen stack (poll-and-diff), graph navigator (KeyGraph/GraphBuilder/
-  GraphAnnouncer, two-tier ControlId focus reconciliation), typeahead, localization layer,
+Reference lineage - most problems here were already solved in one of these, and several rules
+below only make sense against them:
+- `..\brante-access-1.2.0` - the mod this one is a port of, and the only reference checked out
+  beside this repo. When a ported file misbehaves, diff against the original before debugging
+  from scratch.
+- wotr-access (Wrath of the Righteous; same Unity/Mono/net4x runtime family) - the origin of
+  the speech backends (Prism/SAPI/clipboard), the input manager with OS-matched key repeat, the
+  screen stack (poll-and-diff), the graph navigator (KeyGraph/GraphBuilder/GraphAnnouncer,
+  two-tier ControlId focus reconciliation), typeahead, the localization layer, and the
   Mono.CSharp dev REPL.
-- `C:\Users\rasha\Documents\Disco Elysium` - Non-Visual Calculus (IL2CPP, BepInEx 6). Port the
-  dev-server ENDPOINT SET from here (/eval speech-settle capture, /input verbs, /wait per-frame
-  predicates, /gui, /log in-band, /screenshot), but implement on the Mono/net48 stack like
-  wotr-access (Mono.CSharp REPL, not Roslyn). Its CLAUDE.md documents the act-then-listen
-  verification discipline - adopt it.
+- Non-Visual Calculus (Disco Elysium; IL2CPP, BepInEx 6) - the origin of the dev-server ENDPOINT
+  SET (/eval speech-settle capture, /input verbs, /wait per-frame predicates, /gui, /log in-band,
+  /screenshot), implemented here on the Mono/net48 stack (Mono.CSharp REPL, not Roslyn), and of
+  the act-then-listen verification discipline.
 
 ## Game facts
 
@@ -31,9 +33,11 @@ decompiled Jerian code before any feature relies on them.
   (`UnityEngine.InputLegacyModule.dll` ships and is listed in ScriptingAssemblies.json);
   whether legacy `Input.GetKey` works at runtime must be verified at bring-up - if the game is
   "Input System only", our polling switches to `Keyboard.current` or Win32 GetAsyncKeyState.
-- **Install**: `F:\games\The Life and Suffering of Prince Jerian` (NOT a Steam install; a
-  `.rne` file sits beside the exe and there is no steam appmanifest - launch the exe directly,
-  never via Steam). Exe: `The Life and Suffering of Prince Jerian.exe`; Managed dir under
+- **Install**: resolved by `scripts\JerianGameLocator.ps1` (a plain copy on any fixed drive,
+  then Steam libraries, then GOG; `JERIAN_GAME` or `Directory.Build.local.props` overrides).
+  A hand-installed copy is NOT a Steam install - no steam appmanifest, a `.rne` file beside the
+  exe - so launch the exe DIRECTLY, never via steam.exe. Exe:
+  `The Life and Suffering of Prince Jerian.exe`; Managed dir under
   `The Life and Suffering of Prince Jerian_Data\Managed`.
 - **Content model**: only ~24 scenes (level0..level23) - the scene-per-event model from Brante
   is GONE; story content is data-driven out of resources.assets. Cutscenes are Addressables
@@ -136,8 +140,8 @@ Game control (game window does NOT need focus once the dev server forces runInBa
 This install is NOT under Steam - launch the exe DIRECTLY, never via steam.exe. Carried gotcha
 from the Disco project: do NOT invoke `powershell.exe` from the Bash tool (the auto-mode
 classifier blocks it) - use these exact forms:
-- Launch (from Bash):
-  `cd "/f/games/The Life and Suffering of Prince Jerian" && ("./The Life and Suffering of Prince Jerian.exe" &)`
+- Launch (from Bash; `<game>` is the install path in MSYS form, e.g. `/d/games/...`):
+  `cd "<game>" && ("./The Life and Suffering of Prince Jerian.exe" &)`
 - Kill: `MSYS_NO_PATHCONV=1 taskkill.exe /F /IM "The Life and Suffering of Prince Jerian.exe"`
   (plain `taskkill` from Bash mangles `/F` into a path)
 - Mute for unattended runs: `curl -s -X POST --data 'AudioListener.volume = 0f' .../eval`

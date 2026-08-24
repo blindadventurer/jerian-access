@@ -15,11 +15,13 @@
     <DebugType>portable</DebugType>
   </PropertyGroup>
 
-  <!-- Paths. Override GameDir on the command line if the install differs:
-       dotnet build -p:GameDir="D:\...\The Life and Suffering of Prince Jerian" -->
+  <!-- Paths. GameDir resolution order: -p:GameDir=... on the command line (build.ps1 and
+       package.ps1 pass what the locator found), then Directory.Build.local.props, then the
+       JERIAN_GAME environment variable, then the default Steam path. -->
   <PropertyGroup>
     <ModName>JerianAccess</ModName>
-    <GameDir>F:\games\The Life and Suffering of Prince Jerian</GameDir>
+    <GameDir Condition="'$(GameDir)' == ''">$(JERIAN_GAME)</GameDir>
+    <GameDir Condition="'$(GameDir)' == ''">C:\Program Files (x86)\Steam\steamapps\common\The Life and Suffering of Prince Jerian</GameDir>
     <ManagedDir>$(GameDir)\The Life and Suffering of Prince Jerian_Data\Managed</ManagedDir>
     <BepInExCoreDir>$(GameDir)\BepInEx\core</BepInExCoreDir>
     <PluginDeployDir>$(GameDir)\BepInEx\plugins\$(ModName)</PluginDeployDir>

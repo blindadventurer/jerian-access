@@ -1,0 +1,18 @@
+<Project>
+
+  <!-- Machine-local overrides, untracked. Create Directory.Build.local.props beside this file
+       to point the build at a game install the locator cannot find, without touching a tracked
+       file:
+
+         <Project>
+           <PropertyGroup>
+             <GameDir>D:\wherever\The Life and Suffering of Prince Jerian</GameDir>
+           </PropertyGroup>
+         </Project>
+
+       The same thing can be done with the JERIAN_GAME environment variable, or with
+       -p:GameDir=... on the command line (which is what build.ps1 and package.ps1 pass). -->
+  <Import Project="$(MSBuildThisFileDirectory)Directory.Build.local.props"
+          Condition="Exists('$(MSBuildThisFileDirectory)Directory.Build.local.props')" />
+
+</Project>

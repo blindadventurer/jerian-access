@@ -221,3 +221,30 @@ reward the game clamped now reads as what it is ("Разум +2, сейчас 20
 The "now" word is mod-authored: this build ships no translation for the `Now` term its own
 tooltips ask for (it resolves to an empty string in every language, which is why the game's own
 condition rows read "( 5)").
+
+## 2026-08-24 - The build finds the game by shape, not by this machine's path
+
+Publishing the repository meant no tracked file may name one developer's install. The locator
+kept `F:\games\<game>` as a known-local candidate checked first, and both csprojs hardcoded the
+same path as `GameDir` - which is also what made a bare `dotnet build` (the hot-reload path)
+work without arguments. Replaced by two things: `Get-LocalJerianCandidates` scans every fixed
+drive for `<drive>\games\<game>` and `<drive>\<game>` before the store lookups (a hand-installed
+copy is exactly the case Steam and GOG detection cannot cover), and `GameDir` resolves through
+a chain - `-p:GameDir=` from the scripts, then the untracked `Directory.Build.local.props`,
+then the `JERIAN_GAME` environment variable, then the default Steam path. The machine this was
+developed on keeps its path in the local props file, so the documented hot-reload command still
+works there unchanged. Rejected: leaving the path in as harmless (it is the kind of detail that
+silently sends someone else's clone at a folder that does not exist), and requiring JERIAN_GAME
+for everyone (it breaks the bare `dotnet build` the docs promise).
+
+## 2026-08-24 - Published in English, with the Russian player docs kept beside it
+
+The repository and everything a stranger reads in it is English - README, key reference,
+changelog, contributing guide, issue forms. The player docs inside the release zip were written
+in Russian for the tester, and stay: the zip now ships `JerianAccess-README.txt` and
+`JerianAccess-KEYS.txt` in English with `-ru` twins next to them, instead of Russian first and
+an English key reference as an afterthought (`JerianAccess-KEYS-en.txt`, now gone). The Russian
+files are not translations of record - when the two disagree the English pair is the current
+one. Also settled here: the port keeps Rashad Naqeeb's copyright line beside its own, as MIT
+requires of a derivative, and says plainly in the README that brante-access is where this came
+from.
