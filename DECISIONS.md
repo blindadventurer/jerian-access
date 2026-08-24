@@ -248,3 +248,16 @@ files are not translations of record - when the two disagree the English pair is
 one. Also settled here: the port keeps Rashad Naqeeb's copyright line beside its own, as MIT
 requires of a derivative, and says plainly in the README that brante-access is where this came
 from.
+
+## 2026-08-24 - The plugin id becomes the port author's, and the settings file starts over
+
+The port carried `com.rashadnaqeeb.jerianaccess` from brante-access, which put another
+person's name on this mod's BepInEx identity - visible in the log, and the name of the file
+BepInEx writes settings into. Changed to `com.blindadventurer.jerianaccess`. The cost is that
+`BepInEx\config\com.rashadnaqeeb.jerianaccess.cfg` is orphaned and a fresh file appears with
+default values: a hand-picked speech backend or SAPI rate has to be set again. Accepted rather
+than migrated - the settings are four values, all at their defaults on both installs this build
+is known to run on, and a one-shot copy-the-old-file path in the host is code that would live
+forever to save one edit. The verbosity toggle is unaffected: it persists in its own prefs file
+under the plugin folder, not in the BepInEx config. Attribution does not move with the id -
+the README, the LICENSE and the docs in the zip still say where this mod came from.

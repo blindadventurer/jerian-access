@@ -6,6 +6,15 @@ The mod is a port of [brante-access](https://github.com/rashadnaqeeb/brante-acce
 it starts its own numbering at 0.9.0: the infrastructure arrived finished, the game-facing
 half was written from scratch.
 
+## 0.9.4 - 2026-08-24
+
+- The plugin id is the port author's own: `com.blindadventurer.jerianaccess`, where it used to
+  be the one inherited from brante-access. Nothing about the mod behaves differently, but BepInEx
+  names its settings file after the id, so `BepInExnfigm.rashadnaqeeb.jerianaccess.cfg`
+  is replaced by a fresh `com.blindadventurer.jerianaccess.cfg` with the default values. If you
+  had changed the speech backend or the SAPI rate by hand, set them again; the verbosity toggle
+  (Ctrl plus V) is kept elsewhere and survives. The old file can be deleted.
+
 ## 0.9.3 - 2026-08-24
 
 First public release. No change to what the mod does - the code is the 0.9.2 build - but the

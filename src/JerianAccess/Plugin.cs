@@ -15,11 +15,13 @@ namespace JerianAccess
     [BepInPlugin(Guid, Name, Version)]
     public sealed class Plugin : BaseUnityPlugin
     {
-        public const string Guid = "com.rashadnaqeeb.jerianaccess";
+        // The port's own id. It names the BepInEx config file, so changing it starts that file
+        // over - see the 2026-08-24 DECISIONS entry.
+        public const string Guid = "com.blindadventurer.jerianaccess";
         public const string Name = "Jerian Access";
         // The port's own version, not the Brante mod's it grew out of: 0.x while the game is
         // still being played through by testers.
-        public const string Version = "0.9.3";
+        public const string Version = "0.9.4";
 
         // Public (not internal) so /eval-compiled code, which lives in its own assembly, can reach
         // the speech pipeline: `Plugin.Instance.Speech.Speak("...")` is the standard smoke test.

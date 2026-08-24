@@ -2,7 +2,7 @@
 
 A screen reader accessibility mod for **The Life and Suffering of Prince Jerian**. The goal is that the entire game is playable by a blind player with speech and the keyboard alone - no mouse, no sighted assistance.
 
-Current version: **0.9.3**. A blind tester has played the game through with it; the seven items that report produced are fixed. See [CHANGELOG.md](CHANGELOG.md) for what changed per release and [ROADMAP.md](ROADMAP.md) for the per-feature status.
+Current version: **0.9.4**. A blind tester has played the game through with it; the seven items that report produced are fixed. See [CHANGELOG.md](CHANGELOG.md) for what changed per release and [ROADMAP.md](ROADMAP.md) for the per-feature status.
 
 ## Where this came from
 
