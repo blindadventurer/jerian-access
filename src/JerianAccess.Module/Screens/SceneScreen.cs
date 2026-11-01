@@ -159,7 +159,7 @@ namespace JerianAccess.Module.Screens
         public override void OnFocus()
         {
             var title = TitleText(); // empty when the scene hasn't set up yet - delivered below
-            if (!string.IsNullOrEmpty(title) && title != _spokenTitle) Mod.Speech.Speak(title);
+            if (!string.IsNullOrEmpty(title) && title != _spokenTitle) Mod.Speech.Output(title);
             _spokenTitle = title;
         }
 
@@ -194,7 +194,7 @@ namespace JerianAccess.Module.Screens
                 if (!entry && page >= 0)
                 {
                     Navigation.FocusNode(PageId(page), announce: false);
-                    Mod.Speech.Speak(PageText(tc, page));
+                    Mod.Speech.Output(PageText(tc, page));
                 }
                 return;
             }
@@ -223,7 +223,7 @@ namespace JerianAccess.Module.Screens
             // New page delivered: silent re-home, the queued delivery announcement is the
             // speech.
             Navigation.FocusNode(PageId(page), announce: false);
-            Mod.Speech.Speak(PageText(tc, page));
+            Mod.Speech.Output(PageText(tc, page));
         }
 
         // The consequence Continue, seated when the GAME makes it usable. Its page index is not
@@ -248,7 +248,7 @@ namespace JerianAccess.Module.Screens
             var title = TitleText();
             if (string.IsNullOrEmpty(title) || title == _spokenTitle) return;
             _spokenTitle = title;
-            Mod.Speech.Speak(title);
+            Mod.Speech.Output(title);
         }
 
         public override void Build(GraphBuilder b)
@@ -350,7 +350,7 @@ namespace JerianAccess.Module.Screens
                         // Space reads what the sighted player sees on the choice's sheet - the
                         // consequences it promises - then the full requirement breakdown (met
                         // and not-met) from the choice's own typed Condition model.
-                        OnTooltip = () => Mod.Speech.Speak(Detail(choice) ?? Loc.T("nav.no_details")),
+                        OnTooltip = () => Mod.Speech.Output(Detail(choice) ?? Loc.T("nav.no_details")),
                         // Backspace pays a resource lock open (and pays it back): the game's own
                         // lock click, the only way to reach a choice bought with Sanity or
                         // Tempest Legacy - clicking the choice itself does nothing until then.
@@ -456,13 +456,13 @@ namespace JerianAccess.Module.Screens
         {
             if (!choice.GetIsButtonInteractable())
             {
-                Mod.Speech.Speak(ChoiceConditions.UnavailableReason(choice)
+                Mod.Speech.Output(ChoiceConditions.UnavailableReason(choice)
                     ?? Loc.T("state.unavailable"), interrupt: true);
                 return;
             }
             if (!ChoiceConditions.LocksPaid(choice))
             {
-                Mod.Speech.Speak(ChoiceConditions.UnavailableReason(choice)
+                Mod.Speech.Output(ChoiceConditions.UnavailableReason(choice)
                     ?? Loc.T("state.unavailable"), interrupt: true);
                 return;
             }
@@ -489,7 +489,7 @@ namespace JerianAccess.Module.Screens
             var locks = ChoiceConditions.Locks(choice);
             if (locks.Count == 0)
             {
-                Mod.Speech.Speak(Loc.T("nav.no_details"), interrupt: true);
+                Mod.Speech.Output(Loc.T("nav.no_details"), interrupt: true);
                 return;
             }
             var said = new List<string>();
@@ -505,7 +505,7 @@ namespace JerianAccess.Module.Screens
                 view.OnClick();
                 said.Add(ChoiceConditions.LockState(view));
             }
-            Mod.Speech.Speak(string.Join(", ", said.ToArray()), interrupt: true);
+            Mod.Speech.Output(string.Join(", ", said.ToArray()), interrupt: true);
         }
 
         private static ConsequenceButtonController FirstChoice()

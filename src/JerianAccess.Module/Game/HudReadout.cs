@@ -111,7 +111,7 @@ namespace JerianAccess.Module.Game
         private static void Tooltip(GameObject go)
         {
             if (go == null || !TooltipReader.Request(go))
-                Mod.Speech.Speak(Loc.T("nav.no_details"));
+                Mod.Speech.Output(Loc.T("nav.no_details"));
         }
 
         private static void AddButton(GraphBuilder b, HudButtonController ctrl)
@@ -136,7 +136,7 @@ namespace JerianAccess.Module.Game
                         ?? (button.interactable ? null : Loc.T("state.unavailable"));
                     if (reason != null)
                     {
-                        Mod.Speech.Speak(reason, interrupt: true);
+                        Mod.Speech.Output(reason, interrupt: true);
                         return;
                     }
                     UiWidgets.Click(button.gameObject);

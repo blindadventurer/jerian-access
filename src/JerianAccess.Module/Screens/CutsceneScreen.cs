@@ -73,12 +73,12 @@ namespace JerianAccess.Module.Screens
             if (!string.IsNullOrEmpty(subtitle) && subtitle != _spokenSubtitle)
             {
                 _spokenSubtitle = subtitle;
-                Mod.Speech.Speak(subtitle);
+                Mod.Speech.Output(subtitle);
             }
             if (!string.IsNullOrEmpty(skipHint) && !_skipHintSpoken)
             {
                 _skipHintSpoken = true;
-                Mod.Speech.Speak(skipHint);
+                Mod.Speech.Output(skipHint);
             }
         }
     }

@@ -65,7 +65,7 @@ namespace JerianAccess.Module.Screens
             // than from the sliders and crests the game draws them as, so the sweep reads the
             // page's words and leaves the rows to it.
             var text = _consequence.Poll(PanelText.Read(page, RewardPage.OwnsLabel), out grew);
-            if (!string.IsNullOrEmpty(text)) Mod.Speech.Speak(text);
+            if (!string.IsNullOrEmpty(text)) Mod.Speech.Output(text);
             RewardPage.Deliver();
         }
 
@@ -160,7 +160,7 @@ namespace JerianAccess.Module.Screens
                     {
                         if (TripCompleted(option))
                         {
-                            Mod.Speech.Speak(Loc.T("case.completed"), interrupt: true);
+                            Mod.Speech.Output(Loc.T("case.completed"), interrupt: true);
                             return;
                         }
                         Choose(option);
@@ -204,13 +204,13 @@ namespace JerianAccess.Module.Screens
                         new NodeAnnouncement(() => CaseProgress(option),
                             kind: AnnouncementKinds.Value),
                     },
-                    OnTooltip = () => Mod.Speech.Speak(Details(option)),
+                    OnTooltip = () => Mod.Speech.Output(Details(option)),
                     OnActivate = () =>
                     {
                         var state = CaseState(option);
                         if (state != null)
                         {
-                            Mod.Speech.Speak(
+                            Mod.Speech.Output(
                                 Completed(option) ? state : Details(option), interrupt: true);
                             return;
                         }
@@ -316,7 +316,7 @@ namespace JerianAccess.Module.Screens
         // The option's own hover tooltip, read from the game's tooltip system.
         private static void Tooltip(GameObject go)
         {
-            if (!TooltipReader.Request(go)) Mod.Speech.Speak(Loc.T("nav.no_details"));
+            if (!TooltipReader.Request(go)) Mod.Speech.Output(Loc.T("nav.no_details"));
         }
     }
 }

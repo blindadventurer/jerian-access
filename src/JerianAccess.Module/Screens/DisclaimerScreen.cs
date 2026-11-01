@@ -54,7 +54,7 @@ namespace JerianAccess.Module.Screens
             if (_spokenText == null) { _spokenText = text; return; }
             if (text == _spokenText) return;
             _spokenText = text;
-            Mod.Speech.Speak(text);
+            Mod.Speech.Output(text);
         }
 
         private static string CurrentText(DisclaimerController c)

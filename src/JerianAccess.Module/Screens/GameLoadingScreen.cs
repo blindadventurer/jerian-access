@@ -128,7 +128,7 @@ namespace JerianAccess.Module.Screens
                     OnActivate = () =>
                     {
                         var reason = Reason(item);
-                        if (reason != null) { Mod.Speech.Speak(reason, interrupt: true); return; }
+                        if (reason != null) { Mod.Speech.Output(reason, interrupt: true); return; }
                         if (button != null) UiWidgets.Click(button.gameObject);
                     },
                 });

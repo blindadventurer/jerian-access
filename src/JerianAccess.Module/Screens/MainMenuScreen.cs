@@ -74,7 +74,7 @@ namespace JerianAccess.Module.Screens
                     {
                         if (isContinue && !SavesExist())
                         {
-                            Mod.Speech.Speak(Loc.T("state.unavailable"), interrupt: true);
+                            Mod.Speech.Output(Loc.T("state.unavailable"), interrupt: true);
                             return;
                         }
                         UiWidgets.Click(go);

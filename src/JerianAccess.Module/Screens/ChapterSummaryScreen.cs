@@ -176,7 +176,7 @@ namespace JerianAccess.Module.Screens
                         new NodeAnnouncement(() => ObjectiveState(v), kind: AnnouncementKinds.Value),
                     },
                     SearchText = () => ObjectiveLabel(v),
-                    OnTooltip = () => Mod.Speech.Speak(ObjectiveDetails(v)),
+                    OnTooltip = () => Mod.Speech.Output(ObjectiveDetails(v)),
                 });
         }
 

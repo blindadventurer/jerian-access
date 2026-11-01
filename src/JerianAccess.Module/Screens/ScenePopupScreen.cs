@@ -131,7 +131,7 @@ namespace JerianAccess.Module.Screens
             }
             var position = Position(interlude);
             if (position != null) text = position + ". " + text;
-            Mod.Speech.Speak(text);
+            Mod.Speech.Output(text);
         }
 
         /// <summary>The page of conditions an interlude opens on when the player's own history is
@@ -154,7 +154,7 @@ namespace JerianAccess.Module.Screens
             if (rows == null) return false;
             _spokenConditions = true;
             var header = ConditionsHeader(controller);
-            Mod.Speech.Speak(string.IsNullOrEmpty(header) ? rows : header + ". " + rows);
+            Mod.Speech.Output(string.IsNullOrEmpty(header) ? rows : header + ". " + rows);
             return true;
         }
 
@@ -194,7 +194,7 @@ namespace JerianAccess.Module.Screens
             // The reward pages ARE the end of the document - the game offers Continue on the
             // last of them and nothing else follows.
             if (index == rewards.Count - 1) text += ", " + Loc.T("page.last");
-            Mod.Speech.Speak(text);
+            Mod.Speech.Output(text);
             return true;
         }
 

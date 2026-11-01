@@ -121,7 +121,7 @@ namespace JerianAccess.Module
             // Global (live on every screen): verbosity toggle - concise drops the role word and
             // the item position from navigator announcements.
             InputManager.Register("mod.verbosity", "Toggle verbosity", InputCategory.Global,
-                () => Mod.Speech.Speak(
+                () => Mod.Speech.Output(
                     Loc.T(Verbosity.Toggle() ? "verbosity.verbose" : "verbosity.concise"),
                     interrupt: true))
                 .AddBinding(KeyCode.V, ctrl: true);

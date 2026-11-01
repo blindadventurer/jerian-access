@@ -56,7 +56,7 @@ namespace JerianAccess.Module.Screens
             if (name != null)
             {
                 var text = name.Resolve();
-                if (text.Length > 0) Mod.Speech.Speak(text);
+                if (text.Length > 0) Mod.Speech.Output(text);
             }
         }
 
