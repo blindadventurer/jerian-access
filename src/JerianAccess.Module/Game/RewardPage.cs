@@ -43,7 +43,7 @@ namespace JerianAccess.Module.Game
             if (signature == _spoken) return;
             _spoken = signature;
             var words = Words();
-            if (words != null) Mod.Speech.Speak(Loc.T("scene.rewards") + " " + words);
+            if (words != null) Mod.Speech.Output(Loc.T("scene.rewards") + " " + words);
         }
 
         /// <summary>True for a label that belongs to a consequence page - the rows are announced

@@ -212,7 +212,7 @@ namespace JerianAccess.Module.Screens
                 {
                     if (!dropdown.interactable)
                     {
-                        Mod.Speech.Speak(Loc.T("settings.resolution_unavailable"), interrupt: true);
+                        Mod.Speech.Output(Loc.T("settings.resolution_unavailable"), interrupt: true);
                         return;
                     }
                     dropdown.value = Mathf.Clamp(dropdown.value + sign, 0, dropdown.options.Count - 1);

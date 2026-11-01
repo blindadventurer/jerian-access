@@ -109,7 +109,7 @@ namespace JerianAccess.Module.Screens
                             },
                             SearchText = () => Tile(tile).Name.text,
                             OnTooltip = isHero ? (System.Action)null
-                                : () => Mod.Speech.Speak(
+                                : () => Mod.Speech.Output(
                                     Readouts.CharacterDetail(tile.CharacterObject)),
                             OnActivate = () =>
                             {

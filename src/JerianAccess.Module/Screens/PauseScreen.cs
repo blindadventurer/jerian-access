@@ -90,7 +90,7 @@ namespace JerianAccess.Module.Screens
                     {
                         if (isExit && !UiWidgets.Interactable(go))
                         {
-                            Mod.Speech.Speak(Loc.T("state.unavailable"), interrupt: true);
+                            Mod.Speech.Output(Loc.T("state.unavailable"), interrupt: true);
                             return;
                         }
                         UiWidgets.Click(go);

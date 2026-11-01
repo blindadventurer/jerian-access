@@ -60,7 +60,7 @@ namespace JerianAccess.Module.Screens
             var line = Summary(popup);
             if (string.IsNullOrEmpty(line)) return;
             _spoken = true;
-            Mod.Speech.Speak(line);
+            Mod.Speech.Output(line);
         }
 
         private static string Summary(YearPopup popup)

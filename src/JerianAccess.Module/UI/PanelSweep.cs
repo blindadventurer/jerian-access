@@ -64,7 +64,7 @@ namespace JerianAccess.Module.UI
                     {
                         if (!UiWidgets.Interactable(bt.gameObject))
                         {
-                            Mod.Speech.Speak(Loc.T("state.unavailable"), interrupt: true);
+                            Mod.Speech.Output(Loc.T("state.unavailable"), interrupt: true);
                             return;
                         }
                         UiWidgets.Click(bt.gameObject);
@@ -203,7 +203,7 @@ namespace JerianAccess.Module.UI
                                 kind: AnnouncementKinds.Label),
                         },
                         OnTooltip = scales == null ? (System.Action)null
-                            : () => Mod.Speech.Speak(Readouts.ParameterScales(scales.Parameter)),
+                            : () => Mod.Speech.Output(Readouts.ParameterScales(scales.Parameter)),
                     });
                 return;
             }
@@ -225,7 +225,7 @@ namespace JerianAccess.Module.UI
                             kind: AnnouncementKinds.Label),
                     },
                     OnTooltip = pgs == null ? (System.Action)null
-                        : () => Mod.Speech.Speak(Readouts.ParameterScales(pgs.Parameter)),
+                        : () => Mod.Speech.Output(Readouts.ParameterScales(pgs.Parameter)),
                 });
         }
     }

@@ -56,7 +56,7 @@ namespace JerianAccess.Module.Game
             if (!string.IsNullOrEmpty(text) && text == _pending
                 && Time.unscaledTime - _pendingSince >= SettleSeconds)
             {
-                Mod.Speech.Speak(text);
+                Mod.Speech.Output(text);
                 Close();
                 return;
             }
@@ -70,7 +70,7 @@ namespace JerianAccess.Module.Game
             // suppressed during an animation): answer rather than leaving the key silent.
             if (Time.unscaledTime - _asked >= GiveUpSeconds)
             {
-                Mod.Speech.Speak(Loc.T("nav.no_details"));
+                Mod.Speech.Output(Loc.T("nav.no_details"));
                 Close();
             }
         }

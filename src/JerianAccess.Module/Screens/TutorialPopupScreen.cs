@@ -46,7 +46,7 @@ namespace JerianAccess.Module.Screens
             if (popup == null) return;
             bool grew;
             var text = _delivery.Poll(PanelText.Read(popup.gameObject), out grew);
-            if (!string.IsNullOrEmpty(text)) Mod.Speech.Speak(text);
+            if (!string.IsNullOrEmpty(text)) Mod.Speech.Output(text);
         }
     }
 }

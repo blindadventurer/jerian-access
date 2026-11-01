@@ -321,7 +321,7 @@ namespace JerianAccess.Module.Screens
                 {
                     if (!UiWidgets.Interactable(go))
                     {
-                        Mod.Speech.Speak(
+                        Mod.Speech.Output(
                             Loc.T(selected ? "state.selected" : "state.unavailable"), interrupt: true);
                         return;
                     }
@@ -436,7 +436,7 @@ namespace JerianAccess.Module.Screens
         }
 
         private static void Speak(string s)
-            => Mod.Speech.Speak(string.IsNullOrEmpty(s) ? Loc.T("nav.no_details") : s);
+            => Mod.Speech.Output(string.IsNullOrEmpty(s) ? Loc.T("nav.no_details") : s);
 
         // The window's name is the game's own name for the HUD button that opened it: every
         // window controller keeps that button (WindowControllersManager hands it over on

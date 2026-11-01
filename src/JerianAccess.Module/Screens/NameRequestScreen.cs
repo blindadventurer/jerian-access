@@ -172,7 +172,7 @@ namespace JerianAccess.Module.Screens
                     if (!StartAllowed(w, field, minChars))
                     {
                         // The game's own subtitle carries the reason (too short / blacklisted).
-                        Mod.Speech.Speak(subtitle.text.Length > 0
+                        Mod.Speech.Output(subtitle.text.Length > 0
                             ? subtitle.text : Loc.T("namerequest.start_unavailable"),
                             interrupt: true);
                         return;
@@ -243,7 +243,7 @@ namespace JerianAccess.Module.Screens
             _lastSubtitle = subtitle == null ? null : subtitle.text;
             UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(field.gameObject);
             field.ActivateInputField();
-            Mod.Speech.Speak(Loc.T("edit.start"), interrupt: true);
+            Mod.Speech.Output(Loc.T("edit.start"), interrupt: true);
         }
 
         // The edit differ: echo is driven by the FIELD's text changing (model state), not our
@@ -261,12 +261,12 @@ namespace JerianAccess.Module.Screens
                     if (text.Length == _lastText.Length + 1 && text.StartsWith(_lastText))
                     {
                         var added = text[text.Length - 1];
-                        Mod.Speech.Speak(added == ' ' ? Loc.T("edit.space") : added.ToString(),
+                        Mod.Speech.Output(added == ' ' ? Loc.T("edit.space") : added.ToString(),
                             interrupt: true);
                     }
                     else
                     {
-                        Mod.Speech.Speak(text.Length > 0 ? text : Loc.T("edit.blank"),
+                        Mod.Speech.Output(text.Length > 0 ? text : Loc.T("edit.blank"),
                             interrupt: true);
                     }
                 }
@@ -276,7 +276,7 @@ namespace JerianAccess.Module.Screens
                 {
                     var sub = _editSubtitle.text;
                     if (_wasEditing && sub != _lastSubtitle && !string.IsNullOrEmpty(sub))
-                        Mod.Speech.Speak(sub);
+                        Mod.Speech.Output(sub);
                     _lastSubtitle = sub;
                 }
             }
@@ -286,7 +286,7 @@ namespace JerianAccess.Module.Screens
                 // name. A destroyed field means the window is gone - stay silent, the screen
                 // pop announces the return.
                 if (_editField != null)
-                    Mod.Speech.Speak(_editField.text.Length > 0
+                    Mod.Speech.Output(_editField.text.Length > 0
                         ? _editField.text : Loc.T("edit.blank"), interrupt: true);
             }
             _wasEditing = editing;
